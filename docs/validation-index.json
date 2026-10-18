@@ -1,0 +1,57 @@
+{
+  "version": "0.2.0",
+  "environment": {
+    "os": "macOS 26.6.2 (25G83)",
+    "architecture": "arm64",
+    "node": "24.15.0",
+    "pi": "1.2.0"
+  },
+  "finalNonactivatingReport": "artifacts/background-safe-1792223945398/report.json",
+  "earlierSuccessfulSyntheticConcurrency": "artifacts/background-1792223272595/report.json",
+  "humanFeedbackAndLimitations": "artifacts/background-1792223272595/human-report.json",
+  "finalPiReport": "artifacts/pi-test-report.json",
+  "evidenceSources": [
+    "artifacts/background-safe-1792223945398",
+    "artifacts/background-1792223272595",
+    "artifacts/pi-test-report.json",
+    "artifacts/pi-test-compact.json",
+    "artifacts/pi-background",
+    "artifacts/background-1792222936379/failure.json",
+    "artifacts/background-1792222936379/foreground-traffic.json",
+    "artifacts/background-1792222936379/foreground-textedit-after.json",
+    "artifacts/background-1792223580200/failure.json",
+    "artifacts/packaged-background-report.json",
+    "artifacts/packaged-calculator-56.png"
+  ],
+  "claims": {
+    "automatedTestsPassed": 11,
+    "finalNonactivatingChecksPassed": 13,
+    "finalNonactivatingMcpOperations": 29,
+    "syntheticForegroundCharactersPreserved": 177,
+    "foregroundControlDefault": false,
+    "humanReportsTextComplete": true,
+    "humanPointerOverlapIndependentlyEstablished": false,
+    "subsequentInteractiveHarnessInterferenceReported": true,
+    "arbitraryRawMouseAndShortcutCompatibility": false,
+    "externalZipRealCalculatorVerified": true
+  },
+  "notes": [
+    "Evidence contains only independently generated test UI, MCP results and foreground/pointer metadata, not proprietary app code, credentials or raw reverse engineering artifacts.",
+    "The final default harness never activates windows or emits global input. Interactive tests remain opt-in and intentionally take foreground control during setup.",
+    "Prior passing concurrency and failed notification/stacking experiments are retained together. Historical reports are not silently rewritten as passes."
+  ],
+  "developmentCheckpoint": {
+    "goalComplete": false,
+    "packagedReleaseUnchanged": true,
+    "unitTestsPassed": 13,
+    "nonactivatingReport": "artifacts/background-safe-1792302158280/report.json",
+    "rawKeyReport": "artifacts/raw-calculator-1792301216949/report.json",
+    "focusResearch": "docs/FOCUS_FIDELITY.md",
+    "foregroundCharacterIntegrityRetested": false,
+    "rawAppKitTextInputVerified": true,
+    "helperSHA256": "4b68b7a8e91a574444e9f5d8b436ab3047a2d63e5c15cf5214540f216b05df6c",
+    "rawUnicodeReport": "artifacts/raw-textedit-1792302014249/report.json",
+    "piRawUnicodeReport": "artifacts/pi-raw-text-1792302258660/report-corrected.json",
+    "rawAppKitTextInputScope": "Fresh TextEdit process; Unicode CGEvent packets and CMD+Down, exact UTF-16 value and actual event recipient verified. Custom fixture text dispatch remains unresolved."
+  }
+}

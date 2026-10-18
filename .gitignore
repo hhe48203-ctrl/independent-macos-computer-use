@@ -1,0 +1,8 @@
+node_modules/
+.build/
+dist/
+.research/
+artifacts/*
+!artifacts/.gitkeep
+.pi/
+.DS_Store

@@ -1,0 +1,43 @@
+import { spawn, spawnSync } from 'node:child_process';
+import { mkdirSync, writeFileSync } from 'node:fs';
+import { fileURLToPath } from 'node:url';
+import assert from 'node:assert/strict';
+import { startBackgroundFixture } from './background-fixture.mjs';
+const fixtureBundleId='io.local.computeruse.background-target';
+
+const root = fileURLToPath(new URL('../', import.meta.url));
+const work = fileURLToPath(new URL('../.build/pi-test-workspace/', import.meta.url));
+mkdirSync(work, { recursive: true });
+const evidence=fileURLToPath(new URL('../artifacts/pi-background/',import.meta.url));
+const harness=await startBackgroundFixture(evidence,{background:true});
+const fixture={pid:harness.apps.target.pid,state:()=>harness.read('target'),close:()=>harness.close()};
+const proof=()=>JSON.parse(harness.run(harness.driver,['occlusion',String(fixture.pid),String(harness.apps.target.windowId),String(harness.apps.cover.windowId)]));
+const before=proof();assert.equal(before.fullyCovered,true);const started=Date.now()/1000;
+const pi = process.env.PI_COMMAND ?? 'pi';
+const server = fileURLToPath(new URL('../src/server.mjs', import.meta.url));
+try {
+  const added = spawnSync(pi, ['mcp', 'add', 'macos_computer_use', '--local', '--cwd', root, '--exposure', 'direct', '--env', `CU_ALLOWED_BUNDLE_IDS=${fixtureBundleId}`, '--', process.execPath, server], { cwd: work, encoding: 'utf8' });
+  if (added.status !== 0) throw new Error(added.stderr || added.stdout);
+  console.log(added.stdout.trim());
+  const prompt = `Use only the macos_computer_use MCP tools to operate the controlled macOS test fixture (pid ${fixture.pid}). First check permissions, list its windows and take an AX snapshot with screenshot:false. Use background mode only. Never call cu_focus or mode:foreground. Use the exact Message input element reference to type exactly "pi desktop verified 中文", and activate the Apply message button. Take a fresh AX snapshot with screenshot:false to verify Result contains exactly that message and report success. Do not use bash, files, scripting, other MCP servers or other apps. This test authorizes input only in this fixture.`;
+  const args = ['--print', '--mode', 'json', '--no-session', '--approve', '--no-extensions', '--extension', 'builtin:mcp', '--no-skills', '--no-prompt-templates', '--no-themes', '--no-context-files', '--no-builtin-tools', '--tools', 'mcp__macos_computer_use__*', prompt];
+  const child = spawn(pi, args, { cwd: work, stdio: ['ignore', 'pipe', 'pipe'] });
+  const chunks = []; const errors = [];
+  child.stdout.on('data', d => chunks.push(d)); child.stderr.on('data', d => { errors.push(d); process.stderr.write(d); });
+  const timer = setTimeout(() => child.kill('SIGTERM'), 180000);
+  const code = await new Promise((resolve, reject) => { child.on('error', reject); child.on('close', resolve); });
+  clearTimeout(timer);
+  const output = Buffer.concat(chunks).toString();
+  writeFileSync(new URL('../artifacts/pi-test-events.jsonl', import.meta.url), output);
+  writeFileSync(new URL('../artifacts/pi-test-stderr.log', import.meta.url), Buffer.concat(errors));
+  const events = output.split('\n').filter(Boolean).flatMap(l => { try { return [JSON.parse(l)]; } catch { return []; } });
+  const calls = events.filter(e => e.type === 'tool_execution_start').map(e => e.toolName);
+  const finalState = fixture.state();const after=proof();
+  const samples=harness.read('cover','samples').filter(s=>s.t+harness.apps.cover.epoch>=started);
+  assert.equal(after.fullyCovered,true);assert.ok(samples.every(s=>s.frontPid!==fixture.pid));
+  const report = { date: new Date().toISOString(), exitCode: code, calls, finalFixtureState: finalState, success: code === 0 && finalState.input === 'pi desktop verified 中文' && finalState.count >= 1, events: events.length, toolErrorCount:events.filter(e=>e.type==='tool_execution_end'&&e.isError).length, activationCalls:calls.some(n=>n.endsWith('__cu_focus')), background:{before,after,sampleCount:samples.length,targetNeverFront:true} };
+  writeFileSync(new URL('../artifacts/pi-test-report.json', import.meta.url), JSON.stringify(report, null, 2));
+  console.log(JSON.stringify(report, null, 2));
+  if (!report.success) console.error(output.slice(-7000));
+  assert.equal(report.success, true, 'pi must complete real desktop input through MCP');
+} finally { fixture.close(); }

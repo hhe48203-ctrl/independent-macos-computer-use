@@ -1,0 +1,155 @@
+{
+  "investigatedLocalDate": "2026-10-17",
+  "appVersion": "26.1013.31256",
+  "reaVersion": "6.5.0",
+  "reaSourceCommit": "5b243993872c2bcc70cb00060ffb79b347321370",
+  "packages": {
+    "@oai/sky": "0.7.8",
+    "@oai/cua": "0.2.6",
+    "@oai/cua-repl": "0.1.0"
+  },
+  "artifacts": {
+    "asar": {
+      "bytes": 582401226,
+      "sha256": "bf9c41fa9770fbfacfba93042ff71c24cb65c82935819377275faac08103383f",
+      "path": "/Applications/ChatGPT.app/Contents/Resources/app.asar"
+    },
+    "nativePipe": {
+      "bytes": 8221,
+      "sha256": "60b3653f7ee052007b02a79e11416a89d424d73dac450e429a93b214839c267f",
+      "path": "/Applications/ChatGPT.app/Contents/Resources/cua_node/lib/node_modules/@oai/sky/dist/project/cua/sky_js/src/targets/mac/native-pipe.js"
+    },
+    "macClient": {
+      "bytes": 5138,
+      "sha256": "71134f10354fe9f7be23a62df52789908a8592151685286a7965b297a81cef8f",
+      "path": "/Applications/ChatGPT.app/Contents/Resources/cua_node/lib/node_modules/@oai/sky/dist/project/cua/sky_js/src/targets/mac/client.js"
+    },
+    "serviceJs": {
+      "bytes": 1763,
+      "sha256": "5b2fa2f0e19c8401a9be8c71be17008d88049ab107972c1e4a5cb615f4ef5993",
+      "path": "/Applications/ChatGPT.app/Contents/Resources/cua_node/lib/node_modules/@oai/sky/dist/project/cua/sky_js/src/service.js"
+    },
+    "skyApi": {
+      "bytes": 2077,
+      "sha256": "0123da875a2eef5648fac407fcfedad5147ef9a1616b623ad615f4c337aee285",
+      "path": "/Applications/ChatGPT.app/Contents/Resources/cua_node/lib/node_modules/@oai/sky/dist/project/cua/sky_js/src/sky.js"
+    },
+    "replLauncher": {
+      "bytes": 2037,
+      "sha256": "3e52a41f4da41d35be8cc3723fe97251711087a998c1ed7f2cfdf7e20b50fc2b",
+      "path": "/Applications/ChatGPT.app/Contents/Resources/cua_node/lib/node_modules/@oai/cua-repl/dist/lib/js/oai_js_cua_repl/src/launch.js"
+    },
+    "nativeService": {
+      "bytes": 24934560,
+      "sha256": "f21c31c0ee5df419dbd165bf76ebd65c64d864c6fec5b6c6c3a23c42ff3d2e13",
+      "path": "~/.codex/computer-use/Codex Computer Use.app/Contents/MacOS/SkyComputerUseService"
+    }
+  },
+  "evidence": {
+    "sky-graph": {
+      "evidenceId": "ev_c7f7319b09d212c0e5b203582491f1074fa5ec420417f0ad371e8b1f0e1069ee",
+      "authority": "shipped-artifact",
+      "operation": "analyze_javascript_application",
+      "provider": {
+        "id": "rea-javascript-application",
+        "name": "REA JavaScript application analyzer",
+        "version": "1"
+      },
+      "limitations": [
+        "CommonJS and ESM binding relationships were recovered from inert syntax and resolved only within the inventoried artifact container.",
+        "Graph coverage is incomplete; unavailable facts remain explicit and must not be read as absence.",
+        "JavaScript and HTML were parsed as inert text; bundle bootstrap code was never executed.",
+        "Static imports, entrypoints, workers, endpoints, and storage relationships do not prove runtime execution.",
+        "Static paths and relationships may remain unresolved when expressions are dynamic or obfuscated.",
+        "Webpack/Rspack factories were recovered from AST literals; REA did not invoke push handlers or bundle bootstrap code."
+      ]
+    },
+    "cua-repl-graph": {
+      "evidenceId": "ev_8b0502a7cfa643e67deff2e056dbce482d89cdb16efe2f42e0f5e41bbbfae4b0",
+      "authority": "shipped-artifact",
+      "operation": "analyze_javascript_application",
+      "provider": {
+        "id": "rea-javascript-application",
+        "name": "REA JavaScript application analyzer",
+        "version": "1"
+      },
+      "limitations": [
+        "CommonJS and ESM binding relationships were recovered from inert syntax and resolved only within the inventoried artifact container.",
+        "JavaScript and HTML were parsed as inert text; bundle bootstrap code was never executed.",
+        "Static imports, entrypoints, workers, endpoints, and storage relationships do not prove runtime execution.",
+        "Static paths and relationships may remain unresolved when expressions are dynamic or obfuscated.",
+        "Webpack/Rspack factories were recovered from AST literals; REA did not invoke push handlers or bundle bootstrap code."
+      ]
+    },
+    "service-macho": {
+      "evidenceId": "ev_0b29697dc3afb5651283aea96e172264be6fa282f89cca71c1fdddda7a8ca84d",
+      "authority": "shipped-artifact",
+      "operation": "inspect_macho",
+      "provider": {
+        "id": "native-macos",
+        "name": "macOS native inspection utilities",
+        "version": null
+      },
+      "limitations": [
+        "Imports and exports combine dyld_info and nm; stripped or toolchain-hidden symbols may be absent.",
+        "vtool output is retained as provenance but only otool build metadata is normalized."
+      ]
+    },
+    "sky-summary": {
+      "evidenceId": "ev_c5d5a7bc9987d620b7dd576b7c1839379f0471f28cd24421c3b92d9e54d06a2e",
+      "authority": "shipped-artifact",
+      "operation": "inspect_analysis_view",
+      "provider": {
+        "id": "rea-analysis-view",
+        "name": "REA analysis view projection",
+        "version": "1"
+      },
+      "limitations": [
+        "Boundary extraction covers unshadowed JSON/global coercions plus parse and validation method candidates.",
+        "Child-process extraction covers asynchronous node:child_process creation, literal argv/env/stdio options, exit/error listeners, and kill signals.",
+        "CommonJS and ESM binding relationships were recovered from inert syntax and resolved only within the inventoried artifact container.",
+        "Configuration extraction covers process.env, process.argv, node:fs reads, and direct logical defaults.",
+        "Event extraction covers EventEmitter-style literal registrations, removals, and dispatch candidates; dynamic names remain unknown.",
+        "Function fingerprints are static candidates; equal digests can remain ambiguous and do not prove behavioral equivalence.",
+        "Graph coverage is incomplete; unavailable facts remain explicit and must not be read as absence.",
+        "JavaScript and HTML were parsed as inert text; bundle bootstrap code was never executed.",
+        "Local data flow does not claim control-flow-sensitive reaching definitions or arbitrary dynamic property resolution.",
+        "Promise ownership covers explicit unshadowed Promise construction, static factories, aggregation, chaining, and await syntax only.",
+        "Request extraction covers fetch, WebSocket, node:http/node:https construction, direct option fields, and exact local response consumers.",
+        "Resource extraction covers built-in filesystem/network acquisition and exact local close/destroy/end handles.",
+        "Static imports, entrypoints, workers, endpoints, and storage relationships do not prove runtime execution.",
+        "Static paths and relationships may remain unresolved when expressions are dynamic or obfuscated.",
+        "The semantic graph contains static syntax observations and conservative relationship candidates; it does not claim runtime execution.",
+        "Timer extraction covers global or node:timers scheduling and exact local-handle cancellation.",
+        "Webpack/Rspack factories were recovered from AST literals; REA did not invoke push handlers or bundle bootstrap code."
+      ]
+    }
+  },
+  "native": {
+    "uuid": "6AD9DE94-5466-38A4-B2E0-F81DFBC620DB",
+    "architecture": {
+      "name": "arm64",
+      "container_file_offset": 0
+    },
+    "buildMetadata": {
+      "items": [
+        {
+          "platform": "MACOS",
+          "minimum_os": "14.4",
+          "sdk": "26.1",
+          "tools": [
+            {
+              "name": "LD",
+              "version": "1230.1"
+            }
+          ]
+        }
+      ],
+      "total": 1,
+      "exhaustive": true,
+      "limitations": []
+    },
+    "importCount": 4658,
+    "exportCount": 68710
+  }
+}

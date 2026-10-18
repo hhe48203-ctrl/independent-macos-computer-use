@@ -1,0 +1,35 @@
+{
+  "name": "independent-macos-computer-use",
+  "version": "0.2.0",
+  "description": "Independent macOS desktop perception and control over MCP stdio",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": ">=22"
+  },
+  "bin": {
+    "macos-computer-use-mcp": "src/server.mjs"
+  },
+  "scripts": {
+    "build": "node scripts/build.mjs",
+    "start": "node src/server.mjs",
+    "doctor": "node scripts/doctor.mjs",
+    "test": "node --test tests/*.test.mjs",
+    "test:desktop": "node scripts/desktop-test.mjs",
+    "test:pi": "node scripts/pi-test.mjs",
+    "package": "node scripts/package.mjs",
+    "test:background": "node scripts/background-safe-test.mjs",
+    "test:background:interactive": "node scripts/background-test.mjs",
+    "package:evidence": "node scripts/package-evidence.mjs",
+    "test:packaged-background": "node scripts/packaged-background-test.mjs"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "1.32.1",
+    "zod": "4.4.3"
+  },
+  "license": "MIT",
+  "devDependencies": {
+    "esbuild": "0.28.2",
+    "yaml": "2.9.1"
+  }
+}
