@@ -2,13 +2,39 @@
 import AppKit
 import ApplicationServices
 
+// A logger must not change whether the observed input reaches its responder.
+// NSEvent getters have type-specific preconditions (Objective-C exceptions).
+func fixtureEventRecord(_ event:NSEvent,elapsed:TimeInterval)->[String:Any] {
+    var row:[String:Any]=["t":elapsed,"type":event.type.rawValue,"window":event.windowNumber,"flags":event.modifierFlags.rawValue,"x":event.locationInWindow.x,"y":event.locationInWindow.y]
+    if event.type == .keyDown || event.type == .keyUp {
+        row["characters"]=event.characters ?? "";row["keyCode"]=event.keyCode
+    }else if [1,2,3,4,5,6,7,8,9,13,14,15,21,22,25,26,27].contains(event.type.rawValue) {
+        row["subtype"]=event.subtype.rawValue
+    }
+    return row
+}
+
 final class FixtureApplication:NSApplication {
+    override func sendEvent(_ event:NSEvent) {
+        if event.type == .keyDown || event.type == .keyUp {
+            (delegate as? BackgroundFixture)?.recordQueueEvent(event,phase:"sendEvent-entry")
+        }
+        super.sendEvent(event)
+    }
     override func nextEvent(matching mask:NSEvent.EventTypeMask,until expiration:Date?,inMode mode:RunLoop.Mode,dequeue flag:Bool)->NSEvent? {
         let event=super.nextEvent(matching:mask,until:expiration,inMode:mode,dequeue:flag)
         if let event,[10,11,21].contains(event.type.rawValue),flag {
             (delegate as? BackgroundFixture)?.recordQueueEvent(event)
         }
         return event
+    }
+}
+
+// Observe the ordinary AppKit responder chain without changing event handling.
+final class FixtureTextView:NSTextView {
+    override func keyDown(with event:NSEvent) {
+        (NSApp.delegate as? BackgroundFixture)?.recordQueueEvent(event,phase:"textView-keyDown")
+        super.keyDown(with:event)
     }
 }
 
@@ -34,16 +60,19 @@ final class BackgroundFixture: NSObject, NSApplicationDelegate, NSTextFieldDeleg
     let pad = EventPad(); var count = 0
     var timer: Timer?; var started = Date(); var samples: [[String: Any]] = []; var events: [[String: Any]] = []
     var monitor: Any?
+    var documentInput:NSTextView?
     var notifications: [NSObjectProtocol] = []
     var activations: [[String:Any]] = []
-    func recordQueueEvent(_ event:NSEvent) {
-        var row:[String:Any]=["phase":"application-queue","t":Date().timeIntervalSince(started),"type":event.type.rawValue,"window":event.windowNumber,"flags":event.modifierFlags.rawValue]
-        if event.type == .keyDown || event.type == .keyUp {row["characters"]=event.characters ?? "";row["keyCode"]=event.keyCode}
-        if event.type.rawValue == 21 {row["subtype"]=event.subtype.rawValue}
+    func recordQueueEvent(_ event:NSEvent,phase:String="application-queue") {
+        var row=fixtureEventRecord(event,elapsed:Date().timeIntervalSince(started))
+        row.merge(["phase":phase,"active":NSApp.isActive,"key":window?.isKeyWindow ?? false,"keyWindow":NSApp.keyWindow?.windowNumber ?? 0,"mainWindow":NSApp.mainWindow?.windowNumber ?? 0,"firstResponder":window?.firstResponder.map{String(describing:type(of:$0))} ?? "none"]){_,new in new}
         events.append(row)
     }
     func applicationDidFinishLaunching(_ notification: Notification) {
-        let menu = NSMenu(); let item = NSMenuItem(); let edit = NSMenu(title: "Edit")
+        let menu = NSMenu();let appItem=NSMenuItem();let applicationMenu=NSMenu(title:"Application")
+        applicationMenu.addItem(withTitle:"Quit",action:#selector(NSApplication.terminate(_:)),keyEquivalent:"q")
+        appItem.submenu=applicationMenu;menu.addItem(appItem)
+        let item = NSMenuItem(); let edit = NSMenu(title: "Edit")
         edit.addItem(withTitle: "Select All", action: #selector(NSText.selectAll(_:)), keyEquivalent: "a")
         edit.addItem(withTitle: "Copy", action: #selector(NSText.copy(_:)), keyEquivalent: "c")
         item.submenu = edit; menu.addItem(item); NSApp.mainMenu = menu
@@ -65,19 +94,21 @@ final class BackgroundFixture: NSObject, NSApplicationDelegate, NSTextFieldDeleg
         pad.changed = { [weak self] in self?.save() }; content.addSubview(pad)
         let scroll = NSScrollView(frame: NSRect(x: cover ? 650 : 20, y: 20, width: cover ? 600 : 580, height: cover ? 600 : 100))
         scroll.hasVerticalScroller = true; scroll.setAccessibilityIdentifier("scroll-area")
-        let document = NSTextView(frame: NSRect(x: 0, y: 0, width: scroll.frame.width, height: 2400))
+        let document = FixtureTextView(frame: NSRect(x: 0, y: 0, width: scroll.frame.width, height: 2400))
         document.string = (1...100).map { "Scrollable row \($0) — background text" }.joined(separator: "\n")
-        document.isEditable = false; document.font = .systemFont(ofSize: 16); document.setAccessibilityIdentifier("scroll-document")
+        let documentMode=role == "target" && CommandLine.arguments.contains("--document-input")
+        document.isEditable = documentMode
+        if documentMode {document.setSelectedRange(NSRange(location:0,length:0))}
+        if documentMode {documentInput=document}
+        document.font = .systemFont(ofSize: 16); document.setAccessibilityIdentifier("scroll-document")
         scroll.documentView = document; content.addSubview(scroll)
-        monitor = NSEvent.addLocalMonitorForEvents(matching: [.leftMouseDown,.leftMouseUp,.mouseMoved,.scrollWheel,.keyDown,.keyUp,.appKitDefined,.applicationDefined]) { [weak self] event in
+        monitor = NSEvent.addLocalMonitorForEvents(matching: [.leftMouseDown,.leftMouseUp,.leftMouseDragged,.mouseMoved,.scrollWheel,.keyDown,.keyUp,.appKitDefined,.applicationDefined]) { [weak self] event in
             guard let self else { return event }
-            var row:[String:Any]=["t": Date().timeIntervalSince(self.started), "type": event.type.rawValue, "subtype": event.subtype.rawValue, "window": event.windowNumber, "x": event.locationInWindow.x, "y": event.locationInWindow.y, "flags": event.modifierFlags.rawValue]
             // This monitor runs inside our disposable fixture, never another app.
-            if event.type == .keyDown || event.type == .keyUp {row["characters"]=event.characters ?? "";row["keyCode"]=event.keyCode}
-            self.events.append(row)
+            self.events.append(fixtureEventRecord(event,elapsed:Date().timeIntervalSince(self.started)))
             return event
         }
-        window.makeFirstResponder(text)
+        if let documentInput {window.makeFirstResponder(documentInput)}else{window.makeFirstResponder(text)}
         if CommandLine.arguments.contains("--background") {
             window.orderBack(nil)
             if cover, let id=Int(CommandLine.arguments.last ?? "") { window.order(.above,relativeTo:id) }
@@ -104,13 +135,20 @@ final class BackgroundFixture: NSObject, NSApplicationDelegate, NSTextFieldDeleg
     func controlTextDidChange(_ obj: Notification) { save() }
     func save() {
         let state: [String: Any] = ["pid": ProcessInfo.processInfo.processIdentifier, "windowId": window.windowNumber, "role": role, "input": text.stringValue, "result": result.stringValue, "count": count, "clicks": pad.clicks, "scrolls": pad.scrolls, "drags": pad.drags, "releases":pad.releases, "active": NSApp.isActive, "key": window.isKeyWindow, "epoch":started.timeIntervalSince1970,
-            "firstResponderClass":window.firstResponder.map{String(describing:type(of:$0))} ?? "none","textEditorPresent":text.currentEditor() != nil,"applicationClass":String(describing:type(of:NSApp!))]
+            "firstResponderClass":window.firstResponder.map{String(describing:type(of:$0))} ?? "none","textEditorPresent":text.currentEditor() != nil,"applicationClass":String(describing:type(of:NSApp!)),"documentInput":documentInput?.string as Any? ?? NSNull(),"nativeWindowFrame":["x":window.frame.minX,"y":window.frame.minY,"width":window.frame.width,"height":window.frame.height]]
         func write(_ value: Any, _ name: String) { if let data = try? JSONSerialization.data(withJSONObject: value) { try? data.write(to: directory.appendingPathComponent(name), options: .atomic) } }
         write(state, "\(role)-state.json"); write(samples, "\(role)-samples.json"); write(events, "\(role)-events.json")
         write(activations,"\(role)-activations.json")
     }
     func applicationWillTerminate(_ notification: Notification) { save() }
 }
-if CommandLine.arguments.contains("--regular-background"),!CommandLine.arguments.contains("--launch-services-background"),ProcessInfo.processInfo.environment["CU_TEST_ALLOW_FOREGROUND_SETUP"] != "1" {fputs("Direct regular launch may activate the application; explicit foreground setup is required.\n",stderr);exit(2)}
-let app = FixtureApplication.shared; let delegate = BackgroundFixture()
-app.setActivationPolicy(CommandLine.arguments.contains("--background") && !CommandLine.arguments.contains("--regular-background") ? .accessory : .regular); app.delegate = delegate; app.run()
+#if !CU_FIXTURE_RECORD_TEST
+@main struct FixtureMain {
+    static func main() {
+        if CommandLine.arguments.contains("--regular-background"),!CommandLine.arguments.contains("--launch-services-background"),ProcessInfo.processInfo.environment["CU_TEST_ALLOW_FOREGROUND_SETUP"] != "1" {fputs("Direct regular launch may activate the application; explicit foreground setup is required.\n",stderr);exit(2)}
+        let app = FixtureApplication.shared; let delegate = BackgroundFixture()
+        app.setActivationPolicy(CommandLine.arguments.contains("--background") && !CommandLine.arguments.contains("--regular-background") ? .accessory : .regular); app.delegate = delegate
+        withExtendedLifetime(delegate){app.run()}
+    }
+}
+#endif

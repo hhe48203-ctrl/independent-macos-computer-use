@@ -1,0 +1,75 @@
+import AppKit
+import ApplicationServices
+
+// ABI verified from this OS wrapper's ARM64 instructions; semantic attribution
+// of its raw reply is still provisional. Never expose it as proven hardware
+// delivery. Restrict this experiment to the exact OS version investigated.
+@MainActor enum ExperimentalTypingFocus {
+    typealias Query=@convention(c)()->UInt32
+    static let query:Query?=dlsym(UnsafeMutableRawPointer(bitPattern:-2),"SLPSGetTypingFocusProcess").map{unsafeBitCast($0,to:Query.self)}
+    static func read()->UInt32? {
+        guard ProcessInfo.processInfo.environment["CU_EXPERIMENTAL_APPKIT_FOCUS"] == "1" else{return nil}
+        #if arch(arm64)
+        let os=ProcessInfo.processInfo.operatingSystemVersion
+        guard os.majorVersion==26,os.minorVersion==6,os.patchVersion==2 else{return nil}
+        return query?()
+        #else
+        return nil
+        #endif
+    }
+}
+
+// Experimental independent implementation of observed app-local focus notices.
+// Opt-in at server startup. It does not request WindowServer focus, freeze the
+// display, restore foreground, or filter other processes' focus/keyboard events.
+@MainActor final class ScopedAppKitFocus {
+    let pid:pid_t
+    let windowID:CGWindowID
+    var finished=false
+    var notifications=0
+    var skippedCleanupForRealFocus=false
+    init(pid:pid_t,windowID:CGWindowID){self.pid=pid;self.windowID=windowID}
+    func send(_ type:NSEvent.EventType,_ subtype:Int16,_ flags:NSEvent.ModifierFlags,_ window:Int) throws {
+        guard let event=NSEvent.otherEvent(with:type,location:.zero,modifierFlags:flags,timestamp:ProcessInfo.processInfo.systemUptime,windowNumber:window,context:nil,subtype:subtype,data1:0,data2:0)?.cgEvent else{throw BridgeError("EVENT_FAILED","Could not build an app-local focus notice")}
+        event.setIntegerValueField(.eventSourceUserData,value:0x43554247)
+        event.timestamp=DispatchTime.now().uptimeNanoseconds;event.postToPid(pid);notifications += 1
+    }
+    func finish(){
+        guard !finished else{return};finished=true
+        // A user may have switched to the app during the operation. Never send
+        // a synthetic deactivation to an app now owning real foreground/focus.
+        let now=SystemInputFocus.observe()
+        guard now.foregroundPID != pid,now.keyboardPID != pid else{skippedCleanupForRealFocus=true;return}
+        try? send(NSEvent.EventType(rawValue:21)!,0x1000,[],0)
+        try? send(.appKitDefined,2,[],0)
+    }
+    var json:[String:Any]{["experimental":true,"method":"scoped app-local AppKit notices and observed AX activation-point click","notificationsGenerated":notifications,"explicitRegistryFocusAPIRequests":0,"foregroundRestorations":0,"cleanupSkippedForRealFocus":skippedCleanupForRealFocus]}
+}
+
+@MainActor extension Desktop {
+    func prepareScopedAppKitFocus(_ pid:pid_t,_ wid:CGWindowID,_ frame:CGRect,_ delivery:BackgroundPointerDelivery,_ observation:BackgroundFocusObservation) async throws -> ScopedAppKitFocus? {
+        guard ProcessInfo.processInfo.environment["CU_EXPERIMENTAL_APPKIT_FOCUS"] == "1" else{return nil}
+        guard let typing=ExperimentalTypingFocus.read(),typing>0 else{throw BridgeError("EXPERIMENTAL_FOCUS_OS_UNVERIFIED","App-local focus is experimental and currently requires the investigated macOS 26.6.2 typing-focus query. No notice was sent")}
+        let focus=SystemInputFocus.observe()
+        guard focus.foregroundPID != pid,focus.keyboardPID != pid else{return nil}
+        guard focus.keyboardPID != nil else{throw BridgeError("BACKGROUND_FOCUS_UNRESOLVED","Experimental app-local focus requires a resolved registry baseline")}
+        let window=try axWindow(pid,frame)
+        guard let value=attr(window,NSAccessibility.Attribute.activationPoint.rawValue),CFGetTypeID(value)==AXValueGetTypeID() else {
+            throw BridgeError("BACKGROUND_ACTIVATION_POINT_REQUIRED","Experimental app-local focus needs the window's observed AX activation point; no guessed click or notice was sent")
+        }
+        var point=CGPoint.zero
+        guard AXValueGetValue(value as! AXValue,.cgPoint,&point),point.x.isFinite,point.y.isFinite,frame.contains(point) else{throw BridgeError("BACKGROUND_ACTIVATION_POINT_REQUIRED","Window activation point is invalid or outside the target")}
+        let session=ScopedAppKitFocus(pid:pid,windowID:wid);activeAppKitSession=session
+        do {
+            try session.send(.appKitDefined,1,[.control,.option],Int(wid))
+            try await Task.sleep(nanoseconds:20_000_000);try observation.validate()
+            try backgroundMouse(.leftMouseDown,point,.left,1,pid,wid,frame,delivery)
+            // The activation-point click is an adjacent down/up pair; do not
+            // hold the title or consume intervening user pointer movement.
+            try backgroundMouse(.leftMouseUp,point,.left,1,pid,wid,frame,delivery)
+            try session.send(NSEvent.EventType(rawValue:21)!,Int16.min,[],0)
+            try await Task.sleep(nanoseconds:30_000_000);try observation.validate()
+            return session
+        }catch{session.finish();activeAppKitSession=nil;try? await Task.sleep(nanoseconds:80_000_000);throw error}
+    }
+}

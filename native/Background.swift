@@ -7,6 +7,9 @@ import ApplicationServices
 @MainActor final class BackgroundFocusObservation {
     let targetPID:pid_t
     let before=SystemInputFocus.observe()
+    let typingRawBefore=ExperimentalTypingFocus.read()
+    var typingRawAfter:UInt32?
+    var typingRouteChanged=false
     let started=ProcessInfo.processInfo.systemUptime
     var after:InputFocusObservation
     var samples=0
@@ -29,6 +32,8 @@ import ApplicationServices
         if samples>0 {maxSampleGap=max(maxSampleGap,now-lastSampleTime)}
         lastSampleTime=now;samples += 1
         let current=SystemInputFocus.observe()
+        typingRawAfter=ExperimentalTypingFocus.read()
+        if let prior=typingRawBefore,let now=typingRawAfter,prior>0,now>0,prior != now,current.foregroundPID==before.foregroundPID {typingRouteChanged=true}
         if current.keyboardPID == nil {unresolved += 1}
         let change=current.change(from:before,targetPID:targetPID)
         if change == .targetGainedFocus {targetGainedKeyboardFocus=true}
@@ -41,6 +46,7 @@ import ApplicationServices
     func stop() {timer?.invalidate();timer=nil}
     func validate() throws {
         sample()
+        if typingRouteChanged {throw BridgeError("BACKGROUND_TYPING_ROUTE_CHANGED","The experimental typing-focus reply changed while foreground stayed the same. Isolation could not be confirmed; no route restoration was attempted")}
         if targetGainedKeyboardFocus {throw BridgeError("BACKGROUND_KEYBOARD_FOCUS_CHANGED","The target obtained actual system keyboard focus during the operation. Background isolation failed; no foreground-restoration workaround was attempted.")}
         if unexpectedKeyboardRecipient {throw BridgeError("BACKGROUND_KEYBOARD_ROUTE_CHANGED","The actual keyboard recipient changed while the foreground app stayed the same. Isolation could not be confirmed; no focus restoration was attempted. This observation alone does not identify which process caused the change.")}
     }
@@ -48,6 +54,7 @@ import ApplicationServices
         ["before":before.json,"after":after.json,"sampleCount":samples,
          "unresolvedSampleCount":unresolved,"keyboardFocusObserved":before.keyboardPID != nil && unresolved == 0,
          "targetGainedKeyboardFocus":targetGainedKeyboardFocus,"unexpectedKeyboardRecipient":unexpectedKeyboardRecipient,"maxSampleGapMs":maxSampleGap*1000,
+         "experimentalTypingFocusRawBefore":typingRawBefore as Any? ?? NSNull(),"experimentalTypingFocusRawAfter":typingRawAfter as Any? ?? NSNull(),"experimentalTypingRouteChanged":typingRouteChanged,
          "transitions":transitions,"method":"read-only registry query, sampled; observation does not prevent focus stealing"]
     }
 }
@@ -64,6 +71,8 @@ struct HeldBackgroundMouse {
     let frame: CGRect
     let point: CGPoint
     let button: CGMouseButton
+    let eventNumber:Int
+    let source:CGEventSource
 }
 
 @MainActor extension Desktop {
@@ -73,7 +82,7 @@ struct HeldBackgroundMouse {
         source.setLocalEventsFilterDuringSuppressionState(CGEventFilterMask(rawValue: UInt32.max), state: .eventSuppressionStateSuppressionInterval)
         return source
     }
-    func routeBackground(_ event: CGEvent, _ pid: pid_t, _ wid: CGWindowID, _ frame: CGRect, _ point: CGPoint) throws {
+    func routeBackground(_ event: CGEvent, _ pid: pid_t, _ wid: CGWindowID, _ frame: CGRect, _ point: CGPoint,_ delivery:BackgroundPointerDelivery?=nil) throws {
         guard let setter = windowLocationSetter else { throw BridgeError("BACKGROUND_ROUTING_UNAVAILABLE", "CGEventSetWindowLocation is unavailable on this macOS. No foreground fallback was attempted.") }
         _ = try app(pid)
         event.location = point
@@ -82,10 +91,12 @@ struct HeldBackgroundMouse {
         // AppKit's windowNumber carrier, confirmed against locally received events.
         event.setIntegerValueField(CGEventField(rawValue: 51)!, value: Int64(wid))
         setter(event, CGPoint(x: point.x-frame.minX, y: point.y-frame.minY))
-        event.setIntegerValueField(.eventSourceUserData, value: 0x43554247)
+        if let delivery {try delivery.prepare(event)}
+        else {event.setIntegerValueField(.eventSourceUserData,value:0x43554247)}
         event.postToPid(pid)
     }
-    func backgroundMouse(_ kind: CGEventType, _ at: CGPoint, _ button: CGMouseButton, _ count: Int, _ pid: pid_t, _ wid: CGWindowID, _ frame: CGRect) throws {
+    func backgroundMouse(_ kind: CGEventType, _ at: CGPoint, _ button: CGMouseButton, _ count: Int, _ pid: pid_t, _ wid: CGWindowID, _ frame: CGRect,_ delivery:BackgroundPointerDelivery?=nil) throws {
+        if shuttingDown,[.leftMouseDown,.rightMouseDown,.otherMouseDown,.leftMouseDragged].contains(kind){throw BridgeError("CANCELLED","Helper is stopping; no further pointer down/drag was posted")}
         let type: NSEvent.EventType
         switch kind {
         case .leftMouseDown: type = .leftMouseDown
@@ -98,14 +109,19 @@ struct HeldBackgroundMouse {
         default: throw BridgeError("INVALID_ARGUMENT", "Unsupported background mouse event")
         }
         let local = NSPoint(x: at.x-frame.minX, y: frame.height-(at.y-frame.minY))
-        guard let event = NSEvent.mouseEvent(with: type, location: local, modifierFlags: [], timestamp: ProcessInfo.processInfo.systemUptime, windowNumber: Int(wid), context: nil, eventNumber: Int(ProcessInfo.processInfo.systemUptime*1e6) & 0x7fffffff, clickCount: count, pressure: kind == .leftMouseUp || kind == .rightMouseUp || kind == .otherMouseUp ? 0 : 1)?.cgEvent else { throw BridgeError("EVENT_FAILED", "Could not create window mouse event") }
-        event.setSource(try backgroundSource())
+        let isDown=[CGEventType.leftMouseDown,.rightMouseDown,.otherMouseDown].contains(kind)
+        if isDown {backgroundMouseSequence=backgroundMouseSequence%32767+1}
+        let eventNumber=isDown ? backgroundMouseSequence:(heldBackgroundMouse?.eventNumber ?? backgroundMouseSequence)
+        let source=try (delivery?.eventSource ?? heldBackgroundMouse?.source ?? backgroundSource())
+        guard let event = NSEvent.mouseEvent(with: type, location: local, modifierFlags: [], timestamp: ProcessInfo.processInfo.systemUptime, windowNumber: Int(wid), context: nil, eventNumber: eventNumber, clickCount: count, pressure: kind == .leftMouseUp || kind == .rightMouseUp || kind == .otherMouseUp ? 0 : 1)?.cgEvent else { throw BridgeError("EVENT_FAILED", "Could not create window mouse event") }
+        event.setSource(source)
         event.flags = []
         event.setIntegerValueField(.mouseEventButtonNumber, value: Int64(button.rawValue))
-        // Observed original subtype; unlike Command-click this adds no modifier.
+        // Observed subtype; the optional delivery guard removes its temporary
+        // routing modifier at the target process before AppKit receives it.
         event.setIntegerValueField(.mouseEventSubtype, value: 3)
-        try routeBackground(event, pid, wid, frame, at)
-        if [.leftMouseDown,.rightMouseDown,.otherMouseDown,.leftMouseDragged].contains(kind) { heldBackgroundMouse = HeldBackgroundMouse(pid: pid, windowID: wid, frame: frame, point: at, button: button) }
+        try routeBackground(event, pid, wid, frame, at,delivery)
+        if [.leftMouseDown,.rightMouseDown,.otherMouseDown,.leftMouseDragged].contains(kind) { heldBackgroundMouse = HeldBackgroundMouse(pid: pid, windowID: wid, frame: frame, point: at, button: button,eventNumber:eventNumber,source:source) }
         if [.leftMouseUp,.rightMouseUp,.otherMouseUp].contains(kind) { heldBackgroundMouse = nil }
     }
     func belongsToWindow(_ element: AXUIElement, _ window: AXUIElement) -> Bool {
@@ -167,7 +183,7 @@ struct HeldBackgroundMouse {
         }
         throw BridgeError("TEXT_VERIFICATION_FAILED", "AX insertion did not produce the expected readable value. It may have partly completed; refresh state before retrying.")
     }
-    func insertBackgroundEventText(_ p:Object,_ pid:pid_t,_ wid:CGWindowID,_ frame:CGRect) async throws -> Object {
+    func insertBackgroundEventText(_ p:Object,_ pid:pid_t,_ wid:CGWindowID,_ frame:CGRect,_ observation:BackgroundFocusObservation) async throws -> Object {
         let root=AXUIElementCreateApplication(pid)
         let window=try axWindow(pid,frame)
         guard let focusedWindow=attr(root,kAXFocusedWindowAttribute),CFGetTypeID(focusedWindow)==AXUIElementGetTypeID(),CFEqual(focusedWindow,window) else {
@@ -175,6 +191,7 @@ struct HeldBackgroundMouse {
         }
         let element=try backgroundTextElement(p,pid,wid,frame)
         func checkFocus() throws {
+            guard !shuttingDown else{throw BridgeError("CANCELLED","Helper is stopping; no further text event was posted")}
             _=try app(pid);try ensureEditableNotSecure(pid)
             guard let focused=attr(root,kAXFocusedUIElementAttribute),CFGetTypeID(focused)==AXUIElementGetTypeID(),CFEqual(focused,element) else {
                 throw BridgeError("BACKGROUND_EVENT_TEXT_FOCUS_MISMATCH","Raw text can only reach the current internal text focus. The observed element must already be focused; no AX focus action was performed.")
@@ -192,16 +209,10 @@ struct HeldBackgroundMouse {
         let text=p["text"] as? String ?? ""
         let expected=ns.replacingCharacters(in:NSRange(location:selected.location,length:selected.length),with:text)
         let source=try backgroundSource()
-        var packets:[[UniChar]]=[];var packet:[UniChar]=[]
-        // Bound packets without splitting a UTF-16 surrogate pair. Application
-        // frameworks may interpret packets differently; exact readback decides.
-        for scalar in text.unicodeScalars {
-            let units=Array(String(scalar).utf16)
-            if packet.count+units.count>16 {packets.append(packet);packet=[]}
-            packet.append(contentsOf:units)
-        }
-        if !packet.isEmpty {packets.append(packet)}
+        let packets=backgroundUnicodePackets(text)
+        var deliveredText=""
         for units in packets {
+            try observation.validate()
             try checkFocus()
             for down in [true,false] {
                 guard let event=CGEvent(keyboardEventSource:source,virtualKey:0,keyDown:down) else {throw BridgeError("EVENT_FAILED","Could not create Unicode keyboard event")}
@@ -212,7 +223,17 @@ struct HeldBackgroundMouse {
                 event.timestamp=DispatchTime.now().uptimeNanoseconds
                 event.postToPid(pid)
             }
-            try await Task.sleep(nanoseconds:4_000_000)
+            deliveredText += String(utf16CodeUnits:units,count:units.count)
+            let partial=ns.replacingCharacters(in:NSRange(location:selected.location,length:selected.length),with:deliveredText)
+            var acknowledged=false
+            // AppKit can drop bursts while laying out long or multiline input.
+            // Readback is an acknowledgement barrier, never an action retry.
+            for _ in 0..<25 {
+                try await Task.sleep(nanoseconds:10_000_000)
+                try observation.validate()
+                if let actual=attr(element,kAXValueAttribute) as? String,Array(actual.utf16)==Array(partial.utf16) {acknowledged=true;break}
+            }
+            guard acknowledged else{throw BridgeError("TEXT_VERIFICATION_FAILED","A Unicode packet did not produce its exact expected text. Input may be partial; no packet was resent and no AX or foreground fallback was attempted. Observe before retrying.")}
         }
         for _ in 0..<15 {
             if let actual=attr(element,kAXValueAttribute) as? String,Array(actual.utf16)==Array(expected.utf16) {
@@ -240,7 +261,7 @@ struct HeldBackgroundMouse {
         }
         // AppKit key-equivalent dispatch in inactive apps is inconsistent. Select
         // all has an exact AX equivalent which we can verify without any key event.
-        if flags == .maskCommand, last == "a" {
+        if p["strategy"] as? String != "event",flags == .maskCommand, last == "a" {
             let element = try backgroundTextElement(p, pid, wid, frame)
             if let value = attr(element, kAXValueAttribute) as? String {
                 var settable: DarwinBoolean = false
@@ -266,7 +287,7 @@ struct HeldBackgroundMouse {
             event.setIntegerValueField(.eventSourceUserData, value:0x43554247)
             event.postToPid(pid)
         }
-        return ["ok":true,"mode":"background","method":"CGEvent.postToPid","verificationRequired":true]
+        return ["ok":true,"mode":"background","method":"CGEvent.postToPid","AXActionsGenerated":false,"verificationRequired":true]
     }
     func backgroundPressTarget(_ p:Object,_ pid:pid_t,_ frame:CGRect,_ point:CGPoint) throws -> AXUIElement? {
         func pressable(_ element:AXUIElement)->Bool {
@@ -327,7 +348,20 @@ struct HeldBackgroundMouse {
         let foregroundBefore = NSWorkspace.shared.frontmostApplication?.processIdentifier
         let inputObservation=BackgroundFocusObservation(targetPID:pid)
         defer {inputObservation.stop()}
+        var pointerDelivery:BackgroundPointerDelivery?
+        var appKitSession:ScopedAppKitFocus?
+        defer {
+            // Cleanup is a plain target-only mouse-up; it does not depend on
+            // a modifier-rewriting tap being enabled during cancellation.
+            if let held=heldBackgroundMouse,held.pid==pid,held.windowID==wid {
+                let up:CGEventType=held.button == .left ? .leftMouseUp:held.button == .right ? .rightMouseUp:.otherMouseUp
+                try? backgroundMouse(up,held.point,held.button,1,held.pid,held.windowID,held.frame)
+            }
+            appKitSession?.finish();activeAppKitSession=nil
+            pointerDelivery?.stop()
+        }
         var result: Object
+        do {
         switch method {
         case "click":
             let point = try point(p, frame)
@@ -344,7 +378,10 @@ struct HeldBackgroundMouse {
                 break
             }
             guard strategy != "ax" else {throw BridgeError("BACKGROUND_CLICK_UNSUPPORTED","No AXPress equivalent at this target; no event was sent")}
-            for i in 1...count { try backgroundMouse(down, point, button, i, pid, wid, frame); try await Task.sleep(nanoseconds:20_000_000); try backgroundMouse(up, point, button, i, pid, wid, frame) }
+            pointerDelivery=try BackgroundPointerDelivery(pid:pid,windowID:wid)
+            appKitSession=try await prepareScopedAppKitFocus(pid,wid,frame,pointerDelivery!,inputObservation)
+            try assertBackgroundIsolation(pid,wid,orderBefore,foregroundBefore)
+            for i in 1...count {try inputObservation.validate();try backgroundMouse(down, point, button, i, pid, wid, frame,pointerDelivery);try await Task.sleep(nanoseconds:20_000_000);try backgroundMouse(up, point, button, i, pid, wid, frame,pointerDelivery)}
             result = ["ok":true,"mode":"background","method":"window-scoped CGEvent.postToPid","verificationRequired":true]
         case "scroll":
             let at = try point(["x":p["x"] ?? frame.width/2,"y":p["y"] ?? frame.height/2],frame)
@@ -354,28 +391,61 @@ struct HeldBackgroundMouse {
         case "drag":
             let from = try point(p,frame,"fromX","fromY"); let to = try point(p,frame,"toX","toY")
             let duration = min(2,max(0.1,number(p,"duration",0.4)))
-            try backgroundMouse(.leftMouseDown,from,.left,1,pid,wid,frame)
+            pointerDelivery=try BackgroundPointerDelivery(pid:pid,windowID:wid)
+            appKitSession=try await prepareScopedAppKitFocus(pid,wid,frame,pointerDelivery!,inputObservation)
+            try assertBackgroundIsolation(pid,wid,orderBefore,foregroundBefore)
+            try backgroundMouse(.leftMouseDown,from,.left,1,pid,wid,frame,pointerDelivery)
             var last=from
-            defer { try? backgroundMouse(.leftMouseUp,last,.left,1,pid,wid,frame) }
             for i in 1...30 {
+                try inputObservation.validate()
                 let (_,_,current) = try target(p)
                 guard current == frame else { throw BridgeError("WINDOW_MOVED","Window moved during drag; stopped without following the global pointer") }
                 last=CGPoint(x:from.x+(to.x-from.x)*Double(i)/30,y:from.y+(to.y-from.y)*Double(i)/30)
-                try backgroundMouse(.leftMouseDragged,last,.left,1,pid,wid,frame)
+                try backgroundMouse(.leftMouseDragged,last,.left,1,pid,wid,frame,pointerDelivery)
                 try await Task.sleep(nanoseconds:UInt64(duration/30*1e9))
             }
+            try backgroundMouse(.leftMouseUp,last,.left,1,pid,wid,frame,pointerDelivery)
             result=["ok":true,"mode":"background","method":"window-scoped CGEvent.postToPid","verificationRequired":true]
         case "type_text":
             let strategy=p["strategy"] as? String ?? "auto"
             guard ["auto","ax","event"].contains(strategy) else {throw BridgeError("INVALID_ARGUMENT","Unknown text strategy")}
-            result=strategy == "event" ? try await insertBackgroundEventText(p,pid,wid,frame):try await insertBackgroundText(p,pid,wid,frame)
-        case "key": result=try backgroundKey(p,pid,wid,frame)
+            if strategy == "event",ProcessInfo.processInfo.environment["CU_EXPERIMENTAL_APPKIT_FOCUS"] == "1" {
+                let element=try backgroundTextElement(p,pid,wid,frame)
+                guard let focused=attr(AXUIElementCreateApplication(pid),kAXFocusedUIElementAttribute),CFGetTypeID(focused)==AXUIElementGetTypeID(),CFEqual(focused,element) else{throw BridgeError("BACKGROUND_EVENT_TEXT_FOCUS_MISMATCH","Experimental raw text still requires its exact existing editable focus; no notice was sent")}
+                let selectionBefore=attr(element,kAXSelectedTextRangeAttribute)
+                pointerDelivery=try BackgroundPointerDelivery(pid:pid,windowID:wid)
+                appKitSession=try await prepareScopedAppKitFocus(pid,wid,frame,pointerDelivery!,inputObservation)
+                try assertBackgroundIsolation(pid,wid,orderBefore,foregroundBefore)
+                if let selectionBefore,let after=attr(element,kAXSelectedTextRangeAttribute),!CFEqual(selectionBefore,after){throw BridgeError("STALE_SELECTION","App-local focus preparation changed the text selection; no text event was sent")}
+            }
+            result=strategy == "event" ? try await insertBackgroundEventText(p,pid,wid,frame,inputObservation):try await insertBackgroundText(p,pid,wid,frame)
+        case "key":
+            let normalized=(p["key"] as? String ?? "").lowercased().replacingOccurrences(of:" ",with:"")
+            let semanticSelectAll=p["strategy"] as? String != "event" && ["cmd+a","command+a","meta+a","super+a"].contains(normalized)
+            if !semanticSelectAll,ProcessInfo.processInfo.environment["CU_EXPERIMENTAL_APPKIT_FOCUS"] == "1" {
+                pointerDelivery=try BackgroundPointerDelivery(pid:pid,windowID:wid)
+                appKitSession=try await prepareScopedAppKitFocus(pid,wid,frame,pointerDelivery!,inputObservation)
+                try assertBackgroundIsolation(pid,wid,orderBefore,foregroundBefore)
+            }
+            result=try backgroundKey(p,pid,wid,frame)
         default: throw BridgeError("METHOD_NOT_FOUND","Unsupported background method")
         }
+        if let pointerDelivery {try await pointerDelivery.waitForDelivery();result["pointerDelivery"]=pointerDelivery.json}
+        appKitSession?.finish()
+        if let appKitSession {result["appKitFocusSession"]=appKitSession.json}
         try await Task.sleep(nanoseconds:80_000_000)
         try inputObservation.validate()
         try assertBackgroundIsolation(pid,wid,orderBefore,foregroundBefore)
         result["inputFocusObservation"]=inputObservation.json
         return result
+        } catch {
+            if let held=heldBackgroundMouse,held.pid==pid,held.windowID==wid {
+                let up:CGEventType=held.button == .left ? .leftMouseUp:held.button == .right ? .rightMouseUp:.otherMouseUp
+                try? backgroundMouse(up,held.point,held.button,1,held.pid,held.windowID,held.frame)
+            }
+            appKitSession?.finish();activeAppKitSession=nil
+            if appKitSession != nil {try? await Task.sleep(nanoseconds:80_000_000)}
+            throw error
+        }
     }
 }

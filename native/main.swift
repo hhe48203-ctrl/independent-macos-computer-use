@@ -50,6 +50,9 @@ struct Snapshot {
     var snapshots: [String: Snapshot] = [:]
     var heldMouse: (CGMouseButton, CGPoint)?
     var heldBackgroundMouse: HeldBackgroundMouse?
+    var backgroundMouseSequence=0
+    var activeAppKitSession:ScopedAppKitFocus?
+    var shuttingDown=false
     let allowed: Set<String>?
     let clipboardEnabled: Bool
     let foregroundEnabled: Bool
@@ -99,11 +102,25 @@ struct Snapshot {
         let root = AXUIElementCreateApplication(pid)
         AXUIElementSetMessagingTimeout(root, 1)
         // Public AX has no documented CGWindowID attribute. Match geometry, reject ambiguity.
-        let candidates = children(root, kAXWindowsAttribute).filter {
+        var windowsValue:CFTypeRef?
+        try axCheck(AXUIElementCopyAttributeValue(root,kAXWindowsAttribute as CFString,&windowsValue),"Read target AX windows")
+        let observedWindows=windowsValue as? [AXUIElement] ?? []
+        let candidates = observedWindows.filter {
             guard let r = axFrame($0) else { return false }
             return abs(r.minX-frame.minX) < 3 && abs(r.minY-frame.minY) < 3 && abs(r.width-frame.width) < 3 && abs(r.height-frame.height) < 3
         }
-        guard candidates.count == 1 else { throw BridgeError("AX_WINDOW_UNRESOLVED", "Cannot uniquely match AX window to CG window (\(candidates.count) matches)") }
+        guard candidates.count == 1 else {
+            let diagnostic=observedWindows.prefix(3).map{element->String in
+                var pointValue:CFTypeRef?;var sizeValue:CFTypeRef?
+                let pe=AXUIElementCopyAttributeValue(element,kAXPositionAttribute as CFString,&pointValue)
+                let se=AXUIElementCopyAttributeValue(element,kAXSizeAttribute as CFString,&sizeValue)
+                var point=CGPoint.zero;var size=CGSize.zero
+                let pOK=pointValue.map{CFGetTypeID($0)==AXValueGetTypeID() && AXValueGetValue($0 as! AXValue,.cgPoint,&point)} ?? false
+                let sOK=sizeValue.map{CFGetTypeID($0)==AXValueGetTypeID() && AXValueGetValue($0 as! AXValue,.cgSize,&size)} ?? false
+                return "pError=\(pe.rawValue),sError=\(se.rawValue),decoded=\(pOK && sOK),rect=\(point.x),\(point.y),\(size.width),\(size.height)"
+            }.joined(separator:" | ")
+            throw BridgeError("AX_WINDOW_UNRESOLVED", "CG rect=\(frame.minX),\(frame.minY),\(frame.width),\(frame.height); \(candidates.count) matches from \(observedWindows.count) AX windows: \(diagnostic). Refresh observation.")
+        }
         return candidates[0]
     }
     func focus(_ p: Object) async throws -> (NSRunningApplication, Object, CGRect) {
@@ -281,6 +298,7 @@ struct Snapshot {
         if [.leftMouseUp, .rightMouseUp, .otherMouseUp].contains(kind) { heldMouse = nil }
     }
     func releaseInput() {
+        defer {activeAppKitSession?.finish();activeAppKitSession=nil}
         if let held = heldBackgroundMouse {
             let kind: CGEventType = held.button == .left ? .leftMouseUp : held.button == .right ? .rightMouseUp : .otherMouseUp
             try? backgroundMouse(kind,held.point,held.button,1,held.pid,held.windowID,held.frame)
@@ -323,6 +341,7 @@ struct Snapshot {
         event(code, true, flags); event(code, false, flags)
     }
     func handle(_ method: String, _ p: Object) async throws -> Object {
+        guard !shuttingDown else{throw BridgeError("CANCELLED","Helper is stopping")}
         let mode = p["mode"] as? String ?? "background"
         guard ["background","foreground"].contains(mode) else { throw BridgeError("INVALID_ARGUMENT","mode must be background or foreground") }
         guard foregroundEnabled || (method != "focus" && mode != "foreground") else {
@@ -333,6 +352,7 @@ struct Snapshot {
             let strategy=p["strategy"] as? String ?? "auto"
             guard ["auto","ax","event"].contains(strategy),backgroundMode || strategy == "auto" else {throw BridgeError("INVALID_ARGUMENT","Text strategy must be auto, ax or event in background mode; foreground accepts auto only")}
         }
+        if method == "key" {let strategy=p["strategy"] as? String ?? "auto";guard ["auto","event"].contains(strategy),backgroundMode || strategy == "auto" else{throw BridgeError("INVALID_ARGUMENT","Key strategy must be auto or event in background; foreground accepts auto only")}}
         if backgroundMode && ["click","type_text","key","scroll","drag"].contains(method) { return try await background(method,p) }
         switch method {
         case "status":
@@ -340,7 +360,7 @@ struct Snapshot {
                 let id = (screen.deviceDescription[NSDeviceDescriptionKey("NSScreenNumber")] as? NSNumber)?.uint32Value ?? 0
                 return ["displayId": id, "name": screen.localizedName, "frame": rectJSON(CGDisplayBounds(id)), "backingScale": screen.backingScaleFactor]
             }
-            return ["platform": "macOS", "osVersion": ProcessInfo.processInfo.operatingSystemVersionString, "bridgeVersion": "0.2.0", "permissions": ["accessibility": AXIsProcessTrusted(), "screenRecording": CGPreflightScreenCaptureAccess()], "displays": displays, "allowedBundleIds": allowed.map { Array($0).sorted() } as Any? ?? NSNull(), "clipboardEnabled": clipboardEnabled, "foregroundEnabled":foregroundEnabled, "inputFocus":SystemInputFocus.observe().json, "backend": "independent-macos-apis", "background": ["default":true,"windowLocationSPIAvailable":windowLocationSetter != nil,"click":"AXPress preferred; optional window-scoped postToPid","pointer":"window-scoped postToPid","text":"verified AX by default; strategy:event verifies process-directed Unicode keyboard events","keys":"CMD+A verified AX; others process-directed, observe result","foregroundFallback":false], "pid": ProcessInfo.processInfo.processIdentifier]
+            return ["platform": "macOS", "osVersion": ProcessInfo.processInfo.operatingSystemVersionString, "bridgeVersion": "0.3.0", "permissions": ["accessibility": AXIsProcessTrusted(), "screenRecording": CGPreflightScreenCaptureAccess()], "displays": displays, "allowedBundleIds": allowed.map { Array($0).sorted() } as Any? ?? NSNull(), "clipboardEnabled": clipboardEnabled, "foregroundEnabled":foregroundEnabled, "inputFocus":SystemInputFocus.observe().json, "backend": "independent-macos-apis", "background": ["default":true,"experimentalAppKitFocus":ProcessInfo.processInfo.environment["CU_EXPERIMENTAL_APPKIT_FOCUS"] == "1","windowLocationSPIAvailable":windowLocationSetter != nil,"click":"AXPress preferred; optional window-scoped postToPid","pointer":"window-scoped postToPid with source-filtered routing-flag removal and packet acknowledgements; apps can still reorder","text":"verified AX by default; strategy:event verifies process-directed Unicode keyboard events","keys":"CMD+A verified AX; others process-directed, observe result","foregroundFallback":false], "pid": ProcessInfo.processInfo.processIdentifier]
         case "request_permissions":
             if p["accessibility"] as? Bool == true { _ = AXIsProcessTrustedWithOptions([kAXTrustedCheckOptionPrompt.takeUnretainedValue() as String: true] as CFDictionary) }
             if p["screenRecording"] as? Bool == true { _ = CGRequestScreenCaptureAccess() }
@@ -353,10 +373,16 @@ struct Snapshot {
         case "launch":
             let bundle = try string(p, "bundleId")
             if let allowed, !allowed.contains(bundle) { throw BridgeError("APP_NOT_ALLOWED", "Bundle identifier is outside CU_ALLOWED_BUNDLE_IDS") }
+            if backgroundMode {
+                let running=NSRunningApplication.runningApplications(withBundleIdentifier:bundle).filter{!$0.isTerminated}
+                if running.count==1 {return ["app":appJSON(running[0]),"alreadyRunning":true,"launchRequested":false]}
+                guard running.count<2 else{throw BridgeError("MULTIPLE_APP_INSTANCES","Multiple instances already exist; choose an exact PID with cu_apps/cu_windows. No launch request was made.")}
+                guard p["allowVisibleWindows"] as? Bool == true else{throw BridgeError("VISIBLE_LAUNCH_REQUIRED","Launching a new app can raise windows even with activates=false. Set allowVisibleWindows:true only when visible setup is acceptable. No launch request was made.")}
+            }
             guard let url = NSWorkspace.shared.urlForApplication(withBundleIdentifier: bundle) else { throw BridgeError("APP_NOT_FOUND", "No installed application with bundle identifier \(bundle)") }
             let config = NSWorkspace.OpenConfiguration(); config.activates = !backgroundMode
             let a = try await NSWorkspace.shared.openApplication(at: url, configuration: config)
-            return ["app": appJSON(a)]
+            return ["app": appJSON(a),"launchRequested":true,"visibleSetupAllowed":true,"mode":mode]
         case "snapshot": return try await snapshot(p)
         case "screenshot": return ["screenshot": try await screenshot(p)]
         case "ocr": return try await ocr(p)
@@ -513,8 +539,11 @@ for signo in [SIGTERM, SIGINT] {
     signal(signo, SIG_IGN)
     let source = DispatchSource.makeSignalSource(signal: signo, queue: .main)
     source.setEventHandler {
-        MainActor.assumeIsolated { desktop.releaseInput() }
-        exit(0)
+        Task { @MainActor in
+            desktop.shuttingDown=true;desktop.releaseInput()
+            try? await Task.sleep(nanoseconds:100_000_000)
+            exit(0)
+        }
     }
     source.resume(); terminationSignals.append(source)
 }

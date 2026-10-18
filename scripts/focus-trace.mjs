@@ -3,13 +3,13 @@ import { mkdirSync,existsSync,readFileSync } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 const root=fileURLToPath(new URL('../',import.meta.url));
-export async function startFocusTrace(directory,{seconds=90,targetPID}={}) {
+export async function startFocusTrace(directory,{seconds=90,targetPID,env=process.env}={}) {
   mkdirSync(path.join(root,'.build/focus-v3'),{recursive:true});mkdirSync(directory,{recursive:true});
   // Never replace executable pages belonging to an existing observer process.
   const executable=path.join(root,`.build/focus-v3/focus-trace-${process.pid}-${Date.now()}`);
-  const built=spawnSync('xcrun',['swiftc','-swift-version','5','-O',path.join(root,'native/FocusObservation.swift'),path.join(root,'native/FocusTrace.swift'),'-o',executable],{encoding:'utf8'});
+  const built=spawnSync('xcrun',['swiftc','-swift-version','5','-O',path.join(root,'native/FocusObservation.swift'),path.join(root,'native/HumanTextObservation.swift'),path.join(root,'native/FocusTrace.swift'),'-o',executable],{encoding:'utf8'});
   if(built.status!==0)throw Error(built.stderr||built.stdout);
-  const child=spawn(executable,[directory,String(seconds),...(targetPID?[String(targetPID)]:[])],{stdio:['ignore','pipe','pipe']});
+  const child=spawn(executable,[directory,String(seconds),...(targetPID?[String(targetPID)]:[])],{env,stdio:['ignore','pipe','pipe']});
   child.stderr.on('data',data=>process.stderr.write(data));
   await new Promise((resolve,reject)=>{
     const timeout=setTimeout(()=>{child.kill();reject(Error('Focus trace did not become ready'))},10000);
@@ -24,4 +24,11 @@ if(process.argv[1]===fileURLToPath(import.meta.url)){
   const trace=await startFocusTrace(path.resolve(process.argv[2]??'artifacts/focus-observation'),{seconds:Number(process.argv[3]??30)});
   console.log(`Read-only focus observer ready: ${trace.report}`);
   await new Promise(resolve=>trace.child.once('exit',resolve));
+}
+
+// Recorded observations, with explicit coverage. Missing windows are not a pass.
+export function recordedWindowOrder(trace,targetID,coverID){
+ const compared=[];const violations=[];
+ for(const sample of trace.samples??[]){const ids=(sample.windows??[]).map(w=>w.id),target=ids.indexOf(targetID),cover=ids.indexOf(coverID);if(target<0||cover<0)continue;const row={t:sample.t,targetIndex:target,coverIndex:cover};compared.push(row);if(cover>=target)violations.push(row)}
+ return {recordsCompared:compared.length,violations,scope:'Recorded window-order samples only; not a guarantee between polls'};
 }

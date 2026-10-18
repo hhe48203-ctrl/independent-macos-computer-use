@@ -16,7 +16,19 @@ func window(_ id:Int)->AXUIElement?{
         return abs(pos.x-target.minX)<3 && abs(pos.y-target.minY)<3 && abs(size.width-target.width)<3 && abs(size.height-target.height)<3
     }
 }
-if mode=="layout" {
+if mode=="restore-setup-foreground" {
+    // Interactive test setup only. This is never linked into the MCP helper.
+    guard ProcessInfo.processInfo.environment["CU_TEST_ALLOW_FOREGROUND_SETUP"] == "1",
+          args.count==5,let ownedPID=pid_t(args[4]),
+          let application=NSRunningApplication(processIdentifier:pid),application.bundleIdentifier=="com.openai.codex",
+          let original=window(Int(args[3])!) else{fputs("Explicit setup and the exact original Codex window are required\n",stderr);exit(2)}
+    let front=NSWorkspace.shared.frontmostApplication?.processIdentifier
+    guard front==pid || front==ownedPID else{fputs("User switched to another app; setup will not restore foreground\n",stderr);exit(2)}
+    let activationRequested=front != pid
+    if activationRequested {guard application.activate(options:[]) else{fputs("Normal application activation was refused\n",stderr);exit(2)}}
+    let raised=AXUIElementPerformAction(original,kAXRaiseAction as CFString)
+    FileHandle.standardOutput.write(try JSONSerialization.data(withJSONObject:["setupOnly":true,"activationRequested":activationRequested,"raiseStatus":raised.rawValue,"originalPID":pid,"originalWindow":Int(args[3])!]))
+}else if mode=="layout" {
     guard let w=window(Int(args[3])!) else{fputs("Owned test window not yet available in AX\n",stderr);exit(2)}
     var position=CGPoint(x:Double(args[4])!,y:Double(args[5])!);var size=CGSize(width:Double(args[6])!,height:Double(args[7])!)
     let s=AXUIElementSetAttributeValue(w,kAXSizeAttribute as CFString,AXValueCreate(.cgSize,&size)!)

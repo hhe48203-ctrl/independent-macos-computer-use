@@ -54,3 +54,18 @@ test('raw Unicode strategy is explicit and cannot imply foreground or AX fallbac
   assert.equal(schema('cu_type_text').safeParse({...text,strategy:'event',mode:'foreground'}).success,false);
   assert.equal(schema('cu_type_text').safeParse({...text,strategy:'event-then-AX'}).success,false);
 });
+
+test('event key strategy preserves real select-all without a semantic fallback',()=>{
+ const args={pid:1,windowId:2,key:'CMD+A'};
+ assert.equal(schema('cu_key').parse(args).strategy,'auto');
+ assert.equal(schema('cu_key').safeParse({...args,strategy:'event'}).success,true);
+ assert.equal(schema('cu_key').safeParse({...args,strategy:'event',mode:'foreground'}).success,false);
+ assert.equal(schema('cu_key').safeParse({...args,strategy:'event-then-AX'}).success,false);
+});
+
+test('new app launch requires an explicit visible-window choice',()=>{
+ const launch=tools.find(t=>t.name==='cu_launch').schema;
+ assert.equal(launch.parse({bundleId:'com.apple.TextEdit'}).allowVisibleWindows,false);
+ assert.equal(launch.parse({bundleId:'com.apple.TextEdit',allowVisibleWindows:true}).allowVisibleWindows,true);
+ assert.equal(launch.safeParse({bundleId:'com.apple.TextEdit',allowVisibleWindows:'true'}).success,false);
+});

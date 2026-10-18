@@ -12,7 +12,7 @@ async function call(name,args={}){const r=await client.callTool({name,arguments:
 try{
  const before=proof();assert.ok(before.fullyCovered);assert.notEqual(before.frontPid,target.pid);
  await client.connect(new StdioClientTransport({command:process.execPath,args:[path.join(directory,identity.name,'src/server.mjs')],cwd:directory,env}));
- const status=(await call('cu_status')).value;assert.equal(status.bridgeVersion,'0.2.0');assert.equal(status.foregroundEnabled,false);
+ const status=(await call('cu_status')).value;assert.equal(status.bridgeVersion,identity.version);assert.equal(status.foregroundEnabled,false);
  for(const key of['all-clear','seven','multiply','eight','equals']){
   const p=proof();assert.ok(p.fullyCovered);assert.notEqual(p.frontPid,target.pid);
   const s=(await call('cu_snapshot',{...target,screenshot:false})).value;const labels={'all-clear':['All Clear','Clear'],seven:['7'],multiply:['Multiply','×'],eight:['8'],equals:['Equals','=']};const n=s.nodes.find(n=>n.identifier===key)??s.nodes.find(n=>n.role==='AXButton'&&labels[key].includes(n.label??n.title??n.value));assert.ok(n);

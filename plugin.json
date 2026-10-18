@@ -1,7 +1,7 @@
 {
   "$schema": "https://agent-plugins.org/schemas/1.0.0/plugin.schema.json",
   "name": "independent-macos-computer-use",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "description": "Independent local macOS background window automation over MCP. Normal Accessibility and Screen Recording grants required; app compatibility varies.",
   "license": "MIT",
   "extensions": {

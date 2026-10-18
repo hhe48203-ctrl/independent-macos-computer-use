@@ -14,6 +14,8 @@ struct InputFocusObservation {
         ["foregroundPID":foregroundPID.map { Int($0) } as Any? ?? NSNull(),
          "keyboardPID":keyboardPID.map { Int($0) } as Any? ?? NSNull(),
          "keyboardFocusResolved":keyboardPID != nil,
+         "keyFocusPID":keyboardPID.map {Int($0)} as Any? ?? NSNull(),
+         "keyboardFocusQuery":"CPSGetKeyFocusProcess then GetProcessPID; typing-focus routing is a separate diagnostic",
          "queryAvailable":queryAvailable,
          "queryError":queryError as Any? ?? NSNull(),
          "conversionError":conversionError as Any? ?? NSNull(),

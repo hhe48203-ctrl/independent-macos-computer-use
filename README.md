@@ -1,6 +1,6 @@
 # Independent macOS Computer Use MCP
 
-一个真正运行在本机的 Computer Use MCP Server。Node.js 提供标准 MCP stdio，独立编写的 Swift helper 使用 Accessibility、ScreenCaptureKit、Vision 及窗口定向事件完成桌面感知和操作。v0.2 默认后台模式；鼠标路由另依赖动态解析的未公开系统入口 `CGEventSetWindowLocation`，不可视为纯公共 API 实现。**运行时不需要 Codex、ChatGPT、`@oai/sky`、原版 socket 或 OpenAI API key。**
+一个真正运行在本机的 Computer Use MCP Server。Node.js 提供标准 MCP stdio，独立编写的 Swift helper 使用 Accessibility、ScreenCaptureKit、Vision 及窗口定向事件完成桌面感知和操作。v0.3 默认后台模式；鼠标路由另依赖动态解析的未公开系统入口 `CGEventSetWindowLocation`，不可视为纯公共 API 实现。**运行时不需要 Codex、ChatGPT、`@oai/sky`、原版 socket 或 OpenAI API key。**
 
 项目源于对本机 Codex/ChatGPT Computer Use 的调查，使用了 [morluto/rea](https://github.com/morluto/rea) 的静态 JavaScript 和 Mach-O 分析能力。交付物不包含原版应用代码或二进制，也不修改原应用或 macOS 权限数据库。
 
@@ -34,11 +34,11 @@ TCC 取决于启动链和 responsible application，不能从一次测试推断�
 本机 pi 1.2.0 已有原生 MCP 支持，无需另写模型工具适配器：
 
 ```sh
-node scripts/setup-pi.mjs
+node scripts/setup-pi.mjs --background-events  # 当前已验证的 macOS 26.6.2 arm64
 pi --approve --extension builtin:mcp
 ```
 
-setup 仅写本项目 `.pi/mcp.json`，保存当前 Node 的绝对路径；不会修改全局 pi 设置或凭证。`--approve` 对本项目代码授予 pi 的正常项目信任；不授予 macOS TCC。`--extension builtin:mcp` 显式加载 pi 内建 MCP，避免 `--no-extensions` 或用户配置关闭它。不要同时加载替代 `/mcp` 的扩展。
+不启用局部焦点实验路径时，省略 `--background-events`。setup 仅写本项目 `.pi/mcp.json`，保存当前 Node 的绝对路径；不会修改全局 pi 设置或凭证。`--approve` 对本项目代码授予 pi 的正常项目信任；不授予 macOS TCC。`--extension builtin:mcp` 显式加载 pi 内建 MCP，避免 `--no-extensions` 或用户配置关闭它。不要同时加载替代 `/mcp` 的扩展。
 
 示例任务：
 
@@ -125,17 +125,21 @@ await client.callTool({ name: 'cu_click', arguments: {
 
 动作默认 `mode:"background"`，可对当前桌面上完全被遮挡的窗口操作，不调用应用激活、AXRaise、全局鼠标移动或全局 HID 键入。窗口截图可独立于遮挡表面捕获；后台中文输入走可读回验证的 AXSelectedText/AXValue 插入，最好传入精确的 snapshotId+elementId。它是文本编辑操作，不是 IME 组合输入模拟。
 
-后台单击默认 `strategy:"auto"`：支持 AXPress 的按钮用语义按下，坐标也只在目标窗口自己的 AX 树中解析；其余控件使用窗口定向事件。可用 `strategy:"ax"` 要求纯 AX，或 `strategy:"event"` 强制真实进程定向鼠标事件。后者采用 `CGEvent.postToPid`、窗口编号字段及未公开的 `CGEventSetWindowLocation`，不伪造应用激活状态。
+后台单击默认 `strategy:"auto"`：支持 AXPress 的按钮用语义按下，坐标也只在目标窗口自己的 AX 树中解析；其余控件使用窗口定向事件。可用 `strategy:"ax"` 要求纯 AX，或 `strategy:"event"` 强制真实进程定向鼠标事件。后者采用 `CGEvent.postToPid`、窗口编号字段及未公开的 `CGEventSetWindowLocation`，默认不伪造应用激活状态；显式局部焦点实验路径另见后文。
 
 实验发现，单独发送 AppKit 内部激活通知虽不改变前台 PID，却可能使前台应用丢字；该路径已从交付代码中移除。部分 AppKit 窗口在编辑之后仍会对原始鼠标事件改变窗口堆叠，检测到时返回 BACKGROUND_WINDOW_REORDERED；优先使用 AX 单击。该 SPI 或应用接收行为可能随系统更新变化，不适用 Mac App Store 公共 API 限制环境。
 
-`cu_key("CMD+A")` 对支持 AX 选择的文本走可验证的 AX 全选；其余键是进程定向事件，部分应用会忽略，返回 `verificationRequired:true` 只代表已投递。请优先用 select_text/type_text。后台模式不支持全局菜单。应用自身也可能抢焦点或改变窗口堆叠；检测到时报告错误，不通过抢回焦点来掩盖。窗口移动、用户同时切换或调整窗口也可能触发保守拒绝。
+`cu_key("CMD+A")` 默认对支持 AX 选择的文本走可验证的 AX 全选；`strategy:"event"` 明确要求真实按键，包括 CMD+A，不退回语义操作。其余键是进程定向事件，部分应用会忽略，返回 `verificationRequired:true` 只代表已投递。请优先用 select_text/type_text。后台模式不支持全局菜单。应用自身也可能抢焦点或改变窗口堆叠；检测到时报告错误，不通过抢回焦点来掩盖。窗口移动、用户同时切换或调整窗口也可能触发保守拒绝。
+
+当前开发树的 `cu_type_text strategy:"event"` 使用真实 Unicode 键盘包，并逐包精确校验 UTF-16，不调用 AX 写入、剪贴板或前台兜底。默认路径要求现有内部文本焦点与 key window。`CU_EXPERIMENTAL_APPKIT_FOCUS=1` 可显式启用仍在验收的局部 AppKit 焦点通知路径，仅支持本轮核对的 macOS 26.6.2 arm64；它已通过自建遮挡文档和 pi 真实事件验证，已通过当前 OS 的系统计算器、TextEdit 操作及一次真人并用测试；任意应用兼容性仍不保证。v0.3 交付说明详见 [后台机制进度](docs/FOCUS_FIDELITY.md)。
 
 默认原生层拒绝 `cu_focus` 和 `mode:"foreground"`（FOREGROUND_DISABLED）。只有启动服务时明确设置 `CU_ENABLE_FOREGROUND=1`，才允许调用方显式接管前台、移动真实鼠标；未知 mode 直接拒绝。后台失败不会自动退回前台模式。最小化、隐藏、其他 Space、锁屏和独立桌面不在保证范围。请在当前用户的已解锁 GUI 会话中运行。不能保证任意应用、弹窗、辅助功能实现或多显示器布局都工作。
 
 普通动作完成后包含 80 ms 的事件投递缓冲，但不保证网络请求或异步 UI 已完成。客户端仍须观察结果。请求串行执行；不自动重试动作。取消/30 秒超时会终止 helper、废弃排队的旧会话请求，并尝试释放拖拽中按下的鼠标；如果 macOS 同步调用阻塞，1 秒后强制终止。动作可能部分完成，必须先观察再重试。
 
 受保护文本值不进入 AX 输出，安全输入状态拒绝键入；这不能代替调用方的授权判断。剪贴板默认禁用，只有 `CU_ENABLE_CLIPBOARD=1` 且未启用白名单时可用。`cu_type_text` 不使用剪贴板。
+
+启动应用与操作现有遮挡窗口是不同阶段。`cu_launch` 默认只返回已有的唯一实例，不发送重新打开请求。启动新应用须显式传 `allowVisibleWindows:true`，表示接受可见布置；即使 `activates=false`，应用仍可能让窗口来到前面。多个已有实例应先用 apps/windows 选择 PID。此开关不会启用前台鼠标或全局键入。
 
 ## 验证与交付
 
@@ -149,6 +153,18 @@ npm run test:pi          # pi Agent 经 MCP 完成中文输入与按钮操作
 npm run package          # 预编译插件 ZIP + 干净源码包
 npm run package:evidence # 单独证据 ZIP，不包含原版逆向材料
 ```
+
+v0.3 的真实后台文档、pi、外部预编译包与干净源码验收：
+
+```sh
+CU_EXPERIMENTAL_APPKIT_FOCUS=1 node scripts/raw-document-test.mjs
+CU_EXPERIMENTAL_APPKIT_FOCUS=1 node scripts/pi-document-test.mjs
+# 先 npm run package，再验证实际交付文件
+CU_EXPERIMENTAL_APPKIT_FOCUS=1 node scripts/packaged-document-test.mjs
+node scripts/source-package-test.mjs
+```
+
+外部 ZIP 测试包含遮挡窗口 PNG/OCR 和7次真实操作；源码测试在仓库外以隔离 npm 配置安装锁定依赖、重新编译 helper、运行18项检查（无跳过）。真实系统应用与真人测试范围见 [v0.3 发布说明](docs/RELEASE_NOTES.md)。
 
 默认后台测试创建 accessory 测试 app，用 orderBack 和相对排序将遮挡窗口放在目标之上、用户窗口之后，不调用 activate 或全局输入。可用 CU_TEST_EXISTING_TARGETS=/absolute/path/to/previous-report.json 复测已有的自建 TextEdit/Calculator 窗口，不启动/聚焦/重排系统应用。前台回归和交互式并发验收明确受 CU_TEST_ALLOW_FOREGROUND_SETUP=1 保护：它们会激活测试窗口并生成前台输入，不应在用户正常工作时运行。真人并用测试单独记录，不与合成输入混称。图像和报告位于 `artifacts/`，不纳入源码包。另已在真实 macOS Calculator 中用 AX 按钮计算并确认 `7 × 8 = 56`，截图和结果也保存在本机 artifacts。
 
