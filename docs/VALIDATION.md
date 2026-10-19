@@ -28,6 +28,8 @@ node scripts/packaged-repl-test.mjs
 node scripts/source-package-test.mjs
 ```
 
+打包验证曾遇到CG/AX窗口坐标不一致，另一次光标移动中目标和遮挡窗口同步大幅平移；两次均明确失败并停止，未尝试跟随变化投递或恢复布局。后续新建测试窗口后，同一ZIP通过；触发源未确认，不能倒改前次结果。默认桌面测试另有一次APP_GONE，原因未确定；随后对同一原生调用路径的逐请求诊断成功。此类错误要求重新观察，不能自动重试输入。相关记录随最终证据的prior-attempt-failures保存。
+
 真人测试需要协调开始时间；不在自动发布检查中重复。原生真实事件测试显式开启本机限定的实验局部焦点路径，默认关闭。默认AX路径、可见布置、真实事件及人工判断不能互相替代。
 
 当前索引见 [validation-index.json](validation-index.json)，研究与架构见 [REPL_CURSOR_RESEARCH.md](REPL_CURSOR_RESEARCH.md)、[JS_API.md](JS_API.md)。[v0.3验证记录](VALIDATION_V03.md)及其索引是历史证据，旧17工具接口已退役。
