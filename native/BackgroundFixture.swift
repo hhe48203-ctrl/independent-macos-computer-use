@@ -78,7 +78,9 @@ final class BackgroundFixture: NSObject, NSApplicationDelegate, NSTextFieldDeleg
         item.submenu = edit; menu.addItem(item); NSApp.mainMenu = menu
         let cover = role == "cover"
         let rect = cover ? NSRect(x: 80, y: 70, width: 1300, height: 800) : NSRect(x: 260, y: 230, width: 640, height: 460)
-        window = NSWindow(contentRect: rect, styleMask: [.titled, .closable], backing: .buffered, defer: false)
+        var style:NSWindow.StyleMask=[.titled,.closable]
+        if CommandLine.arguments.contains("--resizable") {style.insert(.resizable)}
+        window = NSWindow(contentRect: rect, styleMask: style, backing: .buffered, defer: false)
         window.title = cover ? "Background Automation — Foreground Workspace" : "Background Automation — Target"
         window.isOpaque = true; window.backgroundColor = cover ? .windowBackgroundColor : .controlBackgroundColor
         window.isReleasedWhenClosed = false
