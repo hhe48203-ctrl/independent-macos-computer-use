@@ -2,7 +2,7 @@
 
 本机运行的独立 Computer Use MCP。Agent 只使用 `js`、`js_reset` 两个入口，在持久 JavaScript REPL 内调用 `cua` 和应用对象。Swift helper 提供 Accessibility、ScreenCaptureKit、Vision OCR、后台输入，以及可见、穿透点击、不抢焦点的独立光标。
 
-当前为 v1.0 候选版本，完整验收后才打正式标签。运行不需要 Codex、`@oai/sky`、原版服务、OpenAI API key 或 REA。研究使用了 [REA](https://github.com/morluto/rea)；交付物不含原版专有模块、二进制或图形资源，不修改原版应用或系统权限数据库。
+v1.0 使用持久 REPL 和独立光标接口。运行不需要 Codex、`@oai/sky`、原版服务、OpenAI API key 或 REA。研究使用了 [REA](https://github.com/morluto/rea)；交付物不含原版专有模块、二进制或图形资源，不修改原版应用或系统权限数据库。
 
 ## 构建和启动
 
@@ -54,7 +54,7 @@ pi --approve --extension builtin:mcp
 npm run test:pi
 ```
 
-setup 仅写本项目 `.pi/mcp.json`，不改全局配置或凭证。当前 macOS26.6.2 arm64 已验证的真实事件路径可显式用 `node scripts/setup-pi.mjs --background-events` 启用；默认关闭。pi 验收已仅用5次 js 调用完成中文输入、按钮操作、读回验证和连续光标移动。
+setup 仅写本项目 `.pi/mcp.json`，不改全局配置或凭证。当前 macOS26.6.2 arm64 已验证的真实事件路径可显式用 `node scripts/setup-pi.mjs --background-events` 启用；默认关闭。pi 基础验收仅用5次 js 调用完成中文输入闭环；另用9次 js 完成7项真实文档事件操作，包括快捷键、中文/emoji、选择拖动、滚动和原始点击。
 
 ## 能力与边界
 
@@ -72,11 +72,12 @@ npm run test:desktop
 npm run test:cursor
 node scripts/repl-document-test.mjs
 npm run test:pi
+npm run test:pi:document
 npm run package
 ```
 
 桌面测试只操作临时自建 AppKit 窗口。原生事件测试显式启用本机已验证的局部焦点实验路径。真人并用测试必须先协调开始时间，自动脚本不能替代真人输入完整性。
 
-`artifacts/` 保留本机测试结果和失败记录，默认不进入 Git。`dist/` 生成预编译插件 ZIP、源码包和 SHA256；打包须验证工作线程及 helper 在仓库外运行。当前新版的打包和真人并用验收仍在推进，旧 v0.3 结果不能代替新版证据。
+`artifacts/` 保留本机测试结果和失败记录，默认不进入 Git。`dist/` 生成预编译插件 ZIP、源码包和 SHA256；打包须验证工作线程及 helper 在仓库外运行。新版已通过真人输入法/大小写切换对照；首次失败与后续修正分开保留。仓库外打包验证见 docs/VALIDATION.md。旧 v0.3 结果不作为新版验收。
 
 架构与研究：[REPL/光标证据](docs/REPL_CURSOR_RESEARCH.md)、[原生后台机制](docs/FOCUS_FIDELITY.md)、[原始逆向记录](docs/REVERSE_ENGINEERING.md)。后两者包含 v0.3 历史接口名称；当前公开接口以 JS API 为准。

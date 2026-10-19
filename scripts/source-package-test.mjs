@@ -13,7 +13,7 @@ try{
  assert.equal(run('build',process.execPath,['scripts/build.mjs'],source).status,0,'Clean source build failed');
  const tests=readdirSync(path.join(source,'tests')).filter(n=>n.endsWith('.test.mjs')).map(n=>path.join(source,'tests',n));
  const tested=run('tests',process.execPath,['--test','--test-reporter=spec',...tests],source);assert.equal(tested.status,0,'Clean source regression failed');
- const count=Number((tested.stdout??'').match(/tests\s+(\d+)/)?.[1]);assert.ok(count>=18,'Native and protocol checks must run, not silently skip');assert.match(tested.stdout,/skipped\s+0/);
+ const count=Number((tested.stdout??'').match(/tests\s+(\d+)/)?.[1]);assert.ok(count>=25,'Native and protocol checks must run, not silently skip');assert.match(tested.stdout,/skipped\s+0/);
  report={...report,status:'passed',testsPassed:count,skipped:0,scope:'Actual source archive extracted outside checkout; locked dependencies installed with scripts disabled and isolated npm configuration; native helper rebuilt and all regression checks executed.'};
 }catch(error){report={...report,status:'failed',error:{code:error.code,message:error.message}};process.exitCode=1}
 finally{
