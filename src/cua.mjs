@@ -24,7 +24,7 @@ export function createCua({request, emit}) {
   }
   class App {
     #target; #snapshot; #lines; #scale={x:1,y:1}; #dimensions;
-    constructor(target) {this.#target=Object.freeze({pid:target.pid,windowId:target.windowId});this.pid=target.pid;this.windowId=target.windowId;}
+    constructor(target) {this.#target=Object.freeze({pid:target.pid,windowId:target.windowId});this.pid=target.pid;this.windowId=target.windowId;Object.freeze(this);}
     async #live() {
       const {windows}=await native('windows',{pid:this.pid});
       const w=windows.find(w=>w.windowId===this.windowId);
@@ -112,6 +112,13 @@ export function createCua({request, emit}) {
     async listApps(opts={}) {options(opts,['emit']);return display((await inventory()).apps,opts);},
     async listWindows(opts={}) {options(opts,['emit']);return display((await native('windows')).windows,opts);},
     async status(opts={}) {options(opts,['emit']);return display(await native('status'),opts);},
+    async getScreenshot(opts={}) {
+      options(opts,['emit','maxDimension','displayId','region','includeAgentCursor']);
+      const {emit:shouldEmit,...params}=opts;
+      const {screenshot}=await native('screenshot',params);
+      if(shouldEmit!==false){const {data,...metadata}=screenshot;display({...metadata,agentCursorIncluded:!!opts.includeAgentCursor});emit({type:'image',data,mimeType:screenshot.mimeType});}
+      return Buffer.from(screenshot.data,'base64');
+    },
     async requestPermissions(opts) {return display(await native('request_permissions',opts));},
     async launchApp(bundleId,opts={}) {options(opts,['allowVisibleWindows']);return display(await native('launch',{bundleId,allowVisibleWindows:opts.allowVisibleWindows??false}));},
     async getApp(reference) {

@@ -121,6 +121,10 @@ struct HeldBackgroundMouse {
         // routing modifier at the target process before AppKit receives it.
         event.setIntegerValueField(.mouseEventSubtype, value: 3)
         try routeBackground(event, pid, wid, frame, at,delivery)
+        if cursorTracksPointer {
+            let down=[CGEventType.leftMouseDown,.rightMouseDown,.otherMouseDown,.leftMouseDragged].contains(kind)
+            agentCursor.update(pid:pid,windowID:wid,frame:frame,point:at,pressed:down,activity:kind == .leftMouseDragged ? "drag":"click")
+        }
         if [.leftMouseDown,.rightMouseDown,.otherMouseDown,.leftMouseDragged].contains(kind) { heldBackgroundMouse = HeldBackgroundMouse(pid: pid, windowID: wid, frame: frame, point: at, button: button,eventNumber:eventNumber,source:source) }
         if [.leftMouseUp,.rightMouseUp,.otherMouseUp].contains(kind) { heldBackgroundMouse = nil }
     }
@@ -330,6 +334,9 @@ struct HeldBackgroundMouse {
     }
     func background(_ method: String, _ input: Object) async throws -> Object {
         try requireAX()
+        cursorTracksPointer=false
+        var cursorSucceeded=false
+        defer {cursorTracksPointer=false;if !cursorSucceeded {agentCursor.hide()}}
         var p = input
         if method == "click", p["elementId"] != nil {
             let r = try ref(p)
@@ -373,36 +380,47 @@ struct HeldBackgroundMouse {
             let strategy = p["strategy"] as? String ?? "auto"
             if strategy != "event", button == .left, count == 1,
                 let element = try backgroundPressTarget(p,pid,frame,point) {
+                try await agentCursor.move(pid:pid,windowID:wid,frame:frame,point:point,activity:"click")
+                try inputObservation.validate();try assertBackgroundIsolation(pid,wid,orderBefore,foregroundBefore)
                 try axCheck(AXUIElementPerformAction(element,kAXPressAction as CFString),"Background press")
+                agentCursor.update(pid:pid,windowID:wid,frame:frame,point:point,activity:"click")
                 result = ["ok":true,"mode":"background","method":"AXPress","verificationRequired":true]
                 break
             }
             guard strategy != "ax" else {throw BridgeError("BACKGROUND_CLICK_UNSUPPORTED","No AXPress equivalent at this target; no event was sent")}
+            try await agentCursor.move(pid:pid,windowID:wid,frame:frame,point:point,activity:"click")
             pointerDelivery=try BackgroundPointerDelivery(pid:pid,windowID:wid)
             appKitSession=try await prepareScopedAppKitFocus(pid,wid,frame,pointerDelivery!,inputObservation)
             try assertBackgroundIsolation(pid,wid,orderBefore,foregroundBefore)
+            cursorTracksPointer=true
             for i in 1...count {try inputObservation.validate();try backgroundMouse(down, point, button, i, pid, wid, frame,pointerDelivery);try await Task.sleep(nanoseconds:20_000_000);try backgroundMouse(up, point, button, i, pid, wid, frame,pointerDelivery)}
             result = ["ok":true,"mode":"background","method":"window-scoped CGEvent.postToPid","verificationRequired":true]
         case "scroll":
             let at = try point(["x":p["x"] ?? frame.width/2,"y":p["y"] ?? frame.height/2],frame)
+            try await agentCursor.move(pid:pid,windowID:wid,frame:frame,point:at,activity:"scroll")
+            try inputObservation.validate();try assertBackgroundIsolation(pid,wid,orderBefore,foregroundBefore)
             guard let event = CGEvent(scrollWheelEvent2Source:try backgroundSource(),units:.pixel,wheelCount:2,wheel1:Int32(number(p,"deltaY")),wheel2:Int32(number(p,"deltaX")),wheel3:0) else { throw BridgeError("EVENT_FAILED","Could not create scroll event") }
             event.flags=[]; try routeBackground(event,pid,wid,frame,at)
+            agentCursor.update(pid:pid,windowID:wid,frame:frame,point:at,activity:"scroll")
             result = ["ok":true,"mode":"background","method":"window-scoped CGEvent.postToPid","verificationRequired":true]
         case "drag":
             let from = try point(p,frame,"fromX","fromY"); let to = try point(p,frame,"toX","toY")
             let duration = min(2,max(0.1,number(p,"duration",0.4)))
+            try await agentCursor.move(pid:pid,windowID:wid,frame:frame,point:from,activity:"drag")
             pointerDelivery=try BackgroundPointerDelivery(pid:pid,windowID:wid)
             appKitSession=try await prepareScopedAppKitFocus(pid,wid,frame,pointerDelivery!,inputObservation)
             try assertBackgroundIsolation(pid,wid,orderBefore,foregroundBefore)
+            cursorTracksPointer=true
             try backgroundMouse(.leftMouseDown,from,.left,1,pid,wid,frame,pointerDelivery)
             var last=from
-            for i in 1...30 {
+            let dragSteps=max(6,Int(ceil(duration*60)))
+            for i in 1...dragSteps {
                 try inputObservation.validate()
                 let (_,_,current) = try target(p)
                 guard current == frame else { throw BridgeError("WINDOW_MOVED","Window moved during drag; stopped without following the global pointer") }
-                last=CGPoint(x:from.x+(to.x-from.x)*Double(i)/30,y:from.y+(to.y-from.y)*Double(i)/30)
+                last=CGPoint(x:from.x+(to.x-from.x)*Double(i)/Double(dragSteps),y:from.y+(to.y-from.y)*Double(i)/Double(dragSteps))
                 try backgroundMouse(.leftMouseDragged,last,.left,1,pid,wid,frame,pointerDelivery)
-                try await Task.sleep(nanoseconds:UInt64(duration/30*1e9))
+                try await Task.sleep(nanoseconds:UInt64(duration/Double(dragSteps)*1e9))
             }
             try backgroundMouse(.leftMouseUp,last,.left,1,pid,wid,frame,pointerDelivery)
             result=["ok":true,"mode":"background","method":"window-scoped CGEvent.postToPid","verificationRequired":true]
@@ -418,6 +436,9 @@ struct HeldBackgroundMouse {
                 try assertBackgroundIsolation(pid,wid,orderBefore,foregroundBefore)
                 if let selectionBefore,let after=attr(element,kAXSelectedTextRangeAttribute),!CFEqual(selectionBefore,after){throw BridgeError("STALE_SELECTION","App-local focus preparation changed the text selection; no text event was sent")}
             }
+            let textElement=try backgroundTextElement(p,pid,wid,frame)
+            if let at=axFrame(textElement){try await agentCursor.move(pid:pid,windowID:wid,frame:frame,point:CGPoint(x:at.midX,y:at.midY),activity:"type")}
+            try inputObservation.validate();try assertBackgroundIsolation(pid,wid,orderBefore,foregroundBefore)
             result=strategy == "event" ? try await insertBackgroundEventText(p,pid,wid,frame,inputObservation):try await insertBackgroundText(p,pid,wid,frame)
         case "key":
             let normalized=(p["key"] as? String ?? "").lowercased().replacingOccurrences(of:" ",with:"")
@@ -427,6 +448,8 @@ struct HeldBackgroundMouse {
                 appKitSession=try await prepareScopedAppKitFocus(pid,wid,frame,pointerDelivery!,inputObservation)
                 try assertBackgroundIsolation(pid,wid,orderBefore,foregroundBefore)
             }
+            if let focused=attr(AXUIElementCreateApplication(pid),kAXFocusedUIElementAttribute),CFGetTypeID(focused)==AXUIElementGetTypeID(),let at=axFrame(focused as! AXUIElement){try await agentCursor.move(pid:pid,windowID:wid,frame:frame,point:CGPoint(x:at.midX,y:at.midY),activity:"key")}
+            try inputObservation.validate();try assertBackgroundIsolation(pid,wid,orderBefore,foregroundBefore)
             result=try backgroundKey(p,pid,wid,frame)
         default: throw BridgeError("METHOD_NOT_FOUND","Unsupported background method")
         }
@@ -437,6 +460,7 @@ struct HeldBackgroundMouse {
         try inputObservation.validate()
         try assertBackgroundIsolation(pid,wid,orderBefore,foregroundBefore)
         result["inputFocusObservation"]=inputObservation.json
+        cursorSucceeded=true
         return result
         } catch {
             if let held=heldBackgroundMouse,held.pid==pid,held.windowID==wid {

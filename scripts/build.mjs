@@ -29,6 +29,6 @@ function run(command, args) {
   if (r.error) throw r.error;
   if (r.status !== 0) process.exit(r.status ?? 1);
 }
-run('xcrun', ['swiftc', '-swift-version', '5', '-target', `${process.arch === 'arm64' ? 'arm64' : 'x86_64'}-apple-macos14.4`, '-O', '-framework', 'AppKit', '-framework', 'ApplicationServices', '-framework', 'ScreenCaptureKit', '-framework', 'Vision', path.join(root, 'native/FocusObservation.swift'), path.join(root,'native/PointerDelivery.swift'), path.join(root,'native/UnicodePackets.swift'), path.join(root,'native/ScopedAppKitFocus.swift'), path.join(root, 'native/Background.swift'), path.join(root, 'native/main.swift'), '-o', path.join(app, 'Contents/MacOS/computer-use-bridge')]);
+run('xcrun', ['swiftc', '-swift-version', '5', '-target', `${process.arch === 'arm64' ? 'arm64' : 'x86_64'}-apple-macos14.4`, '-O', '-framework', 'AppKit', '-framework', 'ApplicationServices', '-framework', 'ScreenCaptureKit', '-framework', 'Vision', path.join(root, 'native/FocusObservation.swift'), path.join(root,'native/AgentCursor.swift'), path.join(root,'native/PointerDelivery.swift'), path.join(root,'native/UnicodePackets.swift'), path.join(root,'native/ScopedAppKitFocus.swift'), path.join(root, 'native/Background.swift'), path.join(root, 'native/main.swift'), '-o', path.join(app, 'Contents/MacOS/computer-use-bridge')]);
 run('/usr/bin/codesign', ['--force', '--sign', '-', app]);
 console.error(`Built ${app}`);

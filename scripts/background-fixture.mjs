@@ -1,5 +1,5 @@
 import { spawn, spawnSync } from 'node:child_process';
-import { mkdirSync, writeFileSync, readFileSync, existsSync } from 'node:fs';
+import { mkdirSync, writeFileSync, readFileSync, existsSync, readdirSync, rmSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import path from 'node:path';
 const root=fileURLToPath(new URL('../',import.meta.url));
@@ -15,6 +15,7 @@ export async function startBackgroundFixture(directory,{roles=['target','cover']
   run('xcrun',['swiftc','-swift-version','5','-O',path.join(root,'native/BackgroundTestDriver.swift'),'-o',driver]);
   if(beforeLaunch)await beforeLaunch({driver,run});
   for(const role of roles){
+    for(const file of readdirSync(directory))if(file.startsWith(role+'-')&&file.endsWith('.json'))rmSync(path.join(directory,file));
     const name=role==='target'?(reference?'Reference Document Target':documentInput?'Background Document Target':'Background Target'):'Foreground Workspace';const bundle=role==='target'?(reference?'io.local.computeruse.reference-document-target':documentInput?'io.local.computeruse.document-target':'io.local.computeruse.background-target'):'io.local.computeruse.foreground-workspace';
     const app=path.join(root,'.build',name+'.app');const executable=path.join(app,'Contents/MacOS/fixture');mkdirSync(path.dirname(executable),{recursive:true});
     writeFileSync(path.join(app,'Contents/Info.plist'),`<?xml version="1.0"?><plist version="1.0"><dict><key>CFBundleIdentifier</key><string>${bundle}</string><key>CFBundleName</key><string>${name}</string><key>CFBundleExecutable</key><string>fixture</string><key>CFBundleVersion</key><string>1</string></dict></plist>`);

@@ -52,6 +52,8 @@ struct Snapshot {
     var heldBackgroundMouse: HeldBackgroundMouse?
     var backgroundMouseSequence=0
     var activeAppKitSession:ScopedAppKitFocus?
+    let agentCursor=AgentCursor()
+    var cursorTracksPointer=false
     var shuttingDown=false
     let allowed: Set<String>?
     let clipboardEnabled: Bool
@@ -76,7 +78,7 @@ struct Snapshot {
         return app
     }
     func appJSON(_ a: NSRunningApplication) -> Object {
-        ["pid": Int(a.processIdentifier), "name": a.localizedName ?? "", "bundleId": a.bundleIdentifier ?? "", "active": a.isActive, "hidden": a.isHidden]
+        ["pid": Int(a.processIdentifier), "name": a.localizedName ?? "", "bundleId": a.bundleIdentifier ?? "", "path":a.bundleURL?.path ?? "", "active": a.isActive, "hidden": a.isHidden]
     }
     func windows() -> [Object] {
         let rows = CGWindowListCopyWindowInfo([.optionAll, .excludeDesktopElements], kCGNullWindowID) as? [Object] ?? []
@@ -261,18 +263,26 @@ struct Snapshot {
             guard allowed == nil else { throw BridgeError("DESKTOP_CAPTURE_DISABLED", "Full-display capture is disabled when CU_ALLOWED_BUNDLE_IDS is set. Capture an allowed window.") }
             let id = CGDirectDisplayID(number(p, "displayId", Double(CGMainDisplayID())))
             guard let display = content.displays.first(where: { $0.displayID == id }) else { throw BridgeError("DISPLAY_GONE", "Display is unavailable") }
-            filter = SCContentFilter(display: display, excludingWindows: []); frame = CGDisplayBounds(id); kind = "display"
+            let ownCursor=content.windows.filter{p["includeAgentCursor"] as? Bool != true && $0.windowID==CGWindowID(agentCursor.panel?.windowNumber ?? 0) && $0.owningApplication?.processID==getpid()}
+            filter = SCContentFilter(display: display, excludingWindows: ownCursor); frame = CGDisplayBounds(id); kind = "display"
         }
         let maxDim = max(320, min(4096, number(p, "maxDimension", 1600)))
         let scale = min(2, maxDim / max(frame.width, frame.height))
         let config = SCStreamConfiguration()
-        config.width = max(1, Int((frame.width*scale).rounded()))
-        config.height = max(1, Int((frame.height*scale).rounded()))
+        var capturedFrame=frame
+        if let region=p["region"] as? Object {
+            guard kind=="display" else{throw BridgeError("INVALID_ARGUMENT","Region capture is supported only for displays")}
+            let crop=CGRect(x:number(region,"x"),y:number(region,"y"),width:number(region,"width"),height:number(region,"height"))
+            guard crop.width>=1,crop.height>=1,CGRect(origin:.zero,size:frame.size).contains(crop) else{throw BridgeError("INVALID_ARGUMENT","Region must be contained in the display's logical-point bounds")}
+            config.sourceRect=crop;capturedFrame=crop.offsetBy(dx:frame.minX,dy:frame.minY)
+        }
+        config.width = max(1, Int((capturedFrame.width*scale).rounded()))
+        config.height = max(1, Int((capturedFrame.height*scale).rounded()))
         config.showsCursor = p["showCursor"] as? Bool ?? false
         config.ignoreShadowsSingleWindow = true
         config.captureResolution = .best
         let image = try await SCScreenshotManager.captureImage(contentFilter: filter, configuration: config)
-        return (image, frame, kind)
+        return (image, capturedFrame, kind)
     }
     func screenshot(_ p: Object) async throws -> Object {
         let (image, frame, kind) = try await capture(p)
@@ -298,7 +308,7 @@ struct Snapshot {
         if [.leftMouseUp, .rightMouseUp, .otherMouseUp].contains(kind) { heldMouse = nil }
     }
     func releaseInput() {
-        defer {activeAppKitSession?.finish();activeAppKitSession=nil}
+        defer {activeAppKitSession?.finish();activeAppKitSession=nil;agentCursor.hide()}
         if let held = heldBackgroundMouse {
             let kind: CGEventType = held.button == .left ? .leftMouseUp : held.button == .right ? .rightMouseUp : .otherMouseUp
             try? backgroundMouse(kind,held.point,held.button,1,held.pid,held.windowID,held.frame)
@@ -355,6 +365,14 @@ struct Snapshot {
         if method == "key" {let strategy=p["strategy"] as? String ?? "auto";guard ["auto","event"].contains(strategy),backgroundMode || strategy == "auto" else{throw BridgeError("INVALID_ARGUMENT","Key strategy must be auto or event in background; foreground accepts auto only")}}
         if backgroundMode && ["click","type_text","key","scroll","drag"].contains(method) { return try await background(method,p) }
         switch method {
+        case "cursor_state": return agentCursor.state
+        case "cursor_hide": agentCursor.hide();return ["ok":true]
+        case "cursor":
+            try requireAX()
+            let (application,window,frame)=try target(p)
+            guard !application.isHidden,window["onScreen"] as? Bool == true else{throw BridgeError("WINDOW_NOT_VISIBLE","Agent cursor requires a window on the active desktop")}
+            try await agentCursor.move(pid:application.processIdentifier,windowID:CGWindowID(number(p,"windowId")),frame:frame,point:try point(p,frame))
+            return agentCursor.state
         case "status":
             let displays = NSScreen.screens.map { screen -> Object in
                 let id = (screen.deviceDescription[NSDeviceDescriptionKey("NSScreenNumber")] as? NSNumber)?.uint32Value ?? 0
@@ -411,6 +429,11 @@ struct Snapshot {
             if mode == "cursor_before" { range.length = 0 }
             if mode == "cursor_after" { range.location += range.length; range.length = 0 }
             if !backgroundMode { _ = try await focus(["pid": Int(r.pid), "windowId": Int(r.windowID)]) }
+            if backgroundMode,let at=axFrame(r.element) {
+                let (_,_,frame)=try target(["pid":Int(r.pid),"windowId":Int(r.windowID)])
+                try await agentCursor.move(pid:r.pid,windowID:r.windowID,frame:frame,point:CGPoint(x:at.midX,y:at.midY),activity:"select")
+                try inputObservation?.validate();try assertBackgroundIsolation(r.pid,r.windowID,semanticOrder,semanticFront)
+            }
             try axCheck(AXUIElementSetAttributeValue(r.element, kAXFocusedAttribute as CFString, kCFBooleanTrue), "Focus text element")
             guard let encoded = AXValueCreate(.cfRange, &range) else { throw BridgeError("AX_ERROR", "Could not encode text range") }
             try axCheck(AXUIElementSetAttributeValue(r.element, kAXSelectedTextRangeAttribute as CFString, encoded), "Select text")
@@ -430,6 +453,11 @@ struct Snapshot {
             defer {inputObservation?.stop()}
             if r.scope == "menu", backgroundMode { throw BridgeError("BACKGROUND_MENU_UNSUPPORTED", "Global application menus can interfere with the foreground session. Use explicit foreground mode only when authorized.") }
             if r.scope == "menu" { _ = try await focus(["pid": Int(r.pid), "windowId": Int(r.windowID)]) }
+            if backgroundMode,let at=axFrame(r.element) {
+                let (_,_,frame)=try target(["pid":Int(r.pid),"windowId":Int(r.windowID)])
+                try await agentCursor.move(pid:r.pid,windowID:r.windowID,frame:frame,point:CGPoint(x:at.midX,y:at.midY),activity:action)
+                try inputObservation?.validate();try assertBackgroundIsolation(r.pid,r.windowID,semanticOrder,semanticFront)
+            }
             if action == "setValue" {
                 guard let value = p["value"] as? String else { throw BridgeError("INVALID_ARGUMENT", "setValue requires value") }
                 var settable: DarwinBoolean = false
