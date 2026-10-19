@@ -44,3 +44,12 @@ test('reset invalidates queued executions and stops pending operations',async()=
     assert.equal(calls.filter(c=>c.method==='status').length,0);
   }finally{await runtime.close();}
 });
+test('rich images accept VM typed arrays and result inspection cannot issue late desktop work',async()=>{
+  const {runtime,calls}=fixture();try{
+    const r=await runtime.execute(`await nodeRepl.emitImage(new Uint8Array(Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVQIHWP4z8DwHwAFgAI/ScLbtAAAAABJRU5ErkJggg==','base64'))); undefined`);
+    assert.ok(!r.isError);assert.equal(r.content.filter(c=>c.type==='image').length,1);
+    const inspected=await runtime.execute(`var obj={[Symbol.for('nodejs.util.inspect.custom')](){cua.status();return 'unsafe'}}; obj`);
+    assert.ok(!inspected.isError);assert.equal(calls.filter(c=>c.method==='status').length,0);
+    const imported=await runtime.execute(`var os=await import('node:os'); os.platform()`);assert.ok(!imported.isError);assert.match(text(imported),new RegExp(process.platform));
+  }finally{await runtime.close();}
+});

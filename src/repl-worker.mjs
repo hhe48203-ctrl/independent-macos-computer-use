@@ -2,7 +2,7 @@ import { parentPort } from 'node:worker_threads';
 import { AsyncLocalStorage } from 'node:async_hooks';
 import { start } from 'node:repl';
 import { PassThrough } from 'node:stream';
-import { inspect, format } from 'node:util';
+import { inspect, format, types } from 'node:util';
 import { createCua } from './cua.mjs';
 
 const scope=new AsyncLocalStorage();
@@ -21,10 +21,10 @@ const repl=start({input:new PassThrough(),output,terminal:false,prompt:'',useGlo
 // than its callback. Preserve this evaluator for actual lexical/TLA semantics.
 repl._domain.on('error',error=>failure?.(error));
 const nodeRepl=Object.freeze({
-  write(value){emit({type:'text',text:typeof value==='string'?value:inspect(value,{depth:6,maxArrayLength:100,maxStringLength:20000})});},
+  write(value){emit({type:'text',text:typeof value==='string'?value:inspect(value,{depth:6,maxArrayLength:100,maxStringLength:20000,customInspect:false})});},
   async emitImage(value){
     if(value?.type==='image'&&typeof value.data==='string') {emit(value);return;}
-    const bytes=Buffer.isBuffer(value)||value instanceof Uint8Array?Buffer.from(value):value?.bytes?Buffer.from(value.bytes):null;
+    const bytes=Buffer.isBuffer(value)||types.isUint8Array(value)?Buffer.from(value):value?.bytes?Buffer.from(value.bytes):null;
     if(!bytes)throw Error('emitImage expects PNG/JPEG bytes or an MCP image block');
     const png=bytes.subarray(0,8).equals(Buffer.from([137,80,78,71,13,10,26,10]));const jpeg=bytes[0]===255&&bytes[1]===216;
     if(!png&&!jpeg)throw Error('Only PNG/JPEG images are supported');
@@ -49,7 +49,7 @@ parentPort.on('message',async message=>{
     // Drain already issued native operations. Late timers carry their original
     // AsyncLocalStorage token and cannot operate in a subsequent execution.
     while(token.operations.size)await Promise.allSettled([...token.operations]);
-    if(value!==undefined&&!error)emit({type:'text',text:inspect(value,{depth:4,maxArrayLength:50,maxStringLength:12000})});
+    if(value!==undefined&&!error)emit({type:'text',text:inspect(value,{depth:4,maxArrayLength:50,maxStringLength:12000,customInspect:false})});
     token.closed=true;current=undefined;failure=undefined;
     parentPort.postMessage({type:'done',id:message.id,error});
   });
