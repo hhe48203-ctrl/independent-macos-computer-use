@@ -72,6 +72,7 @@ export function createCua({request, emit}) {
       if(opts.emit!==false){display({windowId:this.windowId,width:s.width,height:s.height,scaleX:s.scaleX,scaleY:s.scaleY,coordinates:'screenshot pixels',agentCursorIncluded:false},opts);emit({type:'image',data:s.data,mimeType:s.mimeType});}
       return Buffer.from(s.data,'base64');
     }
+    async ocr(opts={}) {options(opts,['emit','maxDimension']);const result=await native('ocr',{...this.#target,maxDimension:opts.maxDimension??1600});return display(result,opts);}
     async #action(method,args) {
       await this.#live();
       const result=await native(method,args);

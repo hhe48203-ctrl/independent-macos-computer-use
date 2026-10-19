@@ -1,8 +1,8 @@
 {
   "$schema": "https://agent-plugins.org/schemas/1.0.0/plugin.schema.json",
   "name": "independent-macos-computer-use",
-  "version": "0.3.0",
-  "description": "Independent local macOS background window automation over MCP. Normal Accessibility and Screen Recording grants required; app compatibility varies.",
+  "version": "1.0.0-rc.1",
+  "description": "Independent macOS computer use through persistent JavaScript, cua app objects and a smooth nonactivating agent cursor.",
   "license": "MIT",
   "extensions": {
     "com.openai": {
@@ -10,7 +10,7 @@
       "interface": {
         "displayName": "Local Computer Use",
         "shortDescription": "Independent macOS control",
-        "longDescription": "Observe occluded app windows with Accessibility, ScreenCaptureKit and local OCR. Operate using verified AX text insertion and process/window-directed events, with no automatic foreground fallback. Pointer routing uses undocumented macOS window-location SPI.",
+        "longDescription": "Use a persistent cua JavaScript REPL to observe native app windows, capture screenshots, inspect Accessibility and OCR, and operate in background with a visible independent cursor. Normal macOS permissions required; app compatibility varies.",
         "developerName": "Local Computer Use contributors",
         "category": "Developer Tools",
         "capabilities": [],
