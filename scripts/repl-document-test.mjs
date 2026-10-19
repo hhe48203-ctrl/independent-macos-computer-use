@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
 import {mkdirSync,writeFileSync} from 'node:fs';
 import {fileURLToPath} from 'node:url';
+import {createHash} from 'node:crypto';
 import {connectRepl,parseAX} from './repl-client.mjs';
 import {startBackgroundFixture} from './background-fixture.mjs';
 const root=fileURLToPath(new URL('../',import.meta.url)),directory=root+`artifacts/repl-document-${Date.now()}`;mkdirSync(directory,{recursive:true});
@@ -30,6 +31,9 @@ try{
   const after=await observe();assert.equal(document(after).value,expected);assert.equal(fixture.read('target').count,1);
   const vertical=s=>s.nodes.find(n=>n.role==='AXScrollBar'&&n.frame.height>n.frame.width)?.value;assert.ok(vertical(after)>vertical(before));
   const afterProof=proof();assert.equal(afterProof.fullyCovered,true);assert.notEqual(afterProof.frontPid,target.pid);
-  report={...report,date:new Date().toISOString(),status:'passed',target:{pid:target.pid,windowId:target.windowId},suffix,typed,beforeProof,afterProof,beforeDocument:document(before),afterDocument:document(after),fixture:fixture.read('target'),cursor:await repl.evaluate('cua.cursorState()'),scope:'Fresh accessory AppKit document; only js/js_reset public entry points. Real process-directed keys/Unicode/click, text-selection drag and scroll; no AX mutation for these input operations.'};
+  const captured=await repl.client.callTool({name:'js',arguments:{code:'await app.getScreenshot(); undefined'}});assert.ok(!captured.isError);const image=captured.content.find(c=>c.type==='image');assert.ok(image);const bytes=Buffer.from(image.data,'base64');assert.ok(bytes.subarray(0,8).equals(Buffer.from([137,80,78,71,13,10,26,10])));writeFileSync(directory+'/target.png',bytes);
+  const captureMetadata=JSON.parse(captured.content.find(c=>c.type==='text'&&c.text.startsWith('{')).text);
+  const ocr=await repl.evaluate('app.ocr({emit:false})');assert.ok(ocr.lines.some(line=>/Apply message/i.test(line.text)),'Vision must recognize a real control label in the captured covered window');
+  report={...report,date:new Date().toISOString(),status:'passed',target:{pid:target.pid,windowId:target.windowId},suffix,typed,beforeProof,afterProof,beforeDocument:document(before),afterDocument:document(after),fixture:fixture.read('target'),capture:{...captureMetadata,bytes:bytes.length,sha256:createHash('sha256').update(bytes).digest('hex')},ocr,cursor:await repl.evaluate('cua.cursorState()'),scope:'Fresh accessory AppKit document; only js/js_reset public entry points. Real process-directed keys/Unicode/click, text-selection drag and scroll; no AX mutation for these input operations. ScreenCaptureKit rich PNG and local Vision OCR verified.'};
 }catch(error){report={...report,status:'failed',error:error.message};process.exitCode=1;}
 finally{writeFileSync(directory+'/report.json',JSON.stringify(report,null,2));writeFileSync(directory+'/calls.json',JSON.stringify(repl.calls,null,2));await repl.client.close();fixture.close();console.log('REPORT',directory+'/report.json',report.status,report.error??'');}
