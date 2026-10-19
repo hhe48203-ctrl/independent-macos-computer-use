@@ -15,7 +15,11 @@ test('MCP starts through a symlink and exposes complete tool schemas', async () 
   try {
     await client.connect(new StdioClientTransport({ command: process.execPath, args: [link], cwd: dir }));
     const list = await client.listTools();
-    assert.equal(list.tools.length, 17);
+    assert.deepEqual(list.tools.map(t=>t.name), ['js','js_reset']);
+    const first=await client.callTool({name:'js',arguments:{code:'let counter = await Promise.resolve(41)'}});
+    assert.ok(!first.isError);
+    const next=await client.callTool({name:'js',arguments:{code:'counter += 1'}});
+    assert.equal(next.content[0].text,'42');
     assert.ok(list.tools.every(t => t.inputSchema.type === 'object'));
   } finally { await client.close(); rmSync(dir, { recursive: true, force: true }); }
 });
