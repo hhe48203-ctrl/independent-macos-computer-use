@@ -60,22 +60,34 @@ import ApplicationServices
   guard role as? String != kAXSecureTextFieldSubrole else{return false}
   var countValue:CFTypeRef?
   guard AXUIElementCopyAttributeValue(element,kAXNumberOfCharactersAttribute as CFString,&countValue) == .success,let count=countValue as? NSNumber,count.intValue>=8 else{return false}
-  func read(_ length:Int)->String? {
-   var range=CFRange(location:0,length:length);guard let encoded=AXValueCreate(.cfRange,&range) else{return nil}
+  func read(_ location:Int,_ length:Int)->String? {
+   var range=CFRange(location:location,length:length);guard let encoded=AXValueCreate(.cfRange,&range) else{return nil}
    var value:CFTypeRef?
    let status=AXUIElementCopyParameterizedAttributeValue(element,kAXStringForRangeParameterizedAttribute as CFString,encoded,&value)
    guard status == .success else{let key=String(status.rawValue);readErrors[key,default:0] += 1;return nil}
    return value as? String
   }
   let e=Array(expected.utf16)
-  // Compare only the marker first. Read the remaining known test range only
-  // after identifying the explicitly agreed field; never retain its text.
-  guard let marker=read(8),Array(marker.utf16)==Array(e.prefix(8)),let actual=read(min(count.intValue,e.count)) else{return false}
+  // Probe only bounded marker positions: field start, end-anchored test
+  // phrase, and just before the caret. Never scan/store an unrelated draft.
+  var positions=[0,max(0,count.intValue-e.count)]
+  var selected:CFTypeRef?
+  if AXUIElementCopyAttributeValue(element,kAXSelectedTextRangeAttribute as CFString,&selected) == .success,let selected,CFGetTypeID(selected)==AXValueGetTypeID(){
+   var range=CFRange();if AXValueGetValue(selected as! AXValue,.cfRange,&range),range.location>=e.count {positions.append(range.location-e.count)}
+  }
+  var actual:String?
+  var matchedPosition=0
+  for position in Array(Set(positions)).sorted() where position>=0 && position+8<=count.intValue {
+   if let marker=read(position,8),Array(marker.utf16)==Array(e.prefix(8)) {
+    actual=read(position,min(count.intValue-position,e.count));matchedPosition=position;break
+   }
+  }
+  guard let actual else{return false}
   let a=Array(actual.utf16)
   let now=Date().timeIntervalSince1970
   if firstMarkedEpoch == nil {firstMarkedEpoch=now}
-  markedSamples += 1;lastMarkedUTF16Count=count.intValue
-  lastComplete=a==e && count.intValue==e.count
+  markedSamples += 1;lastMarkedUTF16Count=min(count.intValue-matchedPosition,e.count)
+  lastComplete=a==e
   var matching=0
   while matching<min(a.count,e.count)&&a[matching]==e[matching]{matching += 1}
   maximumMatchingPrefix=max(maximumMatchingPrefix,matching);progress.insert(matching)
@@ -83,5 +95,5 @@ import ApplicationServices
   if lastComplete {completeSamples += 1;if firstCompleteEpoch == nil{firstCompleteEpoch=now};lastCompleteEpoch=now}
   return true
  }
- var json:[String:Any]{["expectedTestPhrase":expected,"pid":pid,"cachedCandidateFields":candidates.count,"candidateRefreshes":candidateRefreshes,"rangeReadErrors":readErrors,"samples":samples,"markedSamples":markedSamples,"completeSamples":completeSamples,"maximumMatchingUTF16Prefix":maximumMatchingPrefix,"observedPrefixLengths":progress.sorted(),"mismatchPositions":mismatchPositions.sorted(),"lastComplete":lastComplete,"lastMarkedUTF16Count":lastMarkedUTF16Count,"firstMarkedEpoch":firstMarkedEpoch as Any? ?? NSNull(),"firstCompleteEpoch":firstCompleteEpoch as Any? ?? NSNull(),"lastCompleteEpoch":lastCompleteEpoch as Any? ?? NSNull(),"privacy":"Only a bounded range starting with the agreed test marker is compared; no draft or key contents stored."]}
+ var json:[String:Any]{["expectedTestPhrase":expected,"pid":pid,"cachedCandidateFields":candidates.count,"candidateRefreshes":candidateRefreshes,"rangeReadErrors":readErrors,"samples":samples,"markedSamples":markedSamples,"completeSamples":completeSamples,"maximumMatchingUTF16Prefix":maximumMatchingPrefix,"observedPrefixLengths":progress.sorted(),"mismatchPositions":mismatchPositions.sorted(),"lastComplete":lastComplete,"lastMarkedUTF16Count":lastMarkedUTF16Count,"firstMarkedEpoch":firstMarkedEpoch as Any? ?? NSNull(),"firstCompleteEpoch":firstCompleteEpoch as Any? ?? NSNull(),"lastCompleteEpoch":lastCompleteEpoch as Any? ?? NSNull(),"privacy":"Only bounded start/end/caret marker probes and the agreed phrase are compared; no draft or key contents stored."]}
 }

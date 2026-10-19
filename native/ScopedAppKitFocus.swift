@@ -28,6 +28,10 @@ import ApplicationServices
     var finished=false
     var notifications=0
     var skippedCleanupForRealFocus=false
+    let startedEpoch=Date().timeIntervalSince1970
+    let startedUptime=ProcessInfo.processInfo.systemUptime
+    var finishedEpoch:Double?
+    var activeDurationMs:Double?
     init(pid:pid_t,windowID:CGWindowID){self.pid=pid;self.windowID=windowID}
     func send(_ type:NSEvent.EventType,_ subtype:Int16,_ flags:NSEvent.ModifierFlags,_ window:Int) throws {
         guard let event=NSEvent.otherEvent(with:type,location:.zero,modifierFlags:flags,timestamp:ProcessInfo.processInfo.systemUptime,windowNumber:window,context:nil,subtype:subtype,data1:0,data2:0)?.cgEvent else{throw BridgeError("EVENT_FAILED","Could not build an app-local focus notice")}
@@ -36,6 +40,7 @@ import ApplicationServices
     }
     func finish(){
         guard !finished else{return};finished=true
+        finishedEpoch=Date().timeIntervalSince1970;activeDurationMs=(ProcessInfo.processInfo.systemUptime-startedUptime)*1000
         // A user may have switched to the app during the operation. Never send
         // a synthetic deactivation to an app now owning real foreground/focus.
         let now=SystemInputFocus.observe()
@@ -43,7 +48,7 @@ import ApplicationServices
         try? send(NSEvent.EventType(rawValue:21)!,0x1000,[],0)
         try? send(.appKitDefined,2,[],0)
     }
-    var json:[String:Any]{["experimental":true,"method":"scoped app-local AppKit notices and observed AX activation-point click","notificationsGenerated":notifications,"explicitRegistryFocusAPIRequests":0,"foregroundRestorations":0,"cleanupSkippedForRealFocus":skippedCleanupForRealFocus]}
+    var json:[String:Any]{["experimental":true,"method":"scoped app-local AppKit notices and observed AX activation-point click","notificationsGenerated":notifications,"explicitRegistryFocusAPIRequests":0,"foregroundRestorations":0,"cleanupSkippedForRealFocus":skippedCleanupForRealFocus,"startedEpoch":startedEpoch,"finishedEpoch":finishedEpoch as Any? ?? NSNull(),"activeDurationMs":activeDurationMs as Any? ?? NSNull()]}
 }
 
 @MainActor extension Desktop {
