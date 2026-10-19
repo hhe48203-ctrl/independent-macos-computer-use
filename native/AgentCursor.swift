@@ -15,8 +15,6 @@ final class AgentCursorView: NSView {
     override func draw(_ dirtyRect: NSRect) {
         NSColor.clear.setFill(); bounds.fill(using:.copy)
         NSGraphicsContext.saveGraphicsState()
-        let glow=NSGradient(starting:NSColor(calibratedRed:0.63,green:0.77,blue:0.96,alpha:pressed ? 0.27:0.14),ending:NSColor.clear)
-        glow?.draw(in:NSBezierPath(ovalIn:NSRect(x:5,y:5,width:48,height:48)),relativeCenterPosition:.zero)
         let arrow=NSBezierPath()
         arrow.move(to:NSPoint(x:25,y:24))
         arrow.curve(to:NSPoint(x:27,y:24),controlPoint1:NSPoint(x:25,y:23.5),controlPoint2:NSPoint(x:26,y:23.5))
@@ -28,9 +26,9 @@ final class AgentCursorView: NSView {
         arrow.curve(to:NSPoint(x:25,y:24),controlPoint1:NSPoint(x:23.7,y:25.7),controlPoint2:NSPoint(x:23.8,y:24.5));arrow.close()
         let transform=AffineTransform(translationByX: -24,byY: -24)
         arrow.transform(using:transform)
-        arrow.transform(using:AffineTransform(scale:0.76))
+        arrow.transform(using:AffineTransform(scale:pressed ? 0.68:0.76))
         arrow.transform(using:AffineTransform(translationByX:24,byY:24))
-        let shadow=NSShadow();shadow.shadowColor=NSColor(calibratedRed:0.63,green:0.77,blue:0.96,alpha:0.55);shadow.shadowBlurRadius=5;shadow.shadowOffset = .zero;shadow.set()
+        let shadow=NSShadow();shadow.shadowColor=NSColor(calibratedRed:0.63,green:0.77,blue:0.96,alpha:0.55);shadow.shadowBlurRadius=12;shadow.shadowOffset = .zero;shadow.set()
         NSColor(calibratedRed:0.63,green:0.72,blue:0.85,alpha:pressed ? 0.48:0.22).setFill();arrow.fill()
         NSColor(calibratedWhite:1,alpha:pressed ? 1:0.85).setStroke();arrow.lineWidth=1.6;arrow.lineJoinStyle = .round;arrow.stroke()
         NSGraphicsContext.restoreGraphicsState()
@@ -54,6 +52,7 @@ final class AgentCursorView: NSView {
     private var moving=false
     private var motionGeneration=0
     private var hasPosition=false
+    private var pulseUntil=Date.distantPast
     static func motionDuration(distance:Double)->Double {min(0.55,max(0.16,0.16+distance/1600))}
     static func interpolate(from:CGPoint,to:CGPoint,progress:Double)->CGPoint {
         let t=min(1,max(0,progress));let eased=t*t*(3-2*t)
@@ -80,7 +79,7 @@ final class AgentCursorView: NSView {
             guard let current=currentFrame(pid:pid,windowID:windowID),current==frame else{hide();throw BridgeError("WINDOW_MOVED","Target moved, resized or disappeared during cursor motion; observe before acting")}
             let at=Self.interpolate(from:from,to:point,progress:Double(step)/Double(steps))
             update(pid:pid,windowID:windowID,frame:frame,point:at,activity:activity)
-            if step<steps && duration>0 {try await Task.sleep(nanoseconds:UInt64(duration/Double(steps)*1e9))}
+            if step<steps {try await Task.sleep(nanoseconds:UInt64((duration>0 ? duration/Double(steps):1.0/60)*1e9))}
         }
     }
     private let enabled=ProcessInfo.processInfo.environment["CU_AGENT_CURSOR"] != "0"
@@ -89,8 +88,10 @@ final class AgentCursorView: NSView {
         // bottom-left coordinates; CG uses primary-display top-left coordinates.
         CGPoint(x:global.x-24,y:primaryTop-global.y-(size-24))
     }
-    func update(pid:pid_t,windowID:CGWindowID,frame:CGRect,point:CGPoint,pressed:Bool=false,activity:String="move") {
+    func pulse(){pulseUntil=Date().addingTimeInterval(0.16);view?.pressed=true;view?.needsDisplay=true;panel?.displayIfNeeded()}
+    func update(pid:pid_t,windowID:CGWindowID,frame:CGRect,point:CGPoint,pressed:Bool=false,activity:String="move",activate:Bool=false) {
         guard enabled else{return}
+        if activate || (pressed && !self.pressed) {pulseUntil=Date().addingTimeInterval(0.16)}
         self.pid=pid;self.windowID=windowID;relative=CGPoint(x:point.x-frame.minX,y:point.y-frame.minY)
         hasPosition=true
         dimensions=frame.size;self.pressed=pressed;self.activity=activity;touched=Date();sequence+=1
@@ -113,7 +114,7 @@ final class AgentCursorView: NSView {
         global=CGPoint(x:frame.minX+relative.x,y:frame.minY+relative.y)
         let top=NSScreen.screens.first?.frame.maxY ?? CGDisplayBounds(CGMainDisplayID()).height
         panel?.setFrameOrigin(Self.appKitOrigin(global:global,primaryTop:top))
-        view?.pressed=pressed;view?.activity=activity;view?.needsDisplay=true
+        view?.pressed=pressed || Date()<pulseUntil;view?.activity=activity;view?.needsDisplay=true
         panel?.displayIfNeeded()
     }
     private func track() {
@@ -124,7 +125,7 @@ final class AgentCursorView: NSView {
         guard frame.size==dimensions,relative.x>=0,relative.y>=0,relative.x<frame.width,relative.y<frame.height else{hide();return}
         position(frame)
     }
-    func hide() {motionGeneration+=1;panel?.orderOut(nil);timer?.invalidate();timer=nil;pressed=false}
+    func hide() {motionGeneration+=1;panel?.orderOut(nil);timer?.invalidate();timer=nil;pressed=false;pulseUntil = .distantPast}
     var state:Object {
         ["enabled":enabled,"moving":moving,"style":"translucent light outline with soft glow","visible":panel?.isVisible ?? false,"windowId":Int(panel?.windowNumber ?? 0),"targetPID":Int(pid),"targetWindowId":Int(windowID),"relative":["x":relative.x,"y":relative.y],"global":["x":global.x,"y":global.y],"panelFrame":rectJSON(panel?.frame ?? .zero),"backingScale":panel?.backingScaleFactor ?? 1,"pressed":pressed,"activity":activity,"sequence":sequence,"ignoresMouseEvents":panel?.ignoresMouseEvents ?? true,"canBecomeKey":panel?.canBecomeKey ?? false,"canBecomeMain":panel?.canBecomeMain ?? false,"history":history]
     }

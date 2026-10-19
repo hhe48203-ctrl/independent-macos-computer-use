@@ -471,6 +471,7 @@ struct Snapshot {
                 let actions = ["press": kAXPressAction, "showMenu": kAXShowMenuAction, "increment": kAXIncrementAction, "decrement": kAXDecrementAction, "confirm": kAXConfirmAction]
                 guard let name = actions[action] else { throw BridgeError("INVALID_ARGUMENT", "Unsupported AX action") }
                 try axCheck(AXUIElementPerformAction(r.element, name as CFString), action)
+                if action == "press" {agentCursor.pulse()}
             }
             if backgroundMode {
                 try await Task.sleep(nanoseconds:80_000_000)

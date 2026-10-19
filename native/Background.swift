@@ -383,7 +383,7 @@ struct HeldBackgroundMouse {
                 try await agentCursor.move(pid:pid,windowID:wid,frame:frame,point:point,activity:"click")
                 try inputObservation.validate();try assertBackgroundIsolation(pid,wid,orderBefore,foregroundBefore)
                 try axCheck(AXUIElementPerformAction(element,kAXPressAction as CFString),"Background press")
-                agentCursor.update(pid:pid,windowID:wid,frame:frame,point:point,activity:"click")
+                agentCursor.update(pid:pid,windowID:wid,frame:frame,point:point,activity:"click",activate:true)
                 result = ["ok":true,"mode":"background","method":"AXPress","verificationRequired":true]
                 break
             }
