@@ -73,3 +73,5 @@ await cua.getScreenshot({
 标准 MCP stdio → 工作线程 REPL/cua → 串行 JSONL Swift helper；无需原版运行时/服务。macOS14.4+ 构建目标，本机实测26.6.2 arm64、Node24.15.0。真实鼠标路由使用未公开系统入口，CU_EXPERIMENTAL_APPKIT_FOCUS=1 使用本机已验证的局部 AppKit 通知，默认关闭。应用可能自行激活或重排；失败后停止并重新观察，不自动恢复焦点掩盖问题。
 
 原生底层分析与新证据见 REPL_CURSOR_RESEARCH.md、FOCUS_FIDELITY.md。多屏只有坐标公式测试，其他系统/应用兼容性不能由单台机器的验收推断。
+
+当前原版macOS与独立版并非完全相同：2026-10-22实测原版返回JPEG，AX-only观察后仍使用Retina截图像素；独立版保持本页的PNG和AX-only逻辑点契约。页数滚动距离、应用实例绑定和可选参数也有差异，详见 [原版对照基线](ORIGINAL_BASELINE.md)。这些首次明确测量的差异不代表本次更新才引入。

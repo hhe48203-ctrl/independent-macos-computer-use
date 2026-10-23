@@ -1,0 +1,4035 @@
+{
+  "schemaVersion": 1,
+  "observedAt": "2026-10-23T01:51:29.769Z",
+  "app": {
+    "path": "/Applications/ChatGPT.app",
+    "bundleId": "com.openai.codex",
+    "version": "26.1016.61520",
+    "build": "21421"
+  },
+  "packages": {
+    "@oai/cua-repl": {
+      "version": "0.1.2",
+      "path": "/Applications/ChatGPT.app/Contents/Resources/cua_node/lib/node_modules/@oai/cua-repl",
+      "manifestSHA256": "6b651f0786202485a945ebbd345ec620107d74a00d86c33d8128329c8f0a262e",
+      "inventory": [
+        {
+          "relative": "README.md",
+          "bytes": 5759,
+          "sha256": "d2e6abfd3ea3e5b6b0f36c93a937eb107147758ad1b9a0c44c67ae7fddc9c889"
+        },
+        {
+          "relative": "bin/cua-repl.mjs",
+          "bytes": 284,
+          "sha256": "992174a5e637645aeb444adfdb1bae688e997bb84d7db07532f68e358e60f278"
+        },
+        {
+          "relative": "dist/lib/js/oai_js_cua_repl/src/index.d.ts",
+          "bytes": 35,
+          "sha256": "74b2593aa98025e60e32eae0997f2c670d7ce06db82dc014ee555cb4b498105b"
+        },
+        {
+          "relative": "dist/lib/js/oai_js_cua_repl/src/index.js",
+          "bytes": 33,
+          "sha256": "bbc0c68a1520d72d1431233bf1c4fd9e3520776cde48542b20332f8ba9da3760"
+        },
+        {
+          "relative": "dist/lib/js/oai_js_cua_repl/src/instructions.d.ts",
+          "bytes": 369,
+          "sha256": "f15164a168393658e32aad292182d39b95acc0b443ffd0c41fa5f931c3474b2f"
+        },
+        {
+          "relative": "dist/lib/js/oai_js_cua_repl/src/instructions.js",
+          "bytes": 774,
+          "sha256": "36acec6b10072e5f3730ca74be23de6b9a4707ebe996dea382f4c262a28d964c"
+        },
+        {
+          "relative": "dist/lib/js/oai_js_cua_repl/src/launch.d.ts",
+          "bytes": 49,
+          "sha256": "511b72b94b6ae8e0c18a01bda63476583fa8d3e4ce253178b13bbce93210778c"
+        },
+        {
+          "relative": "dist/lib/js/oai_js_cua_repl/src/launch.js",
+          "bytes": 2149,
+          "sha256": "97ce061a09cba0e701e83c2508c276ed573ce864d2478993f873c0650a84e316"
+        },
+        {
+          "relative": "instructions/audio-attachments.md",
+          "bytes": 598,
+          "sha256": "8a445752e54042dfb878884afbd3f7730cf4e9a9389af3b7774163b450c4759c"
+        },
+        {
+          "relative": "instructions/banner.js",
+          "bytes": 37,
+          "sha256": "db4a56c4a1cb6f9ec2ca663694fbe8941846aaa83d0bf12d3a5699f92126105a"
+        },
+        {
+          "relative": "instructions/browser-cloud-preference.md",
+          "bytes": 184,
+          "sha256": "8363cae7942a9dac87997398e143b96bc4c3fc2435dccc3b2604391e4bc4bbf1"
+        },
+        {
+          "relative": "instructions/browser-disabled.md",
+          "bytes": 27,
+          "sha256": "6d1be6d881b8b340dabb04d277bfc5c0690fb855031f023bc882284904dd6d9a"
+        },
+        {
+          "relative": "instructions/browser-orbit-preference.md",
+          "bytes": 236,
+          "sha256": "6abbb76f30dc1c0829bc1965723a3245c9fce088ce29d340dc81f8f2f5e9332f"
+        },
+        {
+          "relative": "instructions/code.md",
+          "bytes": 62,
+          "sha256": "c0cc551f6c6116c5276baecc68c1139d25c205570281e02b6ad483526e4bede9"
+        },
+        {
+          "relative": "instructions/computer-disabled.md",
+          "bytes": 35,
+          "sha256": "c34c37e1549a55281eaecf6e29b4878313cfecf5983559a98a6fca1f6d1cf53c"
+        },
+        {
+          "relative": "instructions/linux/browser-cloud-guidance.md",
+          "bytes": 1632,
+          "sha256": "5f04b3b743645bb7adfd91c1fcdf64ddb4a0594fbda60a07651da1ef3342dd84"
+        },
+        {
+          "relative": "instructions/linux/browser-cloud.md",
+          "bytes": 760,
+          "sha256": "7872a652b6911d7b380f64ff6bddc1120e8bc562a2e049aefbf7632904139572"
+        },
+        {
+          "relative": "instructions/linux/browser.md",
+          "bytes": 1757,
+          "sha256": "f30c20ba08636e959f0e044dd4101c0f8f60d2abb3b77d1bb322a41dfeae849b"
+        },
+        {
+          "relative": "instructions/linux/computer.md",
+          "bytes": 140,
+          "sha256": "e8318bd16b9792b517d300802583961317d7e0cb3a3a4ed776a681ed20f16f7d"
+        },
+        {
+          "relative": "instructions/linux/description.md",
+          "bytes": 856,
+          "sha256": "096e5cea5931c9c23adc839211bfe3764039a2e68dd47b627ae0d8bc22fdaed6"
+        },
+        {
+          "relative": "instructions/linux/output.md",
+          "bytes": 488,
+          "sha256": "e239db8a09d3fb3b2a626e19a64be96da0130374675acf709649bef99430d486"
+        },
+        {
+          "relative": "instructions/macos/browser-cloud-guidance.md",
+          "bytes": 1632,
+          "sha256": "5f04b3b743645bb7adfd91c1fcdf64ddb4a0594fbda60a07651da1ef3342dd84"
+        },
+        {
+          "relative": "instructions/macos/browser-cloud.md",
+          "bytes": 760,
+          "sha256": "7872a652b6911d7b380f64ff6bddc1120e8bc562a2e049aefbf7632904139572"
+        },
+        {
+          "relative": "instructions/macos/browser.md",
+          "bytes": 1757,
+          "sha256": "f30c20ba08636e959f0e044dd4101c0f8f60d2abb3b77d1bb322a41dfeae849b"
+        },
+        {
+          "relative": "instructions/macos/computer.md",
+          "bytes": 140,
+          "sha256": "e8318bd16b9792b517d300802583961317d7e0cb3a3a4ed776a681ed20f16f7d"
+        },
+        {
+          "relative": "instructions/macos/description.md",
+          "bytes": 856,
+          "sha256": "096e5cea5931c9c23adc839211bfe3764039a2e68dd47b627ae0d8bc22fdaed6"
+        },
+        {
+          "relative": "instructions/macos/output.md",
+          "bytes": 488,
+          "sha256": "e239db8a09d3fb3b2a626e19a64be96da0130374675acf709649bef99430d486"
+        },
+        {
+          "relative": "instructions/reset.md",
+          "bytes": 240,
+          "sha256": "8293a9ec45999391940bdfce1637fb5c4d708f89b5d726b4d03800df9cb795af"
+        },
+        {
+          "relative": "instructions/server.md",
+          "bytes": 62,
+          "sha256": "6001fb94250c49c234d96cbe08913ad9340e71e48b1709d8c0d598b46a25ea9e"
+        },
+        {
+          "relative": "instructions/windows/browser-cloud-guidance.md",
+          "bytes": 1632,
+          "sha256": "5f04b3b743645bb7adfd91c1fcdf64ddb4a0594fbda60a07651da1ef3342dd84"
+        },
+        {
+          "relative": "instructions/windows/browser-cloud.md",
+          "bytes": 760,
+          "sha256": "7872a652b6911d7b380f64ff6bddc1120e8bc562a2e049aefbf7632904139572"
+        },
+        {
+          "relative": "instructions/windows/browser.md",
+          "bytes": 1757,
+          "sha256": "f30c20ba08636e959f0e044dd4101c0f8f60d2abb3b77d1bb322a41dfeae849b"
+        },
+        {
+          "relative": "instructions/windows/computer.md",
+          "bytes": 140,
+          "sha256": "e8318bd16b9792b517d300802583961317d7e0cb3a3a4ed776a681ed20f16f7d"
+        },
+        {
+          "relative": "instructions/windows/description.md",
+          "bytes": 856,
+          "sha256": "096e5cea5931c9c23adc839211bfe3764039a2e68dd47b627ae0d8bc22fdaed6"
+        },
+        {
+          "relative": "instructions/windows/output.md",
+          "bytes": 488,
+          "sha256": "e239db8a09d3fb3b2a626e19a64be96da0130374675acf709649bef99430d486"
+        },
+        {
+          "relative": "package.json",
+          "bytes": 822,
+          "sha256": "6b651f0786202485a945ebbd345ec620107d74a00d86c33d8128329c8f0a262e"
+        },
+        {
+          "relative": "plugin/.codex-plugin/plugin.json",
+          "bytes": 1390,
+          "sha256": "b6e408092c96217651da2000cdf940d10c8f89b27ffeb0a687e27356640b2fc3"
+        },
+        {
+          "relative": "plugin/.mcp.template.json",
+          "bytes": 349,
+          "sha256": "e7297a8851d46bb5d7f53d57e82d86cfdf4b04524bedf8c2ce6cf4a80ffe71da"
+        }
+      ],
+      "inventorySHA256": "744e90192ad2f7ff692ea2af18d698deb51dc66e6d4a2e37c0e6ea17e15506e4"
+    },
+    "@oai/cua": {
+      "version": "0.2.6",
+      "path": "/Applications/ChatGPT.app/Contents/Resources/cua_node/lib/node_modules/@oai/cua",
+      "manifestSHA256": "c11049f185f13e4eb31aa7a7442f43d4729528d923cf3a6699abf83ea97ab640",
+      "inventory": [
+        {
+          "relative": "dist/_virtual/BatchedEventsQueue.js",
+          "bytes": 33,
+          "sha256": "453d12d37d2617c4ed20d1c79e13f4c80dd1948255fb2d463eb52f0a684f75ac"
+        },
+        {
+          "relative": "dist/_virtual/CacheKey.js",
+          "bytes": 33,
+          "sha256": "453d12d37d2617c4ed20d1c79e13f4c80dd1948255fb2d463eb52f0a684f75ac"
+        },
+        {
+          "relative": "dist/_virtual/ClientInterfaces.js",
+          "bytes": 33,
+          "sha256": "453d12d37d2617c4ed20d1c79e13f4c80dd1948255fb2d463eb52f0a684f75ac"
+        },
+        {
+          "relative": "dist/_virtual/DataAdapterCore.js",
+          "bytes": 33,
+          "sha256": "453d12d37d2617c4ed20d1c79e13f4c80dd1948255fb2d463eb52f0a684f75ac"
+        },
+        {
+          "relative": "dist/_virtual/Diagnostics.js",
+          "bytes": 33,
+          "sha256": "453d12d37d2617c4ed20d1c79e13f4c80dd1948255fb2d463eb52f0a684f75ac"
+        },
+        {
+          "relative": "dist/_virtual/DnsTxtQuery.js",
+          "bytes": 33,
+          "sha256": "453d12d37d2617c4ed20d1c79e13f4c80dd1948255fb2d463eb52f0a684f75ac"
+        },
+        {
+          "relative": "dist/_virtual/DownloadConfigSpecsResponse.js",
+          "bytes": 33,
+          "sha256": "453d12d37d2617c4ed20d1c79e13f4c80dd1948255fb2d463eb52f0a684f75ac"
+        },
+        {
+          "relative": "dist/_virtual/ErrorBoundary.js",
+          "bytes": 33,
+          "sha256": "453d12d37d2617c4ed20d1c79e13f4c80dd1948255fb2d463eb52f0a684f75ac"
+        },
+        {
+          "relative": "dist/_virtual/EvaluationOptions.js",
+          "bytes": 33,
+          "sha256": "453d12d37d2617c4ed20d1c79e13f4c80dd1948255fb2d463eb52f0a684f75ac"
+        },
+        {
+          "relative": "dist/_virtual/EvaluationResponseDeltas.js",
+          "bytes": 33,
+          "sha256": "453d12d37d2617c4ed20d1c79e13f4c80dd1948255fb2d463eb52f0a684f75ac"
+        },
+        {
+          "relative": "dist/_virtual/EvaluationStore.js",
+          "bytes": 33,
+          "sha256": "453d12d37d2617c4ed20d1c79e13f4c80dd1948255fb2d463eb52f0a684f75ac"
+        },
+        {
+          "relative": "dist/_virtual/EvaluationTypes.js",
+          "bytes": 33,
+          "sha256": "453d12d37d2617c4ed20d1c79e13f4c80dd1948255fb2d463eb52f0a684f75ac"
+        },
+        {
+          "relative": "dist/_virtual/EventBatch.js",
+          "bytes": 33,
+          "sha256": "453d12d37d2617c4ed20d1c79e13f4c80dd1948255fb2d463eb52f0a684f75ac"
+        },
+        {
+          "relative": "dist/_virtual/EventLogger.js",
+          "bytes": 33,
+          "sha256": "453d12d37d2617c4ed20d1c79e13f4c80dd1948255fb2d463eb52f0a684f75ac"
+        },
+        {
+          "relative": "dist/_virtual/EventRetryConstants.js",
+          "bytes": 33,
+          "sha256": "453d12d37d2617c4ed20d1c79e13f4c80dd1948255fb2d463eb52f0a684f75ac"
+        },
+        {
+          "relative": "dist/_virtual/EventSender.js",
+          "bytes": 33,
+          "sha256": "453d12d37d2617c4ed20d1c79e13f4c80dd1948255fb2d463eb52f0a684f75ac"
+        },
+        {
+          "relative": "dist/_virtual/FlushCoordinator.js",
+          "bytes": 33,
+          "sha256": "453d12d37d2617c4ed20d1c79e13f4c80dd1948255fb2d463eb52f0a684f75ac"
+        },
+        {
+          "relative": "dist/_virtual/FlushInterval.js",
+          "bytes": 33,
+          "sha256": "453d12d37d2617c4ed20d1c79e13f4c80dd1948255fb2d463eb52f0a684f75ac"
+        },
+        {
+          "relative": "dist/_virtual/FlushTypes.js",
+          "bytes": 33,
+          "sha256": "453d12d37d2617c4ed20d1c79e13f4c80dd1948255fb2d463eb52f0a684f75ac"
+        },
+        {
+          "relative": "dist/_virtual/Hashing.js",
+          "bytes": 33,
+          "sha256": "453d12d37d2617c4ed20d1c79e13f4c80dd1948255fb2d463eb52f0a684f75ac"
+        },
+        {
+          "relative": "dist/_virtual/InitializeResponse.js",
+          "bytes": 33,
+          "sha256": "453d12d37d2617c4ed20d1c79e13f4c80dd1948255fb2d463eb52f0a684f75ac"
+        },
+        {
+          "relative": "dist/_virtual/Log.js",
+          "bytes": 33,
+          "sha256": "453d12d37d2617c4ed20d1c79e13f4c80dd1948255fb2d463eb52f0a684f75ac"
+        },
+        {
+          "relative": "dist/_virtual/MemoKey.js",
+          "bytes": 33,
+          "sha256": "453d12d37d2617c4ed20d1c79e13f4c80dd1948255fb2d463eb52f0a684f75ac"
+        },
+        {
+          "relative": "dist/_virtual/Network.js",
+          "bytes": 33,
+          "sha256": "453d12d37d2617c4ed20d1c79e13f4c80dd1948255fb2d463eb52f0a684f75ac"
+        },
+        {
+          "relative": "dist/_virtual/NetworkConfig.js",
+          "bytes": 33,
+          "sha256": "453d12d37d2617c4ed20d1c79e13f4c80dd1948255fb2d463eb52f0a684f75ac"
+        },
+        {
+          "relative": "dist/_virtual/NetworkCore.js",
+          "bytes": 33,
+          "sha256": "453d12d37d2617c4ed20d1c79e13f4c80dd1948255fb2d463eb52f0a684f75ac"
+        },
+        {
+          "relative": "dist/_virtual/NetworkFallbackResolver.js",
+          "bytes": 33,
+          "sha256": "453d12d37d2617c4ed20d1c79e13f4c80dd1948255fb2d463eb52f0a684f75ac"
+        },
+        {
+          "relative": "dist/_virtual/OverrideAdapter.js",
+          "bytes": 33,
+          "sha256": "453d12d37d2617c4ed20d1c79e13f4c80dd1948255fb2d463eb52f0a684f75ac"
+        },
+        {
+          "relative": "dist/_virtual/ParamStoreGetterFactory.js",
+          "bytes": 33,
+          "sha256": "453d12d37d2617c4ed20d1c79e13f4c80dd1948255fb2d463eb52f0a684f75ac"
+        },
+        {
+          "relative": "dist/_virtual/ParamStoreTypes.js",
+          "bytes": 33,
+          "sha256": "453d12d37d2617c4ed20d1c79e13f4c80dd1948255fb2d463eb52f0a684f75ac"
+        },
+        {
+          "relative": "dist/_virtual/PendingEvents.js",
+          "bytes": 33,
+          "sha256": "453d12d37d2617c4ed20d1c79e13f4c80dd1948255fb2d463eb52f0a684f75ac"
+        },
+        {
+          "relative": "dist/_virtual/SDKFlags.js",
+          "bytes": 33,
+          "sha256": "453d12d37d2617c4ed20d1c79e13f4c80dd1948255fb2d463eb52f0a684f75ac"
+        },
+        {
+          "relative": "dist/_virtual/SDKType.js",
+          "bytes": 33,
+          "sha256": "453d12d37d2617c4ed20d1c79e13f4c80dd1948255fb2d463eb52f0a684f75ac"
+        },
+        {
+          "relative": "dist/_virtual/SafeJs.js",
+          "bytes": 33,
+          "sha256": "453d12d37d2617c4ed20d1c79e13f4c80dd1948255fb2d463eb52f0a684f75ac"
+        },
+        {
+          "relative": "dist/_virtual/SessionID.js",
+          "bytes": 33,
+          "sha256": "453d12d37d2617c4ed20d1c79e13f4c80dd1948255fb2d463eb52f0a684f75ac"
+        },
+        {
+          "relative": "dist/_virtual/SizeOf.js",
+          "bytes": 33,
+          "sha256": "453d12d37d2617c4ed20d1c79e13f4c80dd1948255fb2d463eb52f0a684f75ac"
+        },
+        {
+          "relative": "dist/_virtual/StableID.js",
+          "bytes": 33,
+          "sha256": "453d12d37d2617c4ed20d1c79e13f4c80dd1948255fb2d463eb52f0a684f75ac"
+        },
+        {
+          "relative": "dist/_virtual/StatsigClient.js",
+          "bytes": 33,
+          "sha256": "453d12d37d2617c4ed20d1c79e13f4c80dd1948255fb2d463eb52f0a684f75ac"
+        },
+        {
+          "relative": "dist/_virtual/StatsigClientBase.js",
+          "bytes": 33,
+          "sha256": "453d12d37d2617c4ed20d1c79e13f4c80dd1948255fb2d463eb52f0a684f75ac"
+        },
+        {
+          "relative": "dist/_virtual/StatsigClientEventEmitter.js",
+          "bytes": 33,
+          "sha256": "453d12d37d2617c4ed20d1c79e13f4c80dd1948255fb2d463eb52f0a684f75ac"
+        },
+        {
+          "relative": "dist/_virtual/StatsigDataAdapter.js",
+          "bytes": 33,
+          "sha256": "453d12d37d2617c4ed20d1c79e13f4c80dd1948255fb2d463eb52f0a684f75ac"
+        },
+        {
+          "relative": "dist/_virtual/StatsigEvaluationsDataAdapter.js",
+          "bytes": 33,
+          "sha256": "453d12d37d2617c4ed20d1c79e13f4c80dd1948255fb2d463eb52f0a684f75ac"
+        },
+        {
+          "relative": "dist/_virtual/StatsigEvent.js",
+          "bytes": 33,
+          "sha256": "453d12d37d2617c4ed20d1c79e13f4c80dd1948255fb2d463eb52f0a684f75ac"
+        },
+        {
+          "relative": "dist/_virtual/StatsigMetadata.js",
+          "bytes": 33,
+          "sha256": "453d12d37d2617c4ed20d1c79e13f4c80dd1948255fb2d463eb52f0a684f75ac"
+        },
+        {
+          "relative": "dist/_virtual/StatsigOptionsCommon.js",
+          "bytes": 33,
+          "sha256": "453d12d37d2617c4ed20d1c79e13f4c80dd1948255fb2d463eb52f0a684f75ac"
+        },
+        {
+          "relative": "dist/_virtual/StatsigPlugin.js",
+          "bytes": 33,
+          "sha256": "453d12d37d2617c4ed20d1c79e13f4c80dd1948255fb2d463eb52f0a684f75ac"
+        },
+        {
+          "relative": "dist/_virtual/StatsigTypeFactories.js",
+          "bytes": 33,
+          "sha256": "453d12d37d2617c4ed20d1c79e13f4c80dd1948255fb2d463eb52f0a684f75ac"
+        },
+        {
+          "relative": "dist/_virtual/StatsigTypes.js",
+          "bytes": 33,
+          "sha256": "453d12d37d2617c4ed20d1c79e13f4c80dd1948255fb2d463eb52f0a684f75ac"
+        },
+        {
+          "relative": "dist/_virtual/StatsigUpdateDetails.js",
+          "bytes": 33,
+          "sha256": "453d12d37d2617c4ed20d1c79e13f4c80dd1948255fb2d463eb52f0a684f75ac"
+        },
+        {
+          "relative": "dist/_virtual/StatsigUser.js",
+          "bytes": 33,
+          "sha256": "453d12d37d2617c4ed20d1c79e13f4c80dd1948255fb2d463eb52f0a684f75ac"
+        },
+        {
+          "relative": "dist/_virtual/StorageProvider.js",
+          "bytes": 33,
+          "sha256": "453d12d37d2617c4ed20d1c79e13f4c80dd1948255fb2d463eb52f0a684f75ac"
+        },
+        {
+          "relative": "dist/_virtual/TypedJsonParse.js",
+          "bytes": 33,
+          "sha256": "453d12d37d2617c4ed20d1c79e13f4c80dd1948255fb2d463eb52f0a684f75ac"
+        },
+        {
+          "relative": "dist/_virtual/TypingUtils.js",
+          "bytes": 33,
+          "sha256": "453d12d37d2617c4ed20d1c79e13f4c80dd1948255fb2d463eb52f0a684f75ac"
+        },
+        {
+          "relative": "dist/_virtual/UUID.js",
+          "bytes": 33,
+          "sha256": "453d12d37d2617c4ed20d1c79e13f4c80dd1948255fb2d463eb52f0a684f75ac"
+        },
+        {
+          "relative": "dist/_virtual/UrlConfiguration.js",
+          "bytes": 33,
+          "sha256": "453d12d37d2617c4ed20d1c79e13f4c80dd1948255fb2d463eb52f0a684f75ac"
+        },
+        {
+          "relative": "dist/_virtual/V1InitializeContainer.js",
+          "bytes": 33,
+          "sha256": "453d12d37d2617c4ed20d1c79e13f4c80dd1948255fb2d463eb52f0a684f75ac"
+        },
+        {
+          "relative": "dist/_virtual/V2InitializeContainer.js",
+          "bytes": 33,
+          "sha256": "453d12d37d2617c4ed20d1c79e13f4c80dd1948255fb2d463eb52f0a684f75ac"
+        },
+        {
+          "relative": "dist/_virtual/VisibilityObserving.js",
+          "bytes": 33,
+          "sha256": "453d12d37d2617c4ed20d1c79e13f4c80dd1948255fb2d463eb52f0a684f75ac"
+        },
+        {
+          "relative": "dist/_virtual/__StatsigGlobal.js",
+          "bytes": 33,
+          "sha256": "453d12d37d2617c4ed20d1c79e13f4c80dd1948255fb2d463eb52f0a684f75ac"
+        },
+        {
+          "relative": "dist/_virtual/_commonjsHelpers.js",
+          "bytes": 178,
+          "sha256": "1cde29f09d86243102e18119ca0050402741593191cb95a738ded74e2c99ea65"
+        },
+        {
+          "relative": "dist/_virtual/index.js",
+          "bytes": 147,
+          "sha256": "fb8b7d1f18f80ff4051a502f0f3408e71697193d739eef4a7469ce39af401dd1"
+        },
+        {
+          "relative": "dist/_virtual/index2.js",
+          "bytes": 33,
+          "sha256": "453d12d37d2617c4ed20d1c79e13f4c80dd1948255fb2d463eb52f0a684f75ac"
+        },
+        {
+          "relative": "dist/_virtual/index3.js",
+          "bytes": 33,
+          "sha256": "453d12d37d2617c4ed20d1c79e13f4c80dd1948255fb2d463eb52f0a684f75ac"
+        },
+        {
+          "relative": "dist/lib/js/oai_js_browser/dist/skill/references/api.json",
+          "bytes": 66615,
+          "sha256": "afc25cc80c0abb56fff443642791f2b797113209fb435f686ac4a1dd3654f725"
+        },
+        {
+          "relative": "dist/lib/js/oai_js_browser/dist/skill/references/bootstrap-troubleshooting.md",
+          "bytes": 680,
+          "sha256": "bbf69be0ecff6b45e70a71d96487a6932426b3377df389ec7376107e8c1e0416"
+        },
+        {
+          "relative": "dist/lib/js/oai_js_browser/dist/skill/references/browser-safety-training.md",
+          "bytes": 824,
+          "sha256": "734079c58cdd938673c73a84fe6bd9f1ed131d411f7e4cce9cf6b11819c79e41"
+        },
+        {
+          "relative": "dist/lib/js/oai_js_browser/dist/skill/references/browser-troubleshooting.md",
+          "bytes": 928,
+          "sha256": "76ca57503fc2b11c602ad090326b6f0fec2d037826ec828607945f4c333b206b"
+        },
+        {
+          "relative": "dist/lib/js/oai_js_browser/dist/skill/references/capabilities/browser/management.md",
+          "bytes": 5843,
+          "sha256": "c7718517d2e1db86b07f9b26e9f66c268e6f0e632ec2e204ec945c4cb2bd353e"
+        },
+        {
+          "relative": "dist/lib/js/oai_js_browser/dist/skill/references/capabilities/browser/viewport.md",
+          "bytes": 1014,
+          "sha256": "c9857bf5aae8bfc73630751363ce27204792b88b1cd95d4da19c03833501921a"
+        },
+        {
+          "relative": "dist/lib/js/oai_js_browser/dist/skill/references/capabilities/browser/visibility.md",
+          "bytes": 888,
+          "sha256": "8cb1588084cd3372ffc78b8c500dfa2f359d8a63a3c250f014fd55fad7336b08"
+        },
+        {
+          "relative": "dist/lib/js/oai_js_browser/dist/skill/references/capabilities/tab/botDetection.md",
+          "bytes": 3072,
+          "sha256": "d40282e95a0c3dfcb9a94096e2ae64684af35a551fecc6c1fbfe21a9ccae5c65"
+        },
+        {
+          "relative": "dist/lib/js/oai_js_browser/dist/skill/references/capabilities/tab/browserAuth.md",
+          "bytes": 22070,
+          "sha256": "3f9dddd9731311dcc18015f78667c26ed95fde2fcb909f6eb45e6a12ca501f2a"
+        },
+        {
+          "relative": "dist/lib/js/oai_js_browser/dist/skill/references/capabilities/tab/cdp.md",
+          "bytes": 2232,
+          "sha256": "8e4d8cc937b7213d9c946f082762e31ece226b05ff42e49e535841c7209ac9a6"
+        },
+        {
+          "relative": "dist/lib/js/oai_js_browser/dist/skill/references/capabilities/tab/pageAssets.md",
+          "bytes": 1870,
+          "sha256": "ad372fa68fa3af13a22c1d5a60f3437af19ef24be68197a0602d43cf2ee1950d"
+        },
+        {
+          "relative": "dist/lib/js/oai_js_browser/dist/skill/references/capabilities/tab/webmcp.md",
+          "bytes": 341,
+          "sha256": "02326ba566c5446c8e642fc98ac7aae3044c46d48432272d81b7c7e164d42beb"
+        },
+        {
+          "relative": "dist/lib/js/oai_js_browser/dist/skill/references/documents.json",
+          "bytes": 1930,
+          "sha256": "361fe0b19d7dc370db19638afd1347df48643e2d79cc92e9b2b849f8db2923a6"
+        },
+        {
+          "relative": "dist/lib/js/oai_js_browser/dist/skill/references/file-uploads.md",
+          "bytes": 960,
+          "sha256": "be58df64881903636d16bb11f65e98c8e77f34b82a2d27566df320284c9d37f6"
+        },
+        {
+          "relative": "dist/lib/js/oai_js_browser/dist/skill/references/tab-claiming-cdp.md",
+          "bytes": 697,
+          "sha256": "d6ed229df46068ef8989432f52cb52eef887e3f77f37db55098fb6f146ebcff6"
+        },
+        {
+          "relative": "dist/lib/js/oai_js_browser/dist/skill/references/tab-cleanup-chrome.md",
+          "bytes": 1104,
+          "sha256": "d20b4073125929f2b61960b1513ecd9e0fb261c88a4d8077e34f22520e7a1de8"
+        },
+        {
+          "relative": "dist/lib/js/oai_js_browser/dist/skill/references/visibility.md",
+          "bytes": 601,
+          "sha256": "7cb1870c425f6b80521722fe5091a76328d53c41bca69705277231e815610ed0"
+        },
+        {
+          "relative": "dist/lib/js/oai_js_browser/dist/skill/scripts/browser-client.js",
+          "bytes": 161167,
+          "sha256": "821e2b689eba8d95f3ad0ff328d68ac8692baec955d993ecd21d2cdb9ba31760"
+        },
+        {
+          "relative": "dist/lib/js/oai_js_browser/dist/skill/scripts/browser-client.mjs",
+          "bytes": 170116,
+          "sha256": "ccde4b71fbbe3b73ba7c9b359110371c233f44fb59e8231efdf1f5bc8c29c852"
+        },
+        {
+          "relative": "dist/lib/js/oai_js_browser/dist/skill/scripts/browser-service.mjs",
+          "bytes": 1574596,
+          "sha256": "0924ce1c8694292a6d80f544a7a168833c73e9b3981791860638a20a6f3b8b2d"
+        },
+        {
+          "relative": "dist/lib/js/oai_js_core/src/UnreachableCaseError.d.ts",
+          "bytes": 91,
+          "sha256": "276b8af5ab99167e0a217186a39ffa44473beecd9a937057bcad2eb3e21c53b4"
+        },
+        {
+          "relative": "dist/lib/js/oai_js_core/src/UnreachableCaseError.js",
+          "bytes": 115,
+          "sha256": "0b4ce635bb19896c7dde334d0bba2c5f45194d347ada950b4302c585d7514390"
+        },
+        {
+          "relative": "dist/lib/js/oai_js_core/src/createDelayedAction.d.ts",
+          "bytes": 147,
+          "sha256": "787416230e593571cd1049eb22417f1330b1e3ee546592533acc26fda9769d86"
+        },
+        {
+          "relative": "dist/lib/js/oai_js_core/src/createLazyEvaluator.d.ts",
+          "bytes": 168,
+          "sha256": "6d33edf1a91ab796685ecea32c308d7624ea8edf7177980b49af997c902c89b2"
+        },
+        {
+          "relative": "dist/lib/js/oai_js_core/src/enumerate.d.ts",
+          "bytes": 260,
+          "sha256": "1882fde2f026ba5c40bf6369616d14a7efe40d32478a1f40f82e857452a50812"
+        },
+        {
+          "relative": "dist/lib/js/oai_js_core/src/index.d.ts",
+          "bytes": 343,
+          "sha256": "fe42080f26e2211d8de73d966ed7acb066eadf1fbbf5a5fddd8cd15b726be4f6"
+        },
+        {
+          "relative": "dist/lib/js/oai_js_core/src/invariant.d.ts",
+          "bytes": 91,
+          "sha256": "bf5d6dd5a634f4b912c8111e549654c85158a7f1cf2e9de04e6b15a528d92977"
+        },
+        {
+          "relative": "dist/lib/js/oai_js_core/src/mirror_map.d.ts",
+          "bytes": 245,
+          "sha256": "19e83345abcf55f67f1e20292feaa3132ee9819697b79bb9c22fefe25492c16e"
+        },
+        {
+          "relative": "dist/lib/js/oai_js_core/src/mirror_map.js",
+          "bytes": 143,
+          "sha256": "9c9dd571ddb233c08c10459a5dd3c98d4b8dc41030bac20f37da06b3fec00725"
+        },
+        {
+          "relative": "dist/lib/js/oai_js_core/src/sleep.d.ts",
+          "bytes": 61,
+          "sha256": "adefa308b0adcf20fa0a84e2c0fb2ba94d549b1c7e6e689fa89af3bf705ddbfe"
+        },
+        {
+          "relative": "dist/lib/js/oai_js_cua/src/core/display.d.ts",
+          "bytes": 301,
+          "sha256": "889bb9e35685cb369f601e6275baf98f3a395aae67f1bd8b626c7fb6680edfc5"
+        },
+        {
+          "relative": "dist/lib/js/oai_js_cua/src/core/display.js",
+          "bytes": 551,
+          "sha256": "f6b026dec5d590f6719edb857600a8515c95c593345e8bb06fe98edca35103b6"
+        },
+        {
+          "relative": "dist/lib/js/oai_js_cua/src/core/positive_pixels.d.ts",
+          "bytes": 65,
+          "sha256": "e603919efa797653d54aa2c0e7c8f238e637b462425f1e34f646c1408829a40b"
+        },
+        {
+          "relative": "dist/lib/js/oai_js_cua/src/core/positive_pixels.js",
+          "bytes": 142,
+          "sha256": "e0e3a4cb0113b99ed4177acfe405afd1d538d70f955a299fab2155747f782a91"
+        },
+        {
+          "relative": "dist/lib/js/oai_js_cua/src/core/screenshot_bytes.d.ts",
+          "bytes": 76,
+          "sha256": "282bf2309a2eb0db66d00c8eba6eafc916cb3d9b08169a0576c64c86359ea808"
+        },
+        {
+          "relative": "dist/lib/js/oai_js_cua/src/core/screenshot_bytes.js",
+          "bytes": 394,
+          "sha256": "1898dbdcc479016a588ca1fcc6e58f0d62074266f4a7f80530603491fd483071"
+        },
+        {
+          "relative": "dist/lib/js/oai_js_cua/src/cua.d.ts",
+          "bytes": 1357,
+          "sha256": "2a26eafeb403d4027da8bf2a5b106348c749a117b18a9826876deb43a8197d4e"
+        },
+        {
+          "relative": "dist/lib/js/oai_js_cua/src/cua.js",
+          "bytes": 581,
+          "sha256": "4723fddd6ab6ebea521b5bd9b1e1635ef57845fd26cd84140a5b16a26c1e7529"
+        },
+        {
+          "relative": "dist/lib/js/oai_js_cua/src/get_apps.d.ts",
+          "bytes": 318,
+          "sha256": "eaa920f72c581e384ae90ba49e183e43014cf76d4ed5fca2ed6d3917ce238bfe"
+        },
+        {
+          "relative": "dist/lib/js/oai_js_cua/src/get_apps.js",
+          "bytes": 479,
+          "sha256": "d209775c9aec14191413a4017ef0e070b8f2fe122806216c8fb85c664f51449a"
+        },
+        {
+          "relative": "dist/lib/js/oai_js_cua/src/get_browser_tabs.d.ts",
+          "bytes": 329,
+          "sha256": "843367742d1809f4e9c1b530c782a012a972c8501e81fd7de8f83883a8e2209f"
+        },
+        {
+          "relative": "dist/lib/js/oai_js_cua/src/get_browser_tabs.js",
+          "bytes": 456,
+          "sha256": "cb299a0313fbe8e049b4f25b70237d3d154b170fb297bf6ac57fdb20dc3ce657"
+        },
+        {
+          "relative": "dist/lib/js/oai_js_cua/src/get_browsers.d.ts",
+          "bytes": 824,
+          "sha256": "cfeb108881ede88afe493357ec34e27f8053fadb1be2b26fff46be7f3b4eda47"
+        },
+        {
+          "relative": "dist/lib/js/oai_js_cua/src/get_browsers.js",
+          "bytes": 643,
+          "sha256": "2b12305ac41a9446ecbc221bc3ff0ee8fdf9f39d553f07ffdce89ed40a2564df"
+        },
+        {
+          "relative": "dist/lib/js/oai_js_cua/src/get_state.d.ts",
+          "bytes": 1268,
+          "sha256": "ddce3f8b1d250d05b3abb984348450b64dbb85bc216241307f2cb44734b902c3"
+        },
+        {
+          "relative": "dist/lib/js/oai_js_cua/src/get_state.js",
+          "bytes": 759,
+          "sha256": "d6a44bdff38413cdcaea83c791267ad0bed0e1913bdc60a8c227b3c12d3cc372"
+        },
+        {
+          "relative": "dist/lib/js/oai_js_cua/src/index.d.ts",
+          "bytes": 29,
+          "sha256": "e77ace69fe0dadde9694f0bc4ca8ba793f5c7a354d719e4c198bc6d41de1a9f8"
+        },
+        {
+          "relative": "dist/lib/js/oai_js_cua/src/index.js",
+          "bytes": 27,
+          "sha256": "2a24424f33d4d049f4d96d73616ae5ca86fd9c4347887977b0804851d52b1957"
+        },
+        {
+          "relative": "dist/lib/js/oai_js_cua/src/tinysky_alt/bind_linux_app.d.ts",
+          "bytes": 179,
+          "sha256": "dc1f796ac262c264eb44d6a86d522a7ecd67f78429d250616e14ffa7c347e407"
+        },
+        {
+          "relative": "dist/lib/js/oai_js_cua/src/tinysky_alt/bind_linux_app.js",
+          "bytes": 3219,
+          "sha256": "44017ecce09d7eaca6ec8b4a30651581300127e6998b559f9a4598b1cc81bccd"
+        },
+        {
+          "relative": "dist/lib/js/oai_js_cua/src/tinysky_alt/bind_mac_app.d.ts",
+          "bytes": 118,
+          "sha256": "4c0e1605b293e147ff259780f087b317e16ce3d787bcbc231034b4280644cbd1"
+        },
+        {
+          "relative": "dist/lib/js/oai_js_cua/src/tinysky_alt/bind_mac_app.js",
+          "bytes": 2539,
+          "sha256": "1c210ebf411e196622c6fa294fd255df10ddbb44038ab4523e68d2dcc351ea14"
+        },
+        {
+          "relative": "dist/lib/js/oai_js_cua/src/tinysky_alt/bind_tab.d.ts",
+          "bytes": 95,
+          "sha256": "ec5e233ef4d0044d8cd6914f8b91a8ea708177b5354455d978411bd1e77c2bde"
+        },
+        {
+          "relative": "dist/lib/js/oai_js_cua/src/tinysky_alt/bind_tab.js",
+          "bytes": 2309,
+          "sha256": "a693e078ecbaa34020cf0caa373edb9c525dad87fd3ada62706a07eadaa6dc2a"
+        },
+        {
+          "relative": "dist/lib/js/oai_js_cua/src/tinysky_alt/bind_windows_app.d.ts",
+          "bytes": 175,
+          "sha256": "24734f9da66684acb16904a23e51f055adc9bf98b11e1c578956416eb9f46dc2"
+        },
+        {
+          "relative": "dist/lib/js/oai_js_cua/src/tinysky_alt/bind_windows_app.js",
+          "bytes": 4705,
+          "sha256": "61d568181a97aceb68beb7a5c0273f915febd75f4b2e61b8812bafc469f920c0"
+        },
+        {
+          "relative": "dist/lib/js/oai_js_cua/src/tinysky_alt/create_bootstrap_emitter.d.ts",
+          "bytes": 359,
+          "sha256": "7863b2b81a7c64f740a5e09a119d6f2d93a9746c26fcb0233aaea363e24cec90"
+        },
+        {
+          "relative": "dist/lib/js/oai_js_cua/src/tinysky_alt/create_bootstrap_emitter.js",
+          "bytes": 1718,
+          "sha256": "c7464e22321e47d5bb37b9695b53df1cf95aa6a262143ca1001ad02cba3d00dc"
+        },
+        {
+          "relative": "dist/lib/js/oai_js_cua/src/tinysky_alt/create_browser_api.d.ts",
+          "bytes": 421,
+          "sha256": "db5c24c93bee752f6b6c6135ccaaabec218fad2f78c08ce9f89291a156a4dccf"
+        },
+        {
+          "relative": "dist/lib/js/oai_js_cua/src/tinysky_alt/create_browser_api.js",
+          "bytes": 5738,
+          "sha256": "fe00757868fc4dd01b00d2cd1b315d7442497a4b33d7cd030450da4d47a114f0"
+        },
+        {
+          "relative": "dist/lib/js/oai_js_cua/src/tinysky_alt/create_documentation.d.ts",
+          "bytes": 125,
+          "sha256": "dbd22e1aaa4b4206d7a618de774e7a3b8a8e06eb5fbd8024e67c949932c05598"
+        },
+        {
+          "relative": "dist/lib/js/oai_js_cua/src/tinysky_alt/create_documentation.js",
+          "bytes": 1041,
+          "sha256": "2e976f0b0448f5ca61910b0d3505d9e3e94c7b329787321a5a220d0fe2e83283"
+        },
+        {
+          "relative": "dist/lib/js/oai_js_cua/src/tinysky_alt/create_tinysky_alt.d.ts",
+          "bytes": 148,
+          "sha256": "44246ba01f19bf122e6c8d383b4b2ff1348cb1056264eac747656e13a2203c41"
+        },
+        {
+          "relative": "dist/lib/js/oai_js_cua/src/tinysky_alt/create_tinysky_alt.js",
+          "bytes": 3182,
+          "sha256": "dbe5670314df83184341e58ce0a8e1555537930613cde772905ce18c31744200"
+        },
+        {
+          "relative": "dist/lib/js/oai_js_cua/src/tinysky_alt/duration_seconds.d.ts",
+          "bytes": 71,
+          "sha256": "5f3848c6d73c6f32d707f29ea256779559c92f596bf32b986a7eb950738d10a3"
+        },
+        {
+          "relative": "dist/lib/js/oai_js_cua/src/tinysky_alt/duration_seconds.js",
+          "bytes": 181,
+          "sha256": "6d38d0a24c934f1141cf35236f1f423b398da2521d2c94b12387fe54f60df6c9"
+        },
+        {
+          "relative": "dist/lib/js/oai_js_cua/src/tinysky_alt/globals.d.ts",
+          "bytes": 30,
+          "sha256": "8c0b309eb137be87759827e1fd5bd339bfcde029eb6ff5f1aa91aea43a2b32db"
+        },
+        {
+          "relative": "dist/lib/js/oai_js_cua/src/tinysky_alt/globals.js",
+          "bytes": 583,
+          "sha256": "18b8039f846a6e00206128530c5f59ff05bd361c655a858a4a27059ec0f63d23"
+        },
+        {
+          "relative": "dist/lib/js/oai_js_cua/src/tinysky_alt/one_screenshot.d.ts",
+          "bytes": 95,
+          "sha256": "5f1902274d95781c62903461b1dc1362a2b8bdb91b93993a5c8af457f6727c95"
+        },
+        {
+          "relative": "dist/lib/js/oai_js_cua/src/tinysky_alt/one_screenshot.js",
+          "bytes": 171,
+          "sha256": "22745e46cb646393e95a4190d973ccfe8991dd65750e3ea72076a9e5e3851015"
+        },
+        {
+          "relative": "dist/lib/js/oai_js_cua/src/tinysky_alt/read_documentation.d.ts",
+          "bytes": 77,
+          "sha256": "2831282eaaa0a09c2da600ce967a431bc19ec68fa10db495686c315aa48c59e4"
+        },
+        {
+          "relative": "dist/lib/js/oai_js_cua/src/tinysky_alt/read_documentation.js",
+          "bytes": 415,
+          "sha256": "452e0e8e25e3802ec815512d8b165126ca6a7a01f057bf8e53108a461bcb8d09"
+        },
+        {
+          "relative": "dist/lib/js/oai_js_cua/src/tinysky_alt/require_plain_text.d.ts",
+          "bytes": 140,
+          "sha256": "7ca6620050415a0e39d2393641b2dbc42503235cdffe94bc68465c25d3eea1e3"
+        },
+        {
+          "relative": "dist/lib/js/oai_js_cua/src/tinysky_alt/require_plain_text.js",
+          "bytes": 163,
+          "sha256": "0a279d667c0e10a1e5c330f5ab66d2a8822ba42cee836733e50171d42052c64e"
+        },
+        {
+          "relative": "dist/lib/js/oai_js_cua/src/tinysky_alt/setup_browser.d.ts",
+          "bytes": 339,
+          "sha256": "6c94d841bb576797b50fd0d7b581459ea3fa1ffe62a7ad2159972922f323c694"
+        },
+        {
+          "relative": "dist/lib/js/oai_js_cua/src/tinysky_alt/setup_browser.js",
+          "bytes": 540,
+          "sha256": "a1cf70b2ec89d51f9bc33b056dbe31af9cc6fd605c365e93f5d0649d12748216"
+        },
+        {
+          "relative": "dist/lib/js/oai_js_cua/src/tinysky_alt/tab_reference.d.ts",
+          "bytes": 362,
+          "sha256": "3a19e31b5357d5e7033564f63085c6286b9ad59c117802f5d6f2cae2b5456210"
+        },
+        {
+          "relative": "dist/lib/js/oai_js_cua/src/tinysky_alt/tab_reference.js",
+          "bytes": 1360,
+          "sha256": "d08f46f12ba96fd4a2844eae737697ab4ed51cf9a2beb6c5034362ca17108949"
+        },
+        {
+          "relative": "dist/lib/js/oai_js_cua/src/tinysky_alt/test/create_browser_mocks.d.ts",
+          "bytes": 49209,
+          "sha256": "0838f4e6ec965ba21bce37dab71dac5291e55609a96f922cae1152db6f3b595f"
+        },
+        {
+          "relative": "dist/lib/js/oai_js_cua/src/tinysky_alt/test/documentation.d.ts",
+          "bytes": 129,
+          "sha256": "d3dc6f0e41c18b50493a04b34a17ae1f559be5bcb1fa7dc51f3d946ab0236504"
+        },
+        {
+          "relative": "dist/lib/js/oai_js_cua/src/tinysky_alt/test/globals.d.ts",
+          "bytes": 777,
+          "sha256": "0992fddb34733dd7cd897780919efb14cd6f5ea4a531f23bb41a0515334934e0"
+        },
+        {
+          "relative": "dist/lib/js/oai_js_cua/src/tinysky_alt/test/providers.d.ts",
+          "bytes": 33965,
+          "sha256": "6a25013be9cbe62031541c3905087b0c9509ebce06137c679c075013be0383a6"
+        },
+        {
+          "relative": "dist/lib/js/oai_js_cua/src/tinysky_alt/types.d.ts",
+          "bytes": 9497,
+          "sha256": "44c1ab373013950c2d266d9591f63e1fa9af452477ff9b8b0d4f848a552e057f"
+        },
+        {
+          "relative": "dist/lib/js/oai_js_cua/src/tinysky_browser/create_tinysky_browser.d.ts",
+          "bytes": 421,
+          "sha256": "09f6409e4c8d42d3db43a1740b4828ebbd765158de075df6fff2eb1f80caf0e8"
+        },
+        {
+          "relative": "dist/lib/js/oai_js_cua/src/tinysky_browser/create_tinysky_browser.js",
+          "bytes": 1142,
+          "sha256": "fa1f94f45a1745debd549dc286ef8de3e08a64feaeb8dfd0e5b661af71255e58"
+        },
+        {
+          "relative": "dist/lib/js/oai_js_cua/src/tinysky_vision_only/create_tinysky_vision_only.d.ts",
+          "bytes": 865,
+          "sha256": "1a3be3499cf43bcdfcb504617b8922f4590eec21941f5da2cc0b32041bf21a02"
+        },
+        {
+          "relative": "dist/lib/js/oai_js_cua/src/tinysky_vision_only/create_tinysky_vision_only.js",
+          "bytes": 1064,
+          "sha256": "485c62509de45fc8ee7a0b678c050082b2222151a652621219f13bd73a9f4873"
+        },
+        {
+          "relative": "dist/lib/js/oai_js_cua/src/tinysky_vision_only/globals.d.ts",
+          "bytes": 11,
+          "sha256": "8e609bb71c20b858c77f0e9f90bb1319db8477b13f9f965f1a1e18524bf50881"
+        },
+        {
+          "relative": "dist/lib/js/oai_js_cua/src/tinysky_vision_only/globals.js",
+          "bytes": 280,
+          "sha256": "35a95ec3b269640d51b7d564418bb01ca54128b19a054e43f2c29fc0970378c2"
+        },
+        {
+          "relative": "dist/lib/js/oai_js_cua/src/types.d.ts",
+          "bytes": 675,
+          "sha256": "c83485fe4153790dda17acc6cec41f3d71eac2a5fbb4364ab653ba2245fe3625"
+        },
+        {
+          "relative": "dist/lib/js/oai_js_types/src/AnyFunction.d.ts",
+          "bytes": 49,
+          "sha256": "45d7b3215a84fda846aa5cc298f7792499a061cca8e18aaacc7484f2cea0d1a3"
+        },
+        {
+          "relative": "dist/lib/js/oai_js_types/src/Array.d.ts",
+          "bytes": 90,
+          "sha256": "373a81f7a7f9016c754fc86f6559bb3fac94dca63ad7393ec424b82533c8d026"
+        },
+        {
+          "relative": "dist/lib/js/oai_js_types/src/Merge.d.ts",
+          "bytes": 96,
+          "sha256": "423ca13f3935cc3953a664219f6264c429eed1e917d74d3e6e1086c31cd1aa98"
+        },
+        {
+          "relative": "dist/lib/js/oai_js_types/src/Param/Param.d.ts",
+          "bytes": 375,
+          "sha256": "d618fa88c96a9b8b41e13772c6bfd07496d1d84482ee415cedef032914fef811"
+        },
+        {
+          "relative": "dist/lib/js/oai_js_types/src/Param/index.d.ts",
+          "bytes": 34,
+          "sha256": "6a27b3e2029e9ae8a7d87ba4c8b30c63623018a02de0353da33f49c63f884257"
+        },
+        {
+          "relative": "dist/lib/js/oai_js_types/src/Pretty.d.ts",
+          "bytes": 65,
+          "sha256": "494a7cd529b4d3e37682ecdb17b90d0790fc0e025c6fb3f48f6ab08bdcac542b"
+        },
+        {
+          "relative": "dist/lib/js/oai_js_types/src/index.d.ts",
+          "bytes": 132,
+          "sha256": "321c6e26418b9b30e138f4b45ea8fcc09615d4de2f05ff1aaa0f4a092439b6be"
+        },
+        {
+          "relative": "dist/project/cua/sky_js/src/core/cli.d.ts",
+          "bytes": 543,
+          "sha256": "75f0df743957c633ca9e9f6186522bc425edecb66dc96c3635c0649150dce7b9"
+        },
+        {
+          "relative": "dist/project/cua/sky_js/src/core/cli.js",
+          "bytes": 1287,
+          "sha256": "2c93f5b2abde4dbfb0e2ceb9fa724c883d30f61eb937cb9b51ba65f708e9c094"
+        },
+        {
+          "relative": "dist/project/cua/sky_js/src/core/package_bin.d.ts",
+          "bytes": 198,
+          "sha256": "e322035db59df8d1d7c5c08d975efba0dfa65bb0b25ed5bfa58e5862676509b3"
+        },
+        {
+          "relative": "dist/project/cua/sky_js/src/core/package_bin.js",
+          "bytes": 621,
+          "sha256": "fdfb9aebfb8ffb496c8ddc673ed1b2e6eed536888ad52147d7d91b5486e24b34"
+        },
+        {
+          "relative": "dist/project/cua/sky_js/src/core/uint8.d.ts",
+          "bytes": 236,
+          "sha256": "ea3b51c726d2c532e1a82630b47fd02cff9a0a6d15b6b0f2b5aec0b757f9d49b"
+        },
+        {
+          "relative": "dist/project/cua/sky_js/src/core/uint8.js",
+          "bytes": 465,
+          "sha256": "866164e4a4f919cf6af4921a0670372358f0d92d8f0bcd3e0534297c70b34b6a"
+        },
+        {
+          "relative": "dist/project/cua/sky_js/src/create_client.d.ts",
+          "bytes": 368,
+          "sha256": "a2d5462b30047576f4542b62816c7746a7434f03c9f7c6817867059a44f6d399"
+        },
+        {
+          "relative": "dist/project/cua/sky_js/src/create_client.js",
+          "bytes": 579,
+          "sha256": "5dc4a74434f382e318b596764054bf647fd13d3c9dea9ce5e8464a5c13fa2d81"
+        },
+        {
+          "relative": "dist/project/cua/sky_js/src/index.d.ts",
+          "bytes": 71,
+          "sha256": "f918fe1ee3f7fff0cb88fa0243ae7b58b1f7bf2f5ea9edb6bea69fd58c83e93f"
+        },
+        {
+          "relative": "dist/project/cua/sky_js/src/index.js",
+          "bytes": 27,
+          "sha256": "895d7be648bef5b11b3e562fb1838161a162892b74792469488637665252bdfc"
+        },
+        {
+          "relative": "dist/project/cua/sky_js/src/load_options.d.ts",
+          "bytes": 86,
+          "sha256": "55ae5d7912d284cbeb095d3ac5e449f320cfbf21706d5097a281c503a9fd8655"
+        },
+        {
+          "relative": "dist/project/cua/sky_js/src/load_options.js",
+          "bytes": 438,
+          "sha256": "0ddd5df4674ae2696550cd2ac41583caef9dad9b58bd363559fda716c2ed8341"
+        },
+        {
+          "relative": "dist/project/cua/sky_js/src/require_audio_model_support.d.ts",
+          "bytes": 311,
+          "sha256": "3139fc55b3a1a6dbe5221700cd3347a1c34ac368cf3d47f05a10e5e291466fb8"
+        },
+        {
+          "relative": "dist/project/cua/sky_js/src/require_audio_model_support.js",
+          "bytes": 621,
+          "sha256": "0576698815f735e20d7b0a0d81d18a05bd5f55c362e67597ff816d0f669c19e5"
+        },
+        {
+          "relative": "dist/project/cua/sky_js/src/service.d.ts",
+          "bytes": 620,
+          "sha256": "b3c2b8ed4ea69bba29ef563c7409530d7adf5c6428938836ad91f9c27bb9f084"
+        },
+        {
+          "relative": "dist/project/cua/sky_js/src/sky.d.ts",
+          "bytes": 74,
+          "sha256": "055fb57ead0562e49935152dade680c035d988a7a554266c5f46da2f4ac295e5"
+        },
+        {
+          "relative": "dist/project/cua/sky_js/src/sky.js",
+          "bytes": 2077,
+          "sha256": "0123da875a2eef5648fac407fcfedad5147ef9a1616b623ad615f4c337aee285"
+        },
+        {
+          "relative": "dist/project/cua/sky_js/src/targets/linux/accessibility_tree.d.ts",
+          "bytes": 390,
+          "sha256": "1e4c497864fc9109c01e8f7dcd19c76af3558f425b976f8c81794594f21b27a2"
+        },
+        {
+          "relative": "dist/project/cua/sky_js/src/targets/linux/accessibility_tree.js",
+          "bytes": 3689,
+          "sha256": "fdd977fbaafdc973d126350e469a402ed6e86d6121a5d5a94ceba7bf28c2ae4e"
+        },
+        {
+          "relative": "dist/project/cua/sky_js/src/targets/linux/action_settler.d.ts",
+          "bytes": 307,
+          "sha256": "f6e23a433f85a494de5ffc39d4ec5f35fa374767cdfbad651bf38a55906d19d7"
+        },
+        {
+          "relative": "dist/project/cua/sky_js/src/targets/linux/action_settler.js",
+          "bytes": 740,
+          "sha256": "1341a4cc821347b9323800e597c0c754e2e6aa4e8d7c036b47163b6d43a57591"
+        },
+        {
+          "relative": "dist/project/cua/sky_js/src/targets/linux/activate_window.d.ts",
+          "bytes": 170,
+          "sha256": "71c30134a8e91fef538e3b883d10428d29128719d45328d468e2b802513c99b5"
+        },
+        {
+          "relative": "dist/project/cua/sky_js/src/targets/linux/activate_window.js",
+          "bytes": 352,
+          "sha256": "8fc14053190f5bbb4b7d628d591330392c4833984c75fc4776c88f192b39e803"
+        },
+        {
+          "relative": "dist/project/cua/sky_js/src/targets/linux/audio_recording.d.ts",
+          "bytes": 276,
+          "sha256": "27a1cfc6d12a2da1ce58f2476ce82b407c5675e5e2ba11cc96a08d113c36f69a"
+        },
+        {
+          "relative": "dist/project/cua/sky_js/src/targets/linux/audio_recording.js",
+          "bytes": 2328,
+          "sha256": "2765d8b304ec21d1c76c8a43a56e169ab888160420f6a5fe14c577ca946cf544"
+        },
+        {
+          "relative": "dist/project/cua/sky_js/src/targets/linux/click.d.ts",
+          "bytes": 151,
+          "sha256": "da98de7647ae2746d54cf07343da38c4b45de78e76594261c4449f50f2f60b94"
+        },
+        {
+          "relative": "dist/project/cua/sky_js/src/targets/linux/click.js",
+          "bytes": 355,
+          "sha256": "d4e4d2b4bf6048173f6752b0a1caf1c01a9abd2a93fa1aef61c1c273d2cc6ccf"
+        },
+        {
+          "relative": "dist/project/cua/sky_js/src/targets/linux/clipboard_read.d.ts",
+          "bytes": 168,
+          "sha256": "8cefb2cdda396bda858655a9f782fad5aa32975816f004641089dab4a20bf2de"
+        },
+        {
+          "relative": "dist/project/cua/sky_js/src/targets/linux/clipboard_read.js",
+          "bytes": 379,
+          "sha256": "f493bb081f594f948cf078ac934f70ede178f582af227d3b4d77150c39b3dd73"
+        },
+        {
+          "relative": "dist/project/cua/sky_js/src/targets/linux/clipboard_release.d.ts",
+          "bytes": 174,
+          "sha256": "6e4f7ef07fc6a346e0e57594dfb822f29c615852b05a4b71352931466bbd8394"
+        },
+        {
+          "relative": "dist/project/cua/sky_js/src/targets/linux/clipboard_release.js",
+          "bytes": 301,
+          "sha256": "3cf048de8234616041175e1e00422a30e63f2edadcc1ebfe64c3455052cf71c2"
+        },
+        {
+          "relative": "dist/project/cua/sky_js/src/targets/linux/clipboard_write.d.ts",
+          "bytes": 170,
+          "sha256": "d871392e58a3fd39024df49597b46fae02f42ddd1dcf90788971b54e33803bfd"
+        },
+        {
+          "relative": "dist/project/cua/sky_js/src/targets/linux/clipboard_write.js",
+          "bytes": 352,
+          "sha256": "5c6fa9abb5537b3f0264bd748efcb600a6293e1bc09dc0a1d573ca310af2a03b"
+        },
+        {
+          "relative": "dist/project/cua/sky_js/src/targets/linux/create_client.d.ts",
+          "bytes": 137,
+          "sha256": "a3a7fc2002173852ff5c789b8d8c2c2e639566745a12e17336bd927a62e74c5a"
+        },
+        {
+          "relative": "dist/project/cua/sky_js/src/targets/linux/create_client.js",
+          "bytes": 1902,
+          "sha256": "5ecbf120d4aa74e9b3672a8e1974220a18f2931bf8badb724ac56f13f0e0c0ec"
+        },
+        {
+          "relative": "dist/project/cua/sky_js/src/targets/linux/drag.d.ts",
+          "bytes": 149,
+          "sha256": "ea0aaf2cc665c3732ae1d338ba49288d2f6a3a4cf06b526022ef032661c0d9c8"
+        },
+        {
+          "relative": "dist/project/cua/sky_js/src/targets/linux/drag.js",
+          "bytes": 330,
+          "sha256": "3133bb9c6a287271da0c23d3fc2126e14ad8b793df4ed413bd779d7864f01944"
+        },
+        {
+          "relative": "dist/project/cua/sky_js/src/targets/linux/drag_handle.d.ts",
+          "bytes": 162,
+          "sha256": "308b7d9cf81ee2906d41b84a7616e6744f4ca4c81f77ebd689a662e01e24eb91"
+        },
+        {
+          "relative": "dist/project/cua/sky_js/src/targets/linux/drag_handle.js",
+          "bytes": 1007,
+          "sha256": "7c3034cb0a963d45420ef7a853a48d8bbe3ed0096732f18023e684757a5bb1e5"
+        },
+        {
+          "relative": "dist/project/cua/sky_js/src/targets/linux/element_ids.d.ts",
+          "bytes": 515,
+          "sha256": "3a3c36f21e8009edc5a5eb70ce6aa366a76eb033377fbd686b47d2220d049911"
+        },
+        {
+          "relative": "dist/project/cua/sky_js/src/targets/linux/element_ids.js",
+          "bytes": 709,
+          "sha256": "cb69a5924a3655a56722d071d4224f79aec5aa37360fc87da031293c5fd51f35"
+        },
+        {
+          "relative": "dist/project/cua/sky_js/src/targets/linux/get_screenshot.d.ts",
+          "bytes": 406,
+          "sha256": "44d0301bb2c8aab375fa095c379d278c4c45119303d40e499e519aa799ec4591"
+        },
+        {
+          "relative": "dist/project/cua/sky_js/src/targets/linux/get_screenshot.js",
+          "bytes": 678,
+          "sha256": "3ad2d0174951908697a11962f0dbf95e01214d5bd922a44fdf93082a967a1c1c"
+        },
+        {
+          "relative": "dist/project/cua/sky_js/src/targets/linux/get_window_state.d.ts",
+          "bytes": 171,
+          "sha256": "fe2a3e4466f82766d0c76c5be91263ee7636d05e0d8e4c1ac4747c7df56380b7"
+        },
+        {
+          "relative": "dist/project/cua/sky_js/src/targets/linux/get_window_state.js",
+          "bytes": 676,
+          "sha256": "c851ab56d0f91a59a22a340ef619e7125388250911c86e7acfac06e864a4dd8b"
+        },
+        {
+          "relative": "dist/project/cua/sky_js/src/targets/linux/index.d.ts",
+          "bytes": 33,
+          "sha256": "3707118510f9015b6e1ff1ad063abb4ed17d913542049e0d4356072c5ae9f466"
+        },
+        {
+          "relative": "dist/project/cua/sky_js/src/targets/linux/key_down.d.ts",
+          "bytes": 156,
+          "sha256": "8feddfeaf4629e34b42dff52fdcda4cfc30f5735ad74c2e04cb0cd8213e38d25"
+        },
+        {
+          "relative": "dist/project/cua/sky_js/src/targets/linux/key_down.js",
+          "bytes": 338,
+          "sha256": "163d33f633d575ecc4277c227ed2236b23d28c35bbf24a85fae4e69543f57fac"
+        },
+        {
+          "relative": "dist/project/cua/sky_js/src/targets/linux/key_up.d.ts",
+          "bytes": 152,
+          "sha256": "75baac7f7f62b443cb446d0c9e1770fbb6c89aaa5f0cd4b986d54c27cac451a4"
+        },
+        {
+          "relative": "dist/project/cua/sky_js/src/targets/linux/key_up.js",
+          "bytes": 334,
+          "sha256": "65ef0b73230de7960d680fb206228c0abf77c710bc667c370e9989e74ac9bd59"
+        },
+        {
+          "relative": "dist/project/cua/sky_js/src/targets/linux/launch_app.d.ts",
+          "bytes": 160,
+          "sha256": "e252fe06b5c9450bb9e76fd2c4a3b0eeffa7160bf3cc8776704e97df50d0ca3b"
+        },
+        {
+          "relative": "dist/project/cua/sky_js/src/targets/linux/launch_app.js",
+          "bytes": 342,
+          "sha256": "166b2309b8a2d5f3f5ef7691bd285d200a0ebce3831c7b491a8ba2090fb0ffc9"
+        },
+        {
+          "relative": "dist/project/cua/sky_js/src/targets/linux/list_apps.d.ts",
+          "bytes": 158,
+          "sha256": "6402401a480afda793e44eee3c1e8e575126f084c938af2be82edd8978c35c2c"
+        },
+        {
+          "relative": "dist/project/cua/sky_js/src/targets/linux/list_apps.js",
+          "bytes": 335,
+          "sha256": "d4f7125e517b3355424b6ea8aca72191168f4c0094edd235dcd2fb9e500e34d0"
+        },
+        {
+          "relative": "dist/project/cua/sky_js/src/targets/linux/list_windows.d.ts",
+          "bytes": 164,
+          "sha256": "381190602645c76b376bb314066998dcf6faa131cbf7b700764ff78092e36531"
+        },
+        {
+          "relative": "dist/project/cua/sky_js/src/targets/linux/list_windows.js",
+          "bytes": 341,
+          "sha256": "3d286c26f81d704fb09fe280e9b00bb2947c5a9d1c3bfe01b86fdc738d52bd71"
+        },
+        {
+          "relative": "dist/project/cua/sky_js/src/targets/linux/move.d.ts",
+          "bytes": 149,
+          "sha256": "70bd3b894226cc4bb72ff4718724348042f2f497283f21a073e6ac01ee1c618b"
+        },
+        {
+          "relative": "dist/project/cua/sky_js/src/targets/linux/move.js",
+          "bytes": 330,
+          "sha256": "d30f63a3cbd8daba08b7767b5d3be88cbbc3ba10e679ede293b83fc7d717e018"
+        },
+        {
+          "relative": "dist/project/cua/sky_js/src/targets/linux/move_relative.d.ts",
+          "bytes": 166,
+          "sha256": "11332b072ff66961b9928d13a1b1699cc1b0ca30938af8d00af26487e65c5485"
+        },
+        {
+          "relative": "dist/project/cua/sky_js/src/targets/linux/move_relative.js",
+          "bytes": 348,
+          "sha256": "dad1a2e8033492cec7ed1e3f3aa6b16e3755b5875048fd31ccb4970c93440af8"
+        },
+        {
+          "relative": "dist/project/cua/sky_js/src/targets/linux/perform_secondary_action.d.ts",
+          "bytes": 187,
+          "sha256": "d0a38cb31665821c549f156f9a5865a92467b6542876e7429d2806615ab6fd0b"
+        },
+        {
+          "relative": "dist/project/cua/sky_js/src/targets/linux/perform_secondary_action.js",
+          "bytes": 393,
+          "sha256": "ca6e63c0d6c38a03bac6d3349373f2c27bceb8b78a3ebeaef7f655d15d3260a5"
+        },
+        {
+          "relative": "dist/project/cua/sky_js/src/targets/linux/press_key.d.ts",
+          "bytes": 158,
+          "sha256": "8a29aea49df2c5cbd547177407ae2bacc667853c31b5c9f56618ce84fb72a867"
+        },
+        {
+          "relative": "dist/project/cua/sky_js/src/targets/linux/press_key.js",
+          "bytes": 340,
+          "sha256": "08300a0ae53210dd7716adaaf3c2ae6a2ad685e6295506c6c05a51ebfc6cb752"
+        },
+        {
+          "relative": "dist/project/cua/sky_js/src/targets/linux/scroll.d.ts",
+          "bytes": 153,
+          "sha256": "3c4783ca546b6fdfe8cbf3413be58c9fd9e48da3a286703c364b625191fafb69"
+        },
+        {
+          "relative": "dist/project/cua/sky_js/src/targets/linux/scroll.js",
+          "bytes": 357,
+          "sha256": "0a33b51a927f68eef125a4c92252acacc2fce7a15bf00d4faaafef613e6e38b8"
+        },
+        {
+          "relative": "dist/project/cua/sky_js/src/targets/linux/sky_linux.d.ts",
+          "bytes": 254,
+          "sha256": "0a56925cb0f753b93e8d79fc6332b4fb03813a7e8624db1343b782c0b171146d"
+        },
+        {
+          "relative": "dist/project/cua/sky_js/src/targets/linux/sky_linux.js",
+          "bytes": 707,
+          "sha256": "598bc7a0135a39a327399ae06d28ff15f2ed2bb994b66a78c0eff2c615c9b286"
+        },
+        {
+          "relative": "dist/project/cua/sky_js/src/targets/linux/sky_linux_transport.d.ts",
+          "bytes": 176,
+          "sha256": "2747ba013cfde418f54d03f2f5ddb519415517730787429449d98c3910efa8ad"
+        },
+        {
+          "relative": "dist/project/cua/sky_js/src/targets/linux/sky_linux_transport.js",
+          "bytes": 2951,
+          "sha256": "c879f1b83dbc3cd5d0638c26ecffdd17c9cb6f39578b69bd653ee0c78a85664e"
+        },
+        {
+          "relative": "dist/project/cua/sky_js/src/targets/linux/type_characters.d.ts",
+          "bytes": 170,
+          "sha256": "6ffa2d32b1231180f153390b079c7f174ccbc057ebb831360e10311022788a8c"
+        },
+        {
+          "relative": "dist/project/cua/sky_js/src/targets/linux/type_characters.js",
+          "bytes": 381,
+          "sha256": "62262ac52baedefe48c80f6b44ee367a6f00c00590603c637257c989db59ff24"
+        },
+        {
+          "relative": "dist/project/cua/sky_js/src/targets/linux/type_text.d.ts",
+          "bytes": 158,
+          "sha256": "85bb3aa50709a6ad6b13b5c53854b902459e8711dac92a6cfe8f68b82180ed0f"
+        },
+        {
+          "relative": "dist/project/cua/sky_js/src/targets/linux/type_text.js",
+          "bytes": 363,
+          "sha256": "6738ceef7366fd36fee26b5e5bed66b30c54836035a12702201758b880225100"
+        },
+        {
+          "relative": "dist/project/cua/sky_js/src/targets/mac/audio_recording.d.ts",
+          "bytes": 250,
+          "sha256": "4743816275a4cb95e322794c02ef8633392418df2f4444c57847eecd7d135f39"
+        },
+        {
+          "relative": "dist/project/cua/sky_js/src/targets/mac/audio_recording.js",
+          "bytes": 2425,
+          "sha256": "883e11ac21cb261572166319a4dd7a948713cc7aaffc7c9117029d7374d01081"
+        },
+        {
+          "relative": "dist/project/cua/sky_js/src/targets/mac/click.d.ts",
+          "bytes": 122,
+          "sha256": "503618b0c9f19f9e94162fcd2f3cffc1a285fc5ea3a4a4ca6c915c0e63b7d9e7"
+        },
+        {
+          "relative": "dist/project/cua/sky_js/src/targets/mac/click.js",
+          "bytes": 510,
+          "sha256": "d122645123afdc7aeb1114681adb1bff0d2e6acc41d7a09e449835c80e3e7348"
+        },
+        {
+          "relative": "dist/project/cua/sky_js/src/targets/mac/client.d.ts",
+          "bytes": 4345,
+          "sha256": "ba1fdc06bab21bea6970be9d5f81c3f7d7fa7c7d36717030bce46416ec3c36d6"
+        },
+        {
+          "relative": "dist/project/cua/sky_js/src/targets/mac/client.js",
+          "bytes": 5138,
+          "sha256": "71134f10354fe9f7be23a62df52789908a8592151685286a7965b297a81cef8f"
+        },
+        {
+          "relative": "dist/project/cua/sky_js/src/targets/mac/computer-use-policy.d.ts",
+          "bytes": 667,
+          "sha256": "3fecdea3868778b7c50fc8f67c3aab9b01b71a9daddaf61ac12fad3a2fef29c8"
+        },
+        {
+          "relative": "dist/project/cua/sky_js/src/targets/mac/computer-use-policy.js",
+          "bytes": 4838,
+          "sha256": "a00024117e11f2d1e4151e140bede2c0ed7931625aa0f79a427457cb1103524e"
+        },
+        {
+          "relative": "dist/project/cua/sky_js/src/targets/mac/computer-use-telemetry.d.ts",
+          "bytes": 832,
+          "sha256": "c690cc9e4435ed9e2c4829b5b0e62e4907f0e77553654765235c1cabc38b3242"
+        },
+        {
+          "relative": "dist/project/cua/sky_js/src/targets/mac/computer-use-telemetry.js",
+          "bytes": 4449,
+          "sha256": "5966b3423ef51c26c1ebb7db11f24395e1678b1c5fe18619d65c21de4b2bf23b"
+        },
+        {
+          "relative": "dist/project/cua/sky_js/src/targets/mac/create_client.d.ts",
+          "bytes": 126,
+          "sha256": "12b4535983455e30a62a45ba6a77131c108094b5b57906cef9b3e2de6df60589"
+        },
+        {
+          "relative": "dist/project/cua/sky_js/src/targets/mac/create_client.js",
+          "bytes": 1119,
+          "sha256": "901b7f850b7b4ceaecefe7727a7a4aecd3c22a05fb807ffed5cfcca000906217"
+        },
+        {
+          "relative": "dist/project/cua/sky_js/src/targets/mac/drag.d.ts",
+          "bytes": 119,
+          "sha256": "72b12c06aa0a3964197c37949461bd168ae401f93289bf833ca3a90d6847aa40"
+        },
+        {
+          "relative": "dist/project/cua/sky_js/src/targets/mac/drag.js",
+          "bytes": 436,
+          "sha256": "01df9da83423d1b600b162b71d382d0991fcb62779a969facfbb0b649ffe135e"
+        },
+        {
+          "relative": "dist/project/cua/sky_js/src/targets/mac/errors.d.ts",
+          "bytes": 1438,
+          "sha256": "276b1c1cdb9a92c6308065f3e4ae86e37cb5c6d5269f3e66b76f430e47cec491"
+        },
+        {
+          "relative": "dist/project/cua/sky_js/src/targets/mac/errors.js",
+          "bytes": 1049,
+          "sha256": "9dd27e4cf0ea4456b3ad472fab8cbbe093ad1184d0cb25a8c05e738ee00cfd43"
+        },
+        {
+          "relative": "dist/project/cua/sky_js/src/targets/mac/get_app_state.d.ts",
+          "bytes": 186,
+          "sha256": "861f35ea2b0054efcb73f3ada3a6654c61ce2e233093a3835c9916f660644be0"
+        },
+        {
+          "relative": "dist/project/cua/sky_js/src/targets/mac/get_app_state.js",
+          "bytes": 506,
+          "sha256": "7b7fe2af461c7cd348c07535b1deae9ea14837dbdac9985ba479eb2e53e5248d"
+        },
+        {
+          "relative": "dist/project/cua/sky_js/src/targets/mac/index.d.ts",
+          "bytes": 33,
+          "sha256": "3707118510f9015b6e1ff1ad063abb4ed17d913542049e0d4356072c5ae9f466"
+        },
+        {
+          "relative": "dist/project/cua/sky_js/src/targets/mac/lazy-client.d.ts",
+          "bytes": 122,
+          "sha256": "a38220e12ac273def96d380f53f526425adec618d3846a0071f1201b14461253"
+        },
+        {
+          "relative": "dist/project/cua/sky_js/src/targets/mac/lazy-client.js",
+          "bytes": 116,
+          "sha256": "e222ec4e31b96c06c79819ea23a4d69a7f564c9a11f640c9d4b48c11bc75365b"
+        },
+        {
+          "relative": "dist/project/cua/sky_js/src/targets/mac/list_apps.d.ts",
+          "bytes": 102,
+          "sha256": "9c4b5ad1dbb793cb6affd1245177e730ed84b5143601b44fe672ace83e72395d"
+        },
+        {
+          "relative": "dist/project/cua/sky_js/src/targets/mac/list_apps.js",
+          "bytes": 726,
+          "sha256": "77ec31ff376b5065b08ca1116484b3e69878c2a4a7ad6dac7f29170b965d91df"
+        },
+        {
+          "relative": "dist/project/cua/sky_js/src/targets/mac/native-pipe.d.ts",
+          "bytes": 1447,
+          "sha256": "7d0f1d8e2e0e66448e3c31fb0f7cc88e78385b5fd79fe1fdc8e09a4390026a72"
+        },
+        {
+          "relative": "dist/project/cua/sky_js/src/targets/mac/native-pipe.js",
+          "bytes": 8829,
+          "sha256": "51a1138a0f0d7f01fe5d4d0a4f0753c67b2c3f3ed55c7540c26d182274e116f4"
+        },
+        {
+          "relative": "dist/project/cua/sky_js/src/targets/mac/paste.d.ts",
+          "bytes": 122,
+          "sha256": "2a292a32f8aa9fa0a2565a21df186bf8b5d59ec9cb338ac1dab3ef1f643ecc9f"
+        },
+        {
+          "relative": "dist/project/cua/sky_js/src/targets/mac/paste.js",
+          "bytes": 415,
+          "sha256": "7f829aab4e27038f5eba94262cc0a4dd0e874ece1d8a55dcbf8ecfb5101c9c40"
+        },
+        {
+          "relative": "dist/project/cua/sky_js/src/targets/mac/perform_secondary_action.d.ts",
+          "bytes": 175,
+          "sha256": "eb217bed1938135dbfd5a74323b3c6750df6c1ed057066fefa586962b4f627e8"
+        },
+        {
+          "relative": "dist/project/cua/sky_js/src/targets/mac/perform_secondary_action.js",
+          "bytes": 487,
+          "sha256": "63e4509b86697a3db15c9f38d87715c27d7ba7ba027909ca7618c9341e3ec2ff"
+        },
+        {
+          "relative": "dist/project/cua/sky_js/src/targets/mac/press_key.d.ts",
+          "bytes": 132,
+          "sha256": "32aaf2ec6450cc16aa158e56f2ad7618b7c0cdd0d20b9bf2d314d55f3281b278"
+        },
+        {
+          "relative": "dist/project/cua/sky_js/src/targets/mac/press_key.js",
+          "bytes": 428,
+          "sha256": "12b9a808ecd832943b57a5998d9879fd084067a67b1b0650b2f2743337be872d"
+        },
+        {
+          "relative": "dist/project/cua/sky_js/src/targets/mac/scroll.d.ts",
+          "bytes": 125,
+          "sha256": "483bdc5e2080d3fdf2b7df43ef077bf943847f6389cf7fea7bcc2dc900412720"
+        },
+        {
+          "relative": "dist/project/cua/sky_js/src/targets/mac/scroll.js",
+          "bytes": 467,
+          "sha256": "f026bbeaca656bddb8212c535690d6acbb1a969b392657368ef964a0f015fe95"
+        },
+        {
+          "relative": "dist/project/cua/sky_js/src/targets/mac/select_text.d.ts",
+          "bytes": 138,
+          "sha256": "8293532b5040e9bc501524e092dd4557ee1b22748db5cd8a9f9ec14ac32ca523"
+        },
+        {
+          "relative": "dist/project/cua/sky_js/src/targets/mac/select_text.js",
+          "bytes": 504,
+          "sha256": "44fa3fcd8e1366ebfa5237bc20d570b1e08d38bb99f27a48bf3ee6eaac225ac5"
+        },
+        {
+          "relative": "dist/project/cua/sky_js/src/targets/mac/set_value.d.ts",
+          "bytes": 132,
+          "sha256": "6c9cd027a3c3e6179df9572038527e13d5a33b1ca701e31b1a78a778144550e3"
+        },
+        {
+          "relative": "dist/project/cua/sky_js/src/targets/mac/set_value.js",
+          "bytes": 441,
+          "sha256": "e4ac86f5b4d5ba8bd17ed7281148cd4f1ae1d4a493997fbfc10a3a8f328ed06a"
+        },
+        {
+          "relative": "dist/project/cua/sky_js/src/targets/mac/type_text.d.ts",
+          "bytes": 132,
+          "sha256": "ff4a4d3ccb6ceabe4578396e295128de029bde19aa1864ce841e7fd73adf3820"
+        },
+        {
+          "relative": "dist/project/cua/sky_js/src/targets/mac/type_text.js",
+          "bytes": 410,
+          "sha256": "29289fd08c109ff7f913ef92aea8f4df7d87f8ce59fb05172ee8c99d20b7e568"
+        },
+        {
+          "relative": "dist/project/cua/sky_js/src/targets/mac/window_result.d.ts",
+          "bytes": 257,
+          "sha256": "41920c377dc26959b2949536277cda7b8829541e28fb26e8c14c043bf9a36ec2"
+        },
+        {
+          "relative": "dist/project/cua/sky_js/src/targets/mac/window_result.js",
+          "bytes": 1408,
+          "sha256": "9169daf53e7516eecd2ba8680e990bc6570d16d955f0ffed183572202c5d5448"
+        },
+        {
+          "relative": "dist/project/cua/sky_js/src/targets/windows/create_client.d.ts",
+          "bytes": 132,
+          "sha256": "aed4edd65c6e0cd92b949298d21b59ad978c07c48238c10dc7fb37d57e230069"
+        },
+        {
+          "relative": "dist/project/cua/sky_js/src/targets/windows/create_client.js",
+          "bytes": 132,
+          "sha256": "43935a185c83827ea87e23295c7a44327f43e933da97da7cd1b8b7eb23aa6fab"
+        },
+        {
+          "relative": "dist/project/cua/sky_js/src/targets/windows/index.d.ts",
+          "bytes": 33,
+          "sha256": "3707118510f9015b6e1ff1ad063abb4ed17d913542049e0d4356072c5ae9f466"
+        },
+        {
+          "relative": "dist/project/cua/sky_js/src/targets/windows/internal/codex_turn_metadata.d.ts",
+          "bytes": 216,
+          "sha256": "98274ab227d6b53ee8add571b221c2660c077fc99970db7ca64444ebb83d9fe8"
+        },
+        {
+          "relative": "dist/project/cua/sky_js/src/targets/windows/internal/codex_turn_metadata.js",
+          "bytes": 744,
+          "sha256": "284ca7197ed514ca272c728d6ab0eda116f4fc44b3485435c004adcf2d95f3fb"
+        },
+        {
+          "relative": "dist/project/cua/sky_js/src/targets/windows/internal/computer_use_client.d.ts",
+          "bytes": 568,
+          "sha256": "e057add5e0b0d1043a40b4655570a1b4467d0e765a8c44d913e5deb8c4dd4774"
+        },
+        {
+          "relative": "dist/project/cua/sky_js/src/targets/windows/internal/computer_use_client.js",
+          "bytes": 7646,
+          "sha256": "12f2952342ee3e3e4ae2cd509de48f59c935a925607aee24f41d7797510802f7"
+        },
+        {
+          "relative": "dist/project/cua/sky_js/src/targets/windows/internal/computer_use_client_base.d.ts",
+          "bytes": 2073,
+          "sha256": "6afb8fbcd3f554e715f1b2d7d80b7237dcc6dfe48725deda730903da35e302eb"
+        },
+        {
+          "relative": "dist/project/cua/sky_js/src/targets/windows/internal/computer_use_client_base.js",
+          "bytes": 9682,
+          "sha256": "617d8e6e18fdde25f06d4cba2c84c994e076e05f30a8c55d09e918401c48b171"
+        },
+        {
+          "relative": "dist/project/cua/sky_js/src/targets/windows/internal/helper_transport.d.ts",
+          "bytes": 1055,
+          "sha256": "f3e75b0fbf6f16f0d8a422394c70b0b207032e8130f8fd847d475a8b930b474e"
+        },
+        {
+          "relative": "dist/project/cua/sky_js/src/targets/windows/internal/helper_transport.js",
+          "bytes": 10593,
+          "sha256": "993249ea69056fa0e725c295d7e9fca0a3e608ffd3e3f8d1e7bc20bc1fef5ddf"
+        },
+        {
+          "relative": "dist/project/cua/sky_js/src/types/Direction.d.ts",
+          "bytes": 82,
+          "sha256": "c1422b0e694b052fddb2ac0cb6ffeae7109c108012b22aa129e6c361afd9db4f"
+        },
+        {
+          "relative": "dist/project/cua/sky_js/src/types/MouseButton.d.ts",
+          "bytes": 73,
+          "sha256": "dbb548c19b958c48b07114ae6e6c691aab83c648a9849ab60c990eb050880dad"
+        },
+        {
+          "relative": "dist/project/cua/sky_js/src/types/Point.d.ts",
+          "bytes": 200,
+          "sha256": "452ee6fb49dda75266fe4679c31dc4f323b80125666fd6f5c1ec3668aa4a6908"
+        },
+        {
+          "relative": "dist/project/cua/sky_js/src/types/SkyClient.d.ts",
+          "bytes": 655,
+          "sha256": "dbe3d8669f2abb294e9c6ab19cb346b66722cd44279f8d002a32edcbb607baf2"
+        },
+        {
+          "relative": "dist/project/cua/sky_js/src/types/full-desktop/ActivateWindow.d.ts",
+          "bytes": 301,
+          "sha256": "8b2b2ee8503a0d4f339746b02599559c09ae529efab8fe7433885aaf654d2223"
+        },
+        {
+          "relative": "dist/project/cua/sky_js/src/types/full-desktop/Audio.d.ts",
+          "bytes": 202,
+          "sha256": "d3a5c44212d1be1e643b2a3989272f91c1f111ed83bbef7c5d5abb2967671ff8"
+        },
+        {
+          "relative": "dist/project/cua/sky_js/src/types/full-desktop/Click.d.ts",
+          "bytes": 1406,
+          "sha256": "43efd0608a0a68c769d09d726ccf7833398a09deba74190185a4a5be447de5f2"
+        },
+        {
+          "relative": "dist/project/cua/sky_js/src/types/full-desktop/ClipboardHandle.d.ts",
+          "bytes": 482,
+          "sha256": "fdfce5af076b291dba16248cb2db6ae6ed780aed182e330d7c82e43b05fa0e2c"
+        },
+        {
+          "relative": "dist/project/cua/sky_js/src/types/full-desktop/ClipboardRead.d.ts",
+          "bytes": 492,
+          "sha256": "05711085b2bf5c66f1006daaaeadfbcc76139b56e5c7851e855a0c06a987cd7e"
+        },
+        {
+          "relative": "dist/project/cua/sky_js/src/types/full-desktop/ClipboardRelease.d.ts",
+          "bytes": 379,
+          "sha256": "e2d949c360bde02fca08f52eadfc50f9a38d0512b81578cf307ffa5ba00d42d2"
+        },
+        {
+          "relative": "dist/project/cua/sky_js/src/types/full-desktop/ClipboardWrite.d.ts",
+          "bytes": 534,
+          "sha256": "8bf1e382ce825fa6311bbe5e3db2cfad9584990dff187e96c71cb232730630db"
+        },
+        {
+          "relative": "dist/project/cua/sky_js/src/types/full-desktop/Drag.d.ts",
+          "bytes": 627,
+          "sha256": "20b5cfe44c3799706ace5cda8ba3aab34f3b4381d2825f6977edd562603c6af4"
+        },
+        {
+          "relative": "dist/project/cua/sky_js/src/types/full-desktop/DragHandle.d.ts",
+          "bytes": 633,
+          "sha256": "f8ce88c408d59f956be85cf85e3c4e48dd284a1438588b9038284da92de4b0f3"
+        },
+        {
+          "relative": "dist/project/cua/sky_js/src/types/full-desktop/FullDesktopComputerUseClient.d.ts",
+          "bytes": 2168,
+          "sha256": "6bd636ced639eeabce1db6dc044ff919cbee21b2215134bae8a61e74f2c15ba4"
+        },
+        {
+          "relative": "dist/project/cua/sky_js/src/types/full-desktop/GetScreenshot.d.ts",
+          "bytes": 217,
+          "sha256": "08ea22ad5e5eabcc275f9ffc46343fd24d38f426f578cc185a234c941f14745a"
+        },
+        {
+          "relative": "dist/project/cua/sky_js/src/types/full-desktop/GetWindowState.d.ts",
+          "bytes": 648,
+          "sha256": "7862d7e421213527c9520b5c51ad6235f5bdb1577c3845a950c3e8eca89a6ed9"
+        },
+        {
+          "relative": "dist/project/cua/sky_js/src/types/full-desktop/KeyDown.d.ts",
+          "bytes": 516,
+          "sha256": "be23eaa767ca6620536c1da19c662ec99dee69fd6c779564d69a7d0057f843b2"
+        },
+        {
+          "relative": "dist/project/cua/sky_js/src/types/full-desktop/KeyUp.d.ts",
+          "bytes": 530,
+          "sha256": "77b9b83a337498e3e57e6847f08ef7c7520f70340845a21e62bb2fbba3aeae2e"
+        },
+        {
+          "relative": "dist/project/cua/sky_js/src/types/full-desktop/LaunchApp.d.ts",
+          "bytes": 271,
+          "sha256": "44b065de5a1951757408185b2ab61e02fcba1b140af907084db73f89464b97f4"
+        },
+        {
+          "relative": "dist/project/cua/sky_js/src/types/full-desktop/ListApps.d.ts",
+          "bytes": 563,
+          "sha256": "bab3b8f15b532d01e25fe8cddf302cf04d09584cfa31988885c1e1e826ff86da"
+        },
+        {
+          "relative": "dist/project/cua/sky_js/src/types/full-desktop/ListWindows.d.ts",
+          "bytes": 230,
+          "sha256": "1330bdb44cfd834ab17975eafd085a9ecb3936e8c03cec1fdc0f0bc1c5f79737"
+        },
+        {
+          "relative": "dist/project/cua/sky_js/src/types/full-desktop/Move.d.ts",
+          "bytes": 631,
+          "sha256": "7cd646a6f0a74b078b9d9cda064d26ea43884b5cf3651bea7b4b8b863d02bc6e"
+        },
+        {
+          "relative": "dist/project/cua/sky_js/src/types/full-desktop/MoveRelative.d.ts",
+          "bytes": 479,
+          "sha256": "c222bef6bdd845cf0aef13e4cdf684c99c999f1e20d42797ad58dcf25f6336ce"
+        },
+        {
+          "relative": "dist/project/cua/sky_js/src/types/full-desktop/Options.d.ts",
+          "bytes": 657,
+          "sha256": "2f988c2f4d8b0c3a32a9cc197cbd3ffbe83749de5fb288ede6a31b782aa29abe"
+        },
+        {
+          "relative": "dist/project/cua/sky_js/src/types/full-desktop/PerformSecondaryAction.d.ts",
+          "bytes": 629,
+          "sha256": "f84b1ba8e020f48787feb3f52e86b9d36052286b27061f4b50f85a423a7333a0"
+        },
+        {
+          "relative": "dist/project/cua/sky_js/src/types/full-desktop/PressKey.d.ts",
+          "bytes": 742,
+          "sha256": "c96547c2ac078280ce21030e6b1369174eb146f1c15b87f953f3f8bf7903e773"
+        },
+        {
+          "relative": "dist/project/cua/sky_js/src/types/full-desktop/Screenshot.d.ts",
+          "bytes": 185,
+          "sha256": "39229aa7a8543e7437871b8f6dc79ccfdcce3f4368139a10f60e1955e0876647"
+        },
+        {
+          "relative": "dist/project/cua/sky_js/src/types/full-desktop/Scroll.d.ts",
+          "bytes": 943,
+          "sha256": "bc062204d078718ded990d123fadc7aad9be76cc4bbf54515e3b34b6c67de9e6"
+        },
+        {
+          "relative": "dist/project/cua/sky_js/src/types/full-desktop/StartAudioRecording.d.ts",
+          "bytes": 309,
+          "sha256": "c771576fd04f6d4d0a0cc15f816663d73cc26a2297f79365687ea56510c427ee"
+        },
+        {
+          "relative": "dist/project/cua/sky_js/src/types/full-desktop/StopAudioRecording.d.ts",
+          "bytes": 219,
+          "sha256": "8856774f165020d3ea3ce43c200285b8ce3e25fa6d4e820dfec849be5243102a"
+        },
+        {
+          "relative": "dist/project/cua/sky_js/src/types/full-desktop/TypeCharacters.d.ts",
+          "bytes": 555,
+          "sha256": "74da6138586f53a86f8af478803550d7e14aa083f93b9f4700bfde625a3b48a6"
+        },
+        {
+          "relative": "dist/project/cua/sky_js/src/types/full-desktop/TypeText.d.ts",
+          "bytes": 597,
+          "sha256": "dcf32711d7e5ac671f699d32940c669becdec3b2886a947500d7a1dfc31e7cca"
+        },
+        {
+          "relative": "dist/project/cua/sky_js/src/types/full-desktop/Window.d.ts",
+          "bytes": 883,
+          "sha256": "97972830741a96cad1bbe9452b5dec70fe343dc4dad4feb16a35ee0bf42f59c2"
+        },
+        {
+          "relative": "dist/project/cua/sky_js/src/types/full-desktop/WindowState.d.ts",
+          "bytes": 2220,
+          "sha256": "1b667949910642015ff3fad0ad9b8b935e3fb53c607fded7f947f5af1aa25b7e"
+        },
+        {
+          "relative": "dist/project/cua/sky_js/src/types/full-desktop/index.d.ts",
+          "bytes": 1473,
+          "sha256": "5af2468c7ea74cc4b159b50416f3944a694278079ee140302cd6dc1806161a59"
+        },
+        {
+          "relative": "dist/project/cua/sky_js/src/types/index.d.ts",
+          "bytes": 325,
+          "sha256": "0983ad7650dc6d5472e65fa9c4fdc1b23db08c739c362d00ea6b32b6e597ec0f"
+        },
+        {
+          "relative": "dist/project/cua/sky_js/src/types/window/AppIdentifier.d.ts",
+          "bytes": 36,
+          "sha256": "d686d5c341aac7e0c06dabc58230cef7677bd907f48b7583bc30495d9e61750f"
+        },
+        {
+          "relative": "dist/project/cua/sky_js/src/types/window/AppState.d.ts",
+          "bytes": 408,
+          "sha256": "8923aeeb7f60715493de2c29e19067b1e24211f77f63c6c64a96543fa4dfb78f"
+        },
+        {
+          "relative": "dist/project/cua/sky_js/src/types/window/Audio.d.ts",
+          "bytes": 204,
+          "sha256": "d2909971b4798effc9271aff29bbafe8cc475542ef0296ba9434802ac2c6c71b"
+        },
+        {
+          "relative": "dist/project/cua/sky_js/src/types/window/Click.d.ts",
+          "bytes": 989,
+          "sha256": "6adc3625069b8ecdf64ca393d1b5ec23a20b1befd27a985866b7806448c230c0"
+        },
+        {
+          "relative": "dist/project/cua/sky_js/src/types/window/Drag.d.ts",
+          "bytes": 668,
+          "sha256": "10aeba9607f10a62924f7dced3c77aab5314fb85d178499bac6c0a5f805441b3"
+        },
+        {
+          "relative": "dist/project/cua/sky_js/src/types/window/GetAppState.d.ts",
+          "bytes": 538,
+          "sha256": "996dd4e45f7b2e119dfa074cf5b4b5893248ae79323596da0dcfc3bc3c8c8b55"
+        },
+        {
+          "relative": "dist/project/cua/sky_js/src/types/window/ListApps.d.ts",
+          "bytes": 595,
+          "sha256": "8298eb3a109963fdc0a07a6a30349025dd19c745a241b8ee502bc0779f5617a0"
+        },
+        {
+          "relative": "dist/project/cua/sky_js/src/types/window/Options.d.ts",
+          "bytes": 83,
+          "sha256": "d239ee4c8c1e248e46b056a5452a7ba4761ab84c55773d4907f0cc77ddf7abb7"
+        },
+        {
+          "relative": "dist/project/cua/sky_js/src/types/window/Paste.d.ts",
+          "bytes": 571,
+          "sha256": "3d3ac35d0a85332d85ef07d0aebea837321ce5c3d17b5d60f33cba974f18ca4b"
+        },
+        {
+          "relative": "dist/project/cua/sky_js/src/types/window/PerformSecondaryAction.d.ts",
+          "bytes": 534,
+          "sha256": "9420653e6f1531094a893bde59cf229a5982976263655cbbee97fbe29e20ec44"
+        },
+        {
+          "relative": "dist/project/cua/sky_js/src/types/window/PressKey.d.ts",
+          "bytes": 724,
+          "sha256": "0d8bfc2ade64d7f996cee102909a8158760ce869bf1e9523ba55872e49c68b34"
+        },
+        {
+          "relative": "dist/project/cua/sky_js/src/types/window/Screenshot.d.ts",
+          "bytes": 90,
+          "sha256": "e30ea72625d59780f1f8b4aad00f52dfaea59703f94eb49ea04d784429cdb228"
+        },
+        {
+          "relative": "dist/project/cua/sky_js/src/types/window/Scroll.d.ts",
+          "bytes": 789,
+          "sha256": "800ac84854c3c64fee6678fb36d7a47ccaa823953cedc5543ef092cd78bf88a7"
+        },
+        {
+          "relative": "dist/project/cua/sky_js/src/types/window/SelectText.d.ts",
+          "bytes": 917,
+          "sha256": "dfdc885f128699dc4b7721b161c40a8fdc62185cc3f305bc446d896e7e822619"
+        },
+        {
+          "relative": "dist/project/cua/sky_js/src/types/window/SetValue.d.ts",
+          "bytes": 512,
+          "sha256": "1c55428ade82bf7a37db01aece1faaeae7acf8b22301fbd318abd585c52f93e1"
+        },
+        {
+          "relative": "dist/project/cua/sky_js/src/types/window/StartAudioRecording.d.ts",
+          "bytes": 314,
+          "sha256": "223888166843db29924aaa18d1955682a7614681135145a61b9dfef067a29d15"
+        },
+        {
+          "relative": "dist/project/cua/sky_js/src/types/window/StopAudioRecording.d.ts",
+          "bytes": 219,
+          "sha256": "8856774f165020d3ea3ce43c200285b8ce3e25fa6d4e820dfec849be5243102a"
+        },
+        {
+          "relative": "dist/project/cua/sky_js/src/types/window/TypeText.d.ts",
+          "bytes": 413,
+          "sha256": "a6891c01a84202e00f7d2a156d6222281afe853fa5109f3053fa6e8623f15c0a"
+        },
+        {
+          "relative": "dist/project/cua/sky_js/src/types/window/WindowComputerUseClient.d.ts",
+          "bytes": 1203,
+          "sha256": "4978f3303c28acd2306e7012614b49f24522122b4c2f254fd4b71cb93373dcb0"
+        },
+        {
+          "relative": "dist/project/cua/sky_js/src/types/window/index.d.ts",
+          "bytes": 893,
+          "sha256": "ae5d3c33ded6056204304ae6b2a98c93651519b8bc1645c7e5a8d28d56ec42d6"
+        },
+        {
+          "relative": "dist/project/cua/sky_js/src/types/window2/ActivateWindow.d.ts",
+          "bytes": 392,
+          "sha256": "f0e9b316f2bfd4eac22d66c100af40533cd537d8996b0cfd27a23b3120436ddc"
+        },
+        {
+          "relative": "dist/project/cua/sky_js/src/types/window2/Audio.d.ts",
+          "bytes": 204,
+          "sha256": "d2909971b4798effc9271aff29bbafe8cc475542ef0296ba9434802ac2c6c71b"
+        },
+        {
+          "relative": "dist/project/cua/sky_js/src/types/window2/Click.d.ts",
+          "bytes": 897,
+          "sha256": "3820ce4debf5d5f731ea5259f731b5bd74d9999fd59b95b3a1e24922d0e9d57c"
+        },
+        {
+          "relative": "dist/project/cua/sky_js/src/types/window2/Drag.d.ts",
+          "bytes": 713,
+          "sha256": "994cc79a582b94f2fe060c1b621690017bfa62fe67366dfdd7cd2d80e06bf565"
+        },
+        {
+          "relative": "dist/project/cua/sky_js/src/types/window2/GetWindow.d.ts",
+          "bytes": 503,
+          "sha256": "cddb10da21916fb903f7efd60f6acd2aaef6a58f2abbbb075c4af083c6e7408f"
+        },
+        {
+          "relative": "dist/project/cua/sky_js/src/types/window2/GetWindowState.d.ts",
+          "bytes": 612,
+          "sha256": "68bfc1e35dddaaeb2d89d259373aff50965340b32b7d922abef2741f863f3322"
+        },
+        {
+          "relative": "dist/project/cua/sky_js/src/types/window2/LaunchApp.d.ts",
+          "bytes": 528,
+          "sha256": "16306b8f623eeeb41461b46733b587afd2340ff43e6080e57b2bbacf38dce847"
+        },
+        {
+          "relative": "dist/project/cua/sky_js/src/types/window2/ListApps.d.ts",
+          "bytes": 803,
+          "sha256": "b3d5135bb2ba9df98fca022e46aefcaaa873a329e88e5503e102d9800b2ec0dd"
+        },
+        {
+          "relative": "dist/project/cua/sky_js/src/types/window2/ListWindows.d.ts",
+          "bytes": 188,
+          "sha256": "c2e3c794d75924e5b751d5b7c62ef676c9e721d87fec1f457d93267a3633c67c"
+        },
+        {
+          "relative": "dist/project/cua/sky_js/src/types/window2/Options.d.ts",
+          "bytes": 95,
+          "sha256": "f4d7927600da6f29840b3f59eab7c20ef903fdf155674457f714a8e652a156e9"
+        },
+        {
+          "relative": "dist/project/cua/sky_js/src/types/window2/PerformSecondaryAction.d.ts",
+          "bytes": 649,
+          "sha256": "c9ed5eacae59d99a752bf4ce11c3d1ecc4c187f53ed48879d1378f540c01dd26"
+        },
+        {
+          "relative": "dist/project/cua/sky_js/src/types/window2/PressKey.d.ts",
+          "bytes": 657,
+          "sha256": "67632d226030d8740267e4b12a8806e3997f43c290c68758c4487fd189cb270e"
+        },
+        {
+          "relative": "dist/project/cua/sky_js/src/types/window2/Screenshot.d.ts",
+          "bytes": 675,
+          "sha256": "2734de416038a1ba93229996eb7020c98dd0faacd6566dcdc62dc8c417331b50"
+        },
+        {
+          "relative": "dist/project/cua/sky_js/src/types/window2/Scroll.d.ts",
+          "bytes": 793,
+          "sha256": "f618d4c72097a0a3a69454ee240f8401f664d5fcfe72976bf5ddb6c12b0615d2"
+        },
+        {
+          "relative": "dist/project/cua/sky_js/src/types/window2/SetValue.d.ts",
+          "bytes": 507,
+          "sha256": "0cd338e16395b9416f4f58204fe9f8e29afae1591f2213daf1759b666f8e7bb2"
+        },
+        {
+          "relative": "dist/project/cua/sky_js/src/types/window2/StartAudioRecording.d.ts",
+          "bytes": 314,
+          "sha256": "223888166843db29924aaa18d1955682a7614681135145a61b9dfef067a29d15"
+        },
+        {
+          "relative": "dist/project/cua/sky_js/src/types/window2/StopAudioRecording.d.ts",
+          "bytes": 219,
+          "sha256": "8856774f165020d3ea3ce43c200285b8ce3e25fa6d4e820dfec849be5243102a"
+        },
+        {
+          "relative": "dist/project/cua/sky_js/src/types/window2/TypeText.d.ts",
+          "bytes": 367,
+          "sha256": "93e489baaac67ec8ab7272452071b7a8724fa301a3219786f2a3b8cd42962235"
+        },
+        {
+          "relative": "dist/project/cua/sky_js/src/types/window2/Window.d.ts",
+          "bytes": 391,
+          "sha256": "e870fdd3389a8050d90a2c4d637f90ce008b6fef6b877f73e5084f07c772377a"
+        },
+        {
+          "relative": "dist/project/cua/sky_js/src/types/window2/Window2ComputerUseClient.d.ts",
+          "bytes": 1427,
+          "sha256": "e721a9cad11263d56e8dc296bc22afe35ea6cb7c058487000944babbde138ad7"
+        },
+        {
+          "relative": "dist/project/cua/sky_js/src/types/window2/WindowState.d.ts",
+          "bytes": 967,
+          "sha256": "19a04c5477425816c395ec039049912243207c8e0e0c8c657928ebd5b8e80daa"
+        },
+        {
+          "relative": "dist/project/cua/sky_js/src/types/window2/index.d.ts",
+          "bytes": 1073,
+          "sha256": "18b84d14f9d7d1cb41cca598df6bee0668eb1f8284a9881bffc611ec1e3c4366"
+        },
+        {
+          "relative": "docs/tinysky-alt-audio.md",
+          "bytes": 933,
+          "sha256": "b64279cbbc8d1d4967f14db265b4b6bb0339a5f7e8132f6d90172e333461cc42"
+        },
+        {
+          "relative": "docs/tinysky-alt-confirmations.md",
+          "bytes": 5607,
+          "sha256": "68474884543a6a1e72275b59f27f383313fd6aa8604ccedabb5d5cd37077e6fc"
+        },
+        {
+          "relative": "docs/tinysky-alt-core-cua-repl.md",
+          "bytes": 18768,
+          "sha256": "1ee63f064483eee6585d1e81965f108b348c85143befb07a849c2dcac3341fe8"
+        },
+        {
+          "relative": "docs/tinysky-alt-core-node-repl.md",
+          "bytes": 21690,
+          "sha256": "3f25f3f47fc0aba174ea771dbfa074e38525475583ed3f6ffe18d1fa168ebd49"
+        },
+        {
+          "relative": "docs/tinysky-alt-other-browser-apis.md",
+          "bytes": 792,
+          "sha256": "174672af7e028a5e4815318c4133fdab0a5189c5701396df837d7aac76e90fd4"
+        },
+        {
+          "relative": "package.json",
+          "bytes": 984,
+          "sha256": "c11049f185f13e4eb31aa7a7442f43d4729528d923cf3a6699abf83ea97ab640"
+        }
+      ],
+      "inventorySHA256": "01042720d8a24ee079831c06fa20f557b6b5da8ce6d2867523bed4862409be10"
+    },
+    "@oai/sky": {
+      "version": "0.7.12",
+      "path": "/Applications/ChatGPT.app/Contents/Resources/cua_node/lib/node_modules/@oai/sky",
+      "manifestSHA256": "6c5f3ddc0623bcc90f0e93430a029d66bdcb8df4cdc16070b4d84296c4070981",
+      "inventory": [
+        {
+          "relative": "Codex Computer Use.app/Contents/Resources/Package_ComputerUse.bundle/Contents/Resources/AppInstructions/AppleMusic.md",
+          "bytes": 1260,
+          "sha256": "9bddb86ceac45973489c0c704ed163b2ef55bb2b4cb044da4810ea71f4da1a19"
+        },
+        {
+          "relative": "Codex Computer Use.app/Contents/Resources/Package_ComputerUse.bundle/Contents/Resources/AppInstructions/Clock.md",
+          "bytes": 3610,
+          "sha256": "0b986d7fb6ef16e4cac24ce5de4adc37a0dd82981030b7ab648402c9a2e72c23"
+        },
+        {
+          "relative": "Codex Computer Use.app/Contents/Resources/Package_ComputerUse.bundle/Contents/Resources/AppInstructions/Notion.md",
+          "bytes": 2206,
+          "sha256": "80669d19bb799ea90649c46dfcd77d404fa1960297519640b50ac57ad81969f7"
+        },
+        {
+          "relative": "Codex Computer Use.app/Contents/Resources/Package_ComputerUse.bundle/Contents/Resources/AppInstructions/Numbers.md",
+          "bytes": 1017,
+          "sha256": "a4e07c2c50d233b22f6cabcac0a301474d5317d8c763e9287cdd5763ef34c1bc"
+        },
+        {
+          "relative": "Codex Computer Use.app/Contents/Resources/Package_ComputerUse.bundle/Contents/Resources/AppInstructions/Slack.md",
+          "bytes": 1380,
+          "sha256": "8eb94654ac7d6bf90a75b769a36e8591c8a4f0c5af774045f9499db9b5ed434a"
+        },
+        {
+          "relative": "Codex Computer Use.app/Contents/Resources/Package_ComputerUse.bundle/Contents/Resources/AppInstructions/Spotify.md",
+          "bytes": 828,
+          "sha256": "bcdfc5d2087e88baa55eef3fd8345a988c15bffe74701631bb5239780fd7b99f"
+        },
+        {
+          "relative": "Codex Computer Use.app/Contents/Resources/Package_ComputerUse.bundle/Contents/Resources/AppInstructions/iPhone Mirroring.md",
+          "bytes": 275,
+          "sha256": "a4f39b49aa6400d1af1657d53de1d7cf6b0f093563704136730d84f07e458ab0"
+        },
+        {
+          "relative": "Codex Computer Use.app/Contents/Resources/Package_ComputerUse.bundle/Contents/Resources/SkysightMemoryInstructions.md",
+          "bytes": 2172,
+          "sha256": "b0c176f51416e2c2e06e0f582cb42c830fdf37287dc9b0d0dbc5dc37d1f1c556"
+        },
+        {
+          "relative": "Codex Computer Use.app/Contents/Resources/Package_ComputerUse.bundle/Contents/Resources/SkysightSummarizer.md",
+          "bytes": 20627,
+          "sha256": "2e48522c484c145b65dc3bd4f825e3703ffc5b29d3fac18016e69bda29493ee1"
+        },
+        {
+          "relative": "Codex Computer Use.app/Contents/SharedSupport/CUALockScreenGuardian.app/Contents/Resources/Package_ComputerUse.bundle/Contents/Resources/AppInstructions/AppleMusic.md",
+          "bytes": 1260,
+          "sha256": "9bddb86ceac45973489c0c704ed163b2ef55bb2b4cb044da4810ea71f4da1a19"
+        },
+        {
+          "relative": "Codex Computer Use.app/Contents/SharedSupport/CUALockScreenGuardian.app/Contents/Resources/Package_ComputerUse.bundle/Contents/Resources/AppInstructions/Clock.md",
+          "bytes": 3610,
+          "sha256": "0b986d7fb6ef16e4cac24ce5de4adc37a0dd82981030b7ab648402c9a2e72c23"
+        },
+        {
+          "relative": "Codex Computer Use.app/Contents/SharedSupport/CUALockScreenGuardian.app/Contents/Resources/Package_ComputerUse.bundle/Contents/Resources/AppInstructions/Notion.md",
+          "bytes": 2206,
+          "sha256": "80669d19bb799ea90649c46dfcd77d404fa1960297519640b50ac57ad81969f7"
+        },
+        {
+          "relative": "Codex Computer Use.app/Contents/SharedSupport/CUALockScreenGuardian.app/Contents/Resources/Package_ComputerUse.bundle/Contents/Resources/AppInstructions/Numbers.md",
+          "bytes": 1017,
+          "sha256": "a4e07c2c50d233b22f6cabcac0a301474d5317d8c763e9287cdd5763ef34c1bc"
+        },
+        {
+          "relative": "Codex Computer Use.app/Contents/SharedSupport/CUALockScreenGuardian.app/Contents/Resources/Package_ComputerUse.bundle/Contents/Resources/AppInstructions/Slack.md",
+          "bytes": 1380,
+          "sha256": "8eb94654ac7d6bf90a75b769a36e8591c8a4f0c5af774045f9499db9b5ed434a"
+        },
+        {
+          "relative": "Codex Computer Use.app/Contents/SharedSupport/CUALockScreenGuardian.app/Contents/Resources/Package_ComputerUse.bundle/Contents/Resources/AppInstructions/Spotify.md",
+          "bytes": 828,
+          "sha256": "bcdfc5d2087e88baa55eef3fd8345a988c15bffe74701631bb5239780fd7b99f"
+        },
+        {
+          "relative": "Codex Computer Use.app/Contents/SharedSupport/CUALockScreenGuardian.app/Contents/Resources/Package_ComputerUse.bundle/Contents/Resources/AppInstructions/iPhone Mirroring.md",
+          "bytes": 275,
+          "sha256": "a4f39b49aa6400d1af1657d53de1d7cf6b0f093563704136730d84f07e458ab0"
+        },
+        {
+          "relative": "Codex Computer Use.app/Contents/SharedSupport/CUALockScreenGuardian.app/Contents/Resources/Package_ComputerUse.bundle/Contents/Resources/SkysightMemoryInstructions.md",
+          "bytes": 2172,
+          "sha256": "b0c176f51416e2c2e06e0f582cb42c830fdf37287dc9b0d0dbc5dc37d1f1c556"
+        },
+        {
+          "relative": "Codex Computer Use.app/Contents/SharedSupport/CUALockScreenGuardian.app/Contents/Resources/Package_ComputerUse.bundle/Contents/Resources/SkysightSummarizer.md",
+          "bytes": 20627,
+          "sha256": "2e48522c484c145b65dc3bd4f825e3703ffc5b29d3fac18016e69bda29493ee1"
+        },
+        {
+          "relative": "dist/lib/js/oai_js_core/src/UnreachableCaseError.d.ts",
+          "bytes": 91,
+          "sha256": "276b8af5ab99167e0a217186a39ffa44473beecd9a937057bcad2eb3e21c53b4"
+        },
+        {
+          "relative": "dist/lib/js/oai_js_core/src/UnreachableCaseError.js",
+          "bytes": 115,
+          "sha256": "0b4ce635bb19896c7dde334d0bba2c5f45194d347ada950b4302c585d7514390"
+        },
+        {
+          "relative": "dist/lib/js/oai_js_core/src/createDelayedAction.d.ts",
+          "bytes": 147,
+          "sha256": "787416230e593571cd1049eb22417f1330b1e3ee546592533acc26fda9769d86"
+        },
+        {
+          "relative": "dist/lib/js/oai_js_core/src/createLazyEvaluator.d.ts",
+          "bytes": 168,
+          "sha256": "6d33edf1a91ab796685ecea32c308d7624ea8edf7177980b49af997c902c89b2"
+        },
+        {
+          "relative": "dist/lib/js/oai_js_core/src/enumerate.d.ts",
+          "bytes": 260,
+          "sha256": "1882fde2f026ba5c40bf6369616d14a7efe40d32478a1f40f82e857452a50812"
+        },
+        {
+          "relative": "dist/lib/js/oai_js_core/src/index.d.ts",
+          "bytes": 343,
+          "sha256": "fe42080f26e2211d8de73d966ed7acb066eadf1fbbf5a5fddd8cd15b726be4f6"
+        },
+        {
+          "relative": "dist/lib/js/oai_js_core/src/invariant.d.ts",
+          "bytes": 91,
+          "sha256": "bf5d6dd5a634f4b912c8111e549654c85158a7f1cf2e9de04e6b15a528d92977"
+        },
+        {
+          "relative": "dist/lib/js/oai_js_core/src/mirror_map.d.ts",
+          "bytes": 245,
+          "sha256": "19e83345abcf55f67f1e20292feaa3132ee9819697b79bb9c22fefe25492c16e"
+        },
+        {
+          "relative": "dist/lib/js/oai_js_core/src/mirror_map.js",
+          "bytes": 143,
+          "sha256": "9c9dd571ddb233c08c10459a5dd3c98d4b8dc41030bac20f37da06b3fec00725"
+        },
+        {
+          "relative": "dist/lib/js/oai_js_core/src/sleep.d.ts",
+          "bytes": 61,
+          "sha256": "adefa308b0adcf20fa0a84e2c0fb2ba94d549b1c7e6e689fa89af3bf705ddbfe"
+        },
+        {
+          "relative": "dist/lib/js/oai_js_types/src/AnyFunction.d.ts",
+          "bytes": 49,
+          "sha256": "45d7b3215a84fda846aa5cc298f7792499a061cca8e18aaacc7484f2cea0d1a3"
+        },
+        {
+          "relative": "dist/lib/js/oai_js_types/src/Array.d.ts",
+          "bytes": 90,
+          "sha256": "373a81f7a7f9016c754fc86f6559bb3fac94dca63ad7393ec424b82533c8d026"
+        },
+        {
+          "relative": "dist/lib/js/oai_js_types/src/Merge.d.ts",
+          "bytes": 96,
+          "sha256": "423ca13f3935cc3953a664219f6264c429eed1e917d74d3e6e1086c31cd1aa98"
+        },
+        {
+          "relative": "dist/lib/js/oai_js_types/src/Param/Param.d.ts",
+          "bytes": 375,
+          "sha256": "d618fa88c96a9b8b41e13772c6bfd07496d1d84482ee415cedef032914fef811"
+        },
+        {
+          "relative": "dist/lib/js/oai_js_types/src/Param/index.d.ts",
+          "bytes": 34,
+          "sha256": "6a27b3e2029e9ae8a7d87ba4c8b30c63623018a02de0353da33f49c63f884257"
+        },
+        {
+          "relative": "dist/lib/js/oai_js_types/src/Pretty.d.ts",
+          "bytes": 65,
+          "sha256": "494a7cd529b4d3e37682ecdb17b90d0790fc0e025c6fb3f48f6ab08bdcac542b"
+        },
+        {
+          "relative": "dist/lib/js/oai_js_types/src/index.d.ts",
+          "bytes": 132,
+          "sha256": "321c6e26418b9b30e138f4b45ea8fcc09615d4de2f05ff1aaa0f4a092439b6be"
+        },
+        {
+          "relative": "dist/project/cua/sky_js/scripts/generate-docs.d.ts",
+          "bytes": 11,
+          "sha256": "8e609bb71c20b858c77f0e9f90bb1319db8477b13f9f965f1a1e18524bf50881"
+        },
+        {
+          "relative": "dist/project/cua/sky_js/scripts/install-computer-use-package.d.ts",
+          "bytes": 944,
+          "sha256": "5be9c54282fe59e4dbde1a086bdba8f3138837c666bc3937faaaf973bbcea056"
+        },
+        {
+          "relative": "dist/project/cua/sky_js/scripts/test-build.d.ts",
+          "bytes": 30,
+          "sha256": "f3b2989724efbf7b154b10283b87780d53ee348055b20c76f86634ee512a2f93"
+        },
+        {
+          "relative": "dist/project/cua/sky_js/scripts/windows-wgc-e2e.d.ts",
+          "bytes": 11,
+          "sha256": "8e609bb71c20b858c77f0e9f90bb1319db8477b13f9f965f1a1e18524bf50881"
+        },
+        {
+          "relative": "dist/project/cua/sky_js/src/core/cli.d.ts",
+          "bytes": 543,
+          "sha256": "75f0df743957c633ca9e9f6186522bc425edecb66dc96c3635c0649150dce7b9"
+        },
+        {
+          "relative": "dist/project/cua/sky_js/src/core/cli.js",
+          "bytes": 1287,
+          "sha256": "2c93f5b2abde4dbfb0e2ceb9fa724c883d30f61eb937cb9b51ba65f708e9c094"
+        },
+        {
+          "relative": "dist/project/cua/sky_js/src/core/env.d.ts",
+          "bytes": 1306,
+          "sha256": "9a8d0d5d94a0873e7ec06bea03e05920e37d5b73cfb0cd304ddd5917c73df4bf"
+        },
+        {
+          "relative": "dist/project/cua/sky_js/src/core/package_bin.d.ts",
+          "bytes": 198,
+          "sha256": "e322035db59df8d1d7c5c08d975efba0dfa65bb0b25ed5bfa58e5862676509b3"
+        },
+        {
+          "relative": "dist/project/cua/sky_js/src/core/package_bin.js",
+          "bytes": 621,
+          "sha256": "fdfb9aebfb8ffb496c8ddc673ed1b2e6eed536888ad52147d7d91b5486e24b34"
+        },
+        {
+          "relative": "dist/project/cua/sky_js/src/core/uint8.d.ts",
+          "bytes": 236,
+          "sha256": "ea3b51c726d2c532e1a82630b47fd02cff9a0a6d15b6b0f2b5aec0b757f9d49b"
+        },
+        {
+          "relative": "dist/project/cua/sky_js/src/core/uint8.js",
+          "bytes": 465,
+          "sha256": "866164e4a4f919cf6af4921a0670372358f0d92d8f0bcd3e0534297c70b34b6a"
+        },
+        {
+          "relative": "dist/project/cua/sky_js/src/core/unimplemented.d.ts",
+          "bytes": 60,
+          "sha256": "8dd2fc5a702e8e5c25722753945a817b8ab8b2dc1a1d0e42aa79f106064e0d37"
+        },
+        {
+          "relative": "dist/project/cua/sky_js/src/create_client.d.ts",
+          "bytes": 368,
+          "sha256": "a2d5462b30047576f4542b62816c7746a7434f03c9f7c6817867059a44f6d399"
+        },
+        {
+          "relative": "dist/project/cua/sky_js/src/create_client.js",
+          "bytes": 579,
+          "sha256": "5dc4a74434f382e318b596764054bf647fd13d3c9dea9ce5e8464a5c13fa2d81"
+        },
+        {
+          "relative": "dist/project/cua/sky_js/src/index.d.ts",
+          "bytes": 71,
+          "sha256": "f918fe1ee3f7fff0cb88fa0243ae7b58b1f7bf2f5ea9edb6bea69fd58c83e93f"
+        },
+        {
+          "relative": "dist/project/cua/sky_js/src/index.js",
+          "bytes": 27,
+          "sha256": "895d7be648bef5b11b3e562fb1838161a162892b74792469488637665252bdfc"
+        },
+        {
+          "relative": "dist/project/cua/sky_js/src/load_options.d.ts",
+          "bytes": 86,
+          "sha256": "55ae5d7912d284cbeb095d3ac5e449f320cfbf21706d5097a281c503a9fd8655"
+        },
+        {
+          "relative": "dist/project/cua/sky_js/src/load_options.js",
+          "bytes": 438,
+          "sha256": "0ddd5df4674ae2696550cd2ac41583caef9dad9b58bd363559fda716c2ed8341"
+        },
+        {
+          "relative": "dist/project/cua/sky_js/src/require_audio_model_support.d.ts",
+          "bytes": 311,
+          "sha256": "3139fc55b3a1a6dbe5221700cd3347a1c34ac368cf3d47f05a10e5e291466fb8"
+        },
+        {
+          "relative": "dist/project/cua/sky_js/src/require_audio_model_support.js",
+          "bytes": 621,
+          "sha256": "0576698815f735e20d7b0a0d81d18a05bd5f55c362e67597ff816d0f669c19e5"
+        },
+        {
+          "relative": "dist/project/cua/sky_js/src/service.d.ts",
+          "bytes": 620,
+          "sha256": "b3c2b8ed4ea69bba29ef563c7409530d7adf5c6428938836ad91f9c27bb9f084"
+        },
+        {
+          "relative": "dist/project/cua/sky_js/src/service.js",
+          "bytes": 1953,
+          "sha256": "789e3daf847da27432a816f51493a0ad452f36b67b40b99713c87bf662adb07d"
+        },
+        {
+          "relative": "dist/project/cua/sky_js/src/sky.d.ts",
+          "bytes": 74,
+          "sha256": "055fb57ead0562e49935152dade680c035d988a7a554266c5f46da2f4ac295e5"
+        },
+        {
+          "relative": "dist/project/cua/sky_js/src/sky.js",
+          "bytes": 2077,
+          "sha256": "0123da875a2eef5648fac407fcfedad5147ef9a1616b623ad615f4c337aee285"
+        },
+        {
+          "relative": "dist/project/cua/sky_js/src/targets/linux/accessibility_tree.d.ts",
+          "bytes": 390,
+          "sha256": "1e4c497864fc9109c01e8f7dcd19c76af3558f425b976f8c81794594f21b27a2"
+        },
+        {
+          "relative": "dist/project/cua/sky_js/src/targets/linux/accessibility_tree.js",
+          "bytes": 3689,
+          "sha256": "fdd977fbaafdc973d126350e469a402ed6e86d6121a5d5a94ceba7bf28c2ae4e"
+        },
+        {
+          "relative": "dist/project/cua/sky_js/src/targets/linux/action_settler.d.ts",
+          "bytes": 307,
+          "sha256": "f6e23a433f85a494de5ffc39d4ec5f35fa374767cdfbad651bf38a55906d19d7"
+        },
+        {
+          "relative": "dist/project/cua/sky_js/src/targets/linux/action_settler.js",
+          "bytes": 740,
+          "sha256": "1341a4cc821347b9323800e597c0c754e2e6aa4e8d7c036b47163b6d43a57591"
+        },
+        {
+          "relative": "dist/project/cua/sky_js/src/targets/linux/activate_window.d.ts",
+          "bytes": 170,
+          "sha256": "71c30134a8e91fef538e3b883d10428d29128719d45328d468e2b802513c99b5"
+        },
+        {
+          "relative": "dist/project/cua/sky_js/src/targets/linux/activate_window.js",
+          "bytes": 352,
+          "sha256": "8fc14053190f5bbb4b7d628d591330392c4833984c75fc4776c88f192b39e803"
+        },
+        {
+          "relative": "dist/project/cua/sky_js/src/targets/linux/audio_recording.d.ts",
+          "bytes": 276,
+          "sha256": "27a1cfc6d12a2da1ce58f2476ce82b407c5675e5e2ba11cc96a08d113c36f69a"
+        },
+        {
+          "relative": "dist/project/cua/sky_js/src/targets/linux/audio_recording.js",
+          "bytes": 2328,
+          "sha256": "2765d8b304ec21d1c76c8a43a56e169ab888160420f6a5fe14c577ca946cf544"
+        },
+        {
+          "relative": "dist/project/cua/sky_js/src/targets/linux/click.d.ts",
+          "bytes": 151,
+          "sha256": "da98de7647ae2746d54cf07343da38c4b45de78e76594261c4449f50f2f60b94"
+        },
+        {
+          "relative": "dist/project/cua/sky_js/src/targets/linux/click.js",
+          "bytes": 355,
+          "sha256": "d4e4d2b4bf6048173f6752b0a1caf1c01a9abd2a93fa1aef61c1c273d2cc6ccf"
+        },
+        {
+          "relative": "dist/project/cua/sky_js/src/targets/linux/clipboard_read.d.ts",
+          "bytes": 168,
+          "sha256": "8cefb2cdda396bda858655a9f782fad5aa32975816f004641089dab4a20bf2de"
+        },
+        {
+          "relative": "dist/project/cua/sky_js/src/targets/linux/clipboard_read.js",
+          "bytes": 379,
+          "sha256": "f493bb081f594f948cf078ac934f70ede178f582af227d3b4d77150c39b3dd73"
+        },
+        {
+          "relative": "dist/project/cua/sky_js/src/targets/linux/clipboard_release.d.ts",
+          "bytes": 174,
+          "sha256": "6e4f7ef07fc6a346e0e57594dfb822f29c615852b05a4b71352931466bbd8394"
+        },
+        {
+          "relative": "dist/project/cua/sky_js/src/targets/linux/clipboard_release.js",
+          "bytes": 301,
+          "sha256": "3cf048de8234616041175e1e00422a30e63f2edadcc1ebfe64c3455052cf71c2"
+        },
+        {
+          "relative": "dist/project/cua/sky_js/src/targets/linux/clipboard_write.d.ts",
+          "bytes": 170,
+          "sha256": "d871392e58a3fd39024df49597b46fae02f42ddd1dcf90788971b54e33803bfd"
+        },
+        {
+          "relative": "dist/project/cua/sky_js/src/targets/linux/clipboard_write.js",
+          "bytes": 352,
+          "sha256": "5c6fa9abb5537b3f0264bd748efcb600a6293e1bc09dc0a1d573ca310af2a03b"
+        },
+        {
+          "relative": "dist/project/cua/sky_js/src/targets/linux/create_client.d.ts",
+          "bytes": 137,
+          "sha256": "a3a7fc2002173852ff5c789b8d8c2c2e639566745a12e17336bd927a62e74c5a"
+        },
+        {
+          "relative": "dist/project/cua/sky_js/src/targets/linux/create_client.js",
+          "bytes": 1902,
+          "sha256": "5ecbf120d4aa74e9b3672a8e1974220a18f2931bf8badb724ac56f13f0e0c0ec"
+        },
+        {
+          "relative": "dist/project/cua/sky_js/src/targets/linux/drag.d.ts",
+          "bytes": 149,
+          "sha256": "ea0aaf2cc665c3732ae1d338ba49288d2f6a3a4cf06b526022ef032661c0d9c8"
+        },
+        {
+          "relative": "dist/project/cua/sky_js/src/targets/linux/drag.js",
+          "bytes": 330,
+          "sha256": "3133bb9c6a287271da0c23d3fc2126e14ad8b793df4ed413bd779d7864f01944"
+        },
+        {
+          "relative": "dist/project/cua/sky_js/src/targets/linux/drag_handle.d.ts",
+          "bytes": 162,
+          "sha256": "308b7d9cf81ee2906d41b84a7616e6744f4ca4c81f77ebd689a662e01e24eb91"
+        },
+        {
+          "relative": "dist/project/cua/sky_js/src/targets/linux/drag_handle.js",
+          "bytes": 1007,
+          "sha256": "7c3034cb0a963d45420ef7a853a48d8bbe3ed0096732f18023e684757a5bb1e5"
+        },
+        {
+          "relative": "dist/project/cua/sky_js/src/targets/linux/element_ids.d.ts",
+          "bytes": 515,
+          "sha256": "3a3c36f21e8009edc5a5eb70ce6aa366a76eb033377fbd686b47d2220d049911"
+        },
+        {
+          "relative": "dist/project/cua/sky_js/src/targets/linux/element_ids.js",
+          "bytes": 709,
+          "sha256": "cb69a5924a3655a56722d071d4224f79aec5aa37360fc87da031293c5fd51f35"
+        },
+        {
+          "relative": "dist/project/cua/sky_js/src/targets/linux/fixtures/echo_sky_linux.d.ts",
+          "bytes": 30,
+          "sha256": "f3b2989724efbf7b154b10283b87780d53ee348055b20c76f86634ee512a2f93"
+        },
+        {
+          "relative": "dist/project/cua/sky_js/src/targets/linux/fixtures/failing_sky_linux.d.ts",
+          "bytes": 19,
+          "sha256": "1af9f724d86a6268aa72c8a187248c1d06937501784da400b5a3199270bc3c41"
+        },
+        {
+          "relative": "dist/project/cua/sky_js/src/targets/linux/fixtures/run_sky_linux.d.ts",
+          "bytes": 11,
+          "sha256": "8e609bb71c20b858c77f0e9f90bb1319db8477b13f9f965f1a1e18524bf50881"
+        },
+        {
+          "relative": "dist/project/cua/sky_js/src/targets/linux/fixtures/run_sky_service.d.ts",
+          "bytes": 11,
+          "sha256": "8e609bb71c20b858c77f0e9f90bb1319db8477b13f9f965f1a1e18524bf50881"
+        },
+        {
+          "relative": "dist/project/cua/sky_js/src/targets/linux/get_screenshot.d.ts",
+          "bytes": 406,
+          "sha256": "44d0301bb2c8aab375fa095c379d278c4c45119303d40e499e519aa799ec4591"
+        },
+        {
+          "relative": "dist/project/cua/sky_js/src/targets/linux/get_screenshot.js",
+          "bytes": 678,
+          "sha256": "3ad2d0174951908697a11962f0dbf95e01214d5bd922a44fdf93082a967a1c1c"
+        },
+        {
+          "relative": "dist/project/cua/sky_js/src/targets/linux/get_window_state.d.ts",
+          "bytes": 171,
+          "sha256": "fe2a3e4466f82766d0c76c5be91263ee7636d05e0d8e4c1ac4747c7df56380b7"
+        },
+        {
+          "relative": "dist/project/cua/sky_js/src/targets/linux/get_window_state.js",
+          "bytes": 676,
+          "sha256": "c851ab56d0f91a59a22a340ef619e7125388250911c86e7acfac06e864a4dd8b"
+        },
+        {
+          "relative": "dist/project/cua/sky_js/src/targets/linux/index.d.ts",
+          "bytes": 33,
+          "sha256": "3707118510f9015b6e1ff1ad063abb4ed17d913542049e0d4356072c5ae9f466"
+        },
+        {
+          "relative": "dist/project/cua/sky_js/src/targets/linux/key_down.d.ts",
+          "bytes": 156,
+          "sha256": "8feddfeaf4629e34b42dff52fdcda4cfc30f5735ad74c2e04cb0cd8213e38d25"
+        },
+        {
+          "relative": "dist/project/cua/sky_js/src/targets/linux/key_down.js",
+          "bytes": 338,
+          "sha256": "163d33f633d575ecc4277c227ed2236b23d28c35bbf24a85fae4e69543f57fac"
+        },
+        {
+          "relative": "dist/project/cua/sky_js/src/targets/linux/key_up.d.ts",
+          "bytes": 152,
+          "sha256": "75baac7f7f62b443cb446d0c9e1770fbb6c89aaa5f0cd4b986d54c27cac451a4"
+        },
+        {
+          "relative": "dist/project/cua/sky_js/src/targets/linux/key_up.js",
+          "bytes": 334,
+          "sha256": "65ef0b73230de7960d680fb206228c0abf77c710bc667c370e9989e74ac9bd59"
+        },
+        {
+          "relative": "dist/project/cua/sky_js/src/targets/linux/launch_app.d.ts",
+          "bytes": 160,
+          "sha256": "e252fe06b5c9450bb9e76fd2c4a3b0eeffa7160bf3cc8776704e97df50d0ca3b"
+        },
+        {
+          "relative": "dist/project/cua/sky_js/src/targets/linux/launch_app.js",
+          "bytes": 342,
+          "sha256": "166b2309b8a2d5f3f5ef7691bd285d200a0ebce3831c7b491a8ba2090fb0ffc9"
+        },
+        {
+          "relative": "dist/project/cua/sky_js/src/targets/linux/list_apps.d.ts",
+          "bytes": 158,
+          "sha256": "6402401a480afda793e44eee3c1e8e575126f084c938af2be82edd8978c35c2c"
+        },
+        {
+          "relative": "dist/project/cua/sky_js/src/targets/linux/list_apps.js",
+          "bytes": 335,
+          "sha256": "d4f7125e517b3355424b6ea8aca72191168f4c0094edd235dcd2fb9e500e34d0"
+        },
+        {
+          "relative": "dist/project/cua/sky_js/src/targets/linux/list_windows.d.ts",
+          "bytes": 164,
+          "sha256": "381190602645c76b376bb314066998dcf6faa131cbf7b700764ff78092e36531"
+        },
+        {
+          "relative": "dist/project/cua/sky_js/src/targets/linux/list_windows.js",
+          "bytes": 341,
+          "sha256": "3d286c26f81d704fb09fe280e9b00bb2947c5a9d1c3bfe01b86fdc738d52bd71"
+        },
+        {
+          "relative": "dist/project/cua/sky_js/src/targets/linux/move.d.ts",
+          "bytes": 149,
+          "sha256": "70bd3b894226cc4bb72ff4718724348042f2f497283f21a073e6ac01ee1c618b"
+        },
+        {
+          "relative": "dist/project/cua/sky_js/src/targets/linux/move.js",
+          "bytes": 330,
+          "sha256": "d30f63a3cbd8daba08b7767b5d3be88cbbc3ba10e679ede293b83fc7d717e018"
+        },
+        {
+          "relative": "dist/project/cua/sky_js/src/targets/linux/move_relative.d.ts",
+          "bytes": 166,
+          "sha256": "11332b072ff66961b9928d13a1b1699cc1b0ca30938af8d00af26487e65c5485"
+        },
+        {
+          "relative": "dist/project/cua/sky_js/src/targets/linux/move_relative.js",
+          "bytes": 348,
+          "sha256": "dad1a2e8033492cec7ed1e3f3aa6b16e3755b5875048fd31ccb4970c93440af8"
+        },
+        {
+          "relative": "dist/project/cua/sky_js/src/targets/linux/perform_secondary_action.d.ts",
+          "bytes": 187,
+          "sha256": "d0a38cb31665821c549f156f9a5865a92467b6542876e7429d2806615ab6fd0b"
+        },
+        {
+          "relative": "dist/project/cua/sky_js/src/targets/linux/perform_secondary_action.js",
+          "bytes": 393,
+          "sha256": "ca6e63c0d6c38a03bac6d3349373f2c27bceb8b78a3ebeaef7f655d15d3260a5"
+        },
+        {
+          "relative": "dist/project/cua/sky_js/src/targets/linux/press_key.d.ts",
+          "bytes": 158,
+          "sha256": "8a29aea49df2c5cbd547177407ae2bacc667853c31b5c9f56618ce84fb72a867"
+        },
+        {
+          "relative": "dist/project/cua/sky_js/src/targets/linux/press_key.js",
+          "bytes": 340,
+          "sha256": "08300a0ae53210dd7716adaaf3c2ae6a2ad685e6295506c6c05a51ebfc6cb752"
+        },
+        {
+          "relative": "dist/project/cua/sky_js/src/targets/linux/scroll.d.ts",
+          "bytes": 153,
+          "sha256": "3c4783ca546b6fdfe8cbf3413be58c9fd9e48da3a286703c364b625191fafb69"
+        },
+        {
+          "relative": "dist/project/cua/sky_js/src/targets/linux/scroll.js",
+          "bytes": 357,
+          "sha256": "0a33b51a927f68eef125a4c92252acacc2fce7a15bf00d4faaafef613e6e38b8"
+        },
+        {
+          "relative": "dist/project/cua/sky_js/src/targets/linux/sky_linux.d.ts",
+          "bytes": 254,
+          "sha256": "0a56925cb0f753b93e8d79fc6332b4fb03813a7e8624db1343b782c0b171146d"
+        },
+        {
+          "relative": "dist/project/cua/sky_js/src/targets/linux/sky_linux.js",
+          "bytes": 707,
+          "sha256": "598bc7a0135a39a327399ae06d28ff15f2ed2bb994b66a78c0eff2c615c9b286"
+        },
+        {
+          "relative": "dist/project/cua/sky_js/src/targets/linux/sky_linux_transport.d.ts",
+          "bytes": 176,
+          "sha256": "2747ba013cfde418f54d03f2f5ddb519415517730787429449d98c3910efa8ad"
+        },
+        {
+          "relative": "dist/project/cua/sky_js/src/targets/linux/sky_linux_transport.js",
+          "bytes": 2951,
+          "sha256": "c879f1b83dbc3cd5d0638c26ecffdd17c9cb6f39578b69bd653ee0c78a85664e"
+        },
+        {
+          "relative": "dist/project/cua/sky_js/src/targets/linux/type_characters.d.ts",
+          "bytes": 170,
+          "sha256": "6ffa2d32b1231180f153390b079c7f174ccbc057ebb831360e10311022788a8c"
+        },
+        {
+          "relative": "dist/project/cua/sky_js/src/targets/linux/type_characters.js",
+          "bytes": 381,
+          "sha256": "62262ac52baedefe48c80f6b44ee367a6f00c00590603c637257c989db59ff24"
+        },
+        {
+          "relative": "dist/project/cua/sky_js/src/targets/linux/type_text.d.ts",
+          "bytes": 158,
+          "sha256": "85bb3aa50709a6ad6b13b5c53854b902459e8711dac92a6cfe8f68b82180ed0f"
+        },
+        {
+          "relative": "dist/project/cua/sky_js/src/targets/linux/type_text.js",
+          "bytes": 363,
+          "sha256": "6738ceef7366fd36fee26b5e5bed66b30c54836035a12702201758b880225100"
+        },
+        {
+          "relative": "dist/project/cua/sky_js/src/targets/mac/audio_recording.d.ts",
+          "bytes": 250,
+          "sha256": "4743816275a4cb95e322794c02ef8633392418df2f4444c57847eecd7d135f39"
+        },
+        {
+          "relative": "dist/project/cua/sky_js/src/targets/mac/audio_recording.js",
+          "bytes": 2425,
+          "sha256": "883e11ac21cb261572166319a4dd7a948713cc7aaffc7c9117029d7374d01081"
+        },
+        {
+          "relative": "dist/project/cua/sky_js/src/targets/mac/click.d.ts",
+          "bytes": 122,
+          "sha256": "503618b0c9f19f9e94162fcd2f3cffc1a285fc5ea3a4a4ca6c915c0e63b7d9e7"
+        },
+        {
+          "relative": "dist/project/cua/sky_js/src/targets/mac/click.js",
+          "bytes": 510,
+          "sha256": "d122645123afdc7aeb1114681adb1bff0d2e6acc41d7a09e449835c80e3e7348"
+        },
+        {
+          "relative": "dist/project/cua/sky_js/src/targets/mac/client.d.ts",
+          "bytes": 4345,
+          "sha256": "ba1fdc06bab21bea6970be9d5f81c3f7d7fa7c7d36717030bce46416ec3c36d6"
+        },
+        {
+          "relative": "dist/project/cua/sky_js/src/targets/mac/client.js",
+          "bytes": 5138,
+          "sha256": "71134f10354fe9f7be23a62df52789908a8592151685286a7965b297a81cef8f"
+        },
+        {
+          "relative": "dist/project/cua/sky_js/src/targets/mac/computer-use-policy.d.ts",
+          "bytes": 667,
+          "sha256": "3fecdea3868778b7c50fc8f67c3aab9b01b71a9daddaf61ac12fad3a2fef29c8"
+        },
+        {
+          "relative": "dist/project/cua/sky_js/src/targets/mac/computer-use-policy.js",
+          "bytes": 4838,
+          "sha256": "a00024117e11f2d1e4151e140bede2c0ed7931625aa0f79a427457cb1103524e"
+        },
+        {
+          "relative": "dist/project/cua/sky_js/src/targets/mac/computer-use-telemetry.d.ts",
+          "bytes": 832,
+          "sha256": "c690cc9e4435ed9e2c4829b5b0e62e4907f0e77553654765235c1cabc38b3242"
+        },
+        {
+          "relative": "dist/project/cua/sky_js/src/targets/mac/computer-use-telemetry.js",
+          "bytes": 4435,
+          "sha256": "3645bebe7ff8badca86e57367e7961e1b4ac1fb0e743c65b3e1d3e308847208e"
+        },
+        {
+          "relative": "dist/project/cua/sky_js/src/targets/mac/create_client.d.ts",
+          "bytes": 126,
+          "sha256": "12b4535983455e30a62a45ba6a77131c108094b5b57906cef9b3e2de6df60589"
+        },
+        {
+          "relative": "dist/project/cua/sky_js/src/targets/mac/create_client.js",
+          "bytes": 1119,
+          "sha256": "901b7f850b7b4ceaecefe7727a7a4aecd3c22a05fb807ffed5cfcca000906217"
+        },
+        {
+          "relative": "dist/project/cua/sky_js/src/targets/mac/drag.d.ts",
+          "bytes": 119,
+          "sha256": "72b12c06aa0a3964197c37949461bd168ae401f93289bf833ca3a90d6847aa40"
+        },
+        {
+          "relative": "dist/project/cua/sky_js/src/targets/mac/drag.js",
+          "bytes": 436,
+          "sha256": "01df9da83423d1b600b162b71d382d0991fcb62779a969facfbb0b649ffe135e"
+        },
+        {
+          "relative": "dist/project/cua/sky_js/src/targets/mac/errors.d.ts",
+          "bytes": 1438,
+          "sha256": "276b1c1cdb9a92c6308065f3e4ae86e37cb5c6d5269f3e66b76f430e47cec491"
+        },
+        {
+          "relative": "dist/project/cua/sky_js/src/targets/mac/errors.js",
+          "bytes": 1049,
+          "sha256": "9dd27e4cf0ea4456b3ad472fab8cbbe093ad1184d0cb25a8c05e738ee00cfd43"
+        },
+        {
+          "relative": "dist/project/cua/sky_js/src/targets/mac/get_app_state.d.ts",
+          "bytes": 186,
+          "sha256": "861f35ea2b0054efcb73f3ada3a6654c61ce2e233093a3835c9916f660644be0"
+        },
+        {
+          "relative": "dist/project/cua/sky_js/src/targets/mac/get_app_state.js",
+          "bytes": 506,
+          "sha256": "7b7fe2af461c7cd348c07535b1deae9ea14837dbdac9985ba479eb2e53e5248d"
+        },
+        {
+          "relative": "dist/project/cua/sky_js/src/targets/mac/index.d.ts",
+          "bytes": 33,
+          "sha256": "3707118510f9015b6e1ff1ad063abb4ed17d913542049e0d4356072c5ae9f466"
+        },
+        {
+          "relative": "dist/project/cua/sky_js/src/targets/mac/lazy-client.d.ts",
+          "bytes": 122,
+          "sha256": "a38220e12ac273def96d380f53f526425adec618d3846a0071f1201b14461253"
+        },
+        {
+          "relative": "dist/project/cua/sky_js/src/targets/mac/lazy-client.js",
+          "bytes": 116,
+          "sha256": "e222ec4e31b96c06c79819ea23a4d69a7f564c9a11f640c9d4b48c11bc75365b"
+        },
+        {
+          "relative": "dist/project/cua/sky_js/src/targets/mac/list_apps.d.ts",
+          "bytes": 102,
+          "sha256": "9c4b5ad1dbb793cb6affd1245177e730ed84b5143601b44fe672ace83e72395d"
+        },
+        {
+          "relative": "dist/project/cua/sky_js/src/targets/mac/list_apps.js",
+          "bytes": 726,
+          "sha256": "77ec31ff376b5065b08ca1116484b3e69878c2a4a7ad6dac7f29170b965d91df"
+        },
+        {
+          "relative": "dist/project/cua/sky_js/src/targets/mac/native-pipe.d.ts",
+          "bytes": 1447,
+          "sha256": "7d0f1d8e2e0e66448e3c31fb0f7cc88e78385b5fd79fe1fdc8e09a4390026a72"
+        },
+        {
+          "relative": "dist/project/cua/sky_js/src/targets/mac/native-pipe.js",
+          "bytes": 8829,
+          "sha256": "51a1138a0f0d7f01fe5d4d0a4f0753c67b2c3f3ed55c7540c26d182274e116f4"
+        },
+        {
+          "relative": "dist/project/cua/sky_js/src/targets/mac/paste.d.ts",
+          "bytes": 122,
+          "sha256": "2a292a32f8aa9fa0a2565a21df186bf8b5d59ec9cb338ac1dab3ef1f643ecc9f"
+        },
+        {
+          "relative": "dist/project/cua/sky_js/src/targets/mac/paste.js",
+          "bytes": 415,
+          "sha256": "7f829aab4e27038f5eba94262cc0a4dd0e874ece1d8a55dcbf8ecfb5101c9c40"
+        },
+        {
+          "relative": "dist/project/cua/sky_js/src/targets/mac/perform_secondary_action.d.ts",
+          "bytes": 175,
+          "sha256": "eb217bed1938135dbfd5a74323b3c6750df6c1ed057066fefa586962b4f627e8"
+        },
+        {
+          "relative": "dist/project/cua/sky_js/src/targets/mac/perform_secondary_action.js",
+          "bytes": 487,
+          "sha256": "63e4509b86697a3db15c9f38d87715c27d7ba7ba027909ca7618c9341e3ec2ff"
+        },
+        {
+          "relative": "dist/project/cua/sky_js/src/targets/mac/press_key.d.ts",
+          "bytes": 132,
+          "sha256": "32aaf2ec6450cc16aa158e56f2ad7618b7c0cdd0d20b9bf2d314d55f3281b278"
+        },
+        {
+          "relative": "dist/project/cua/sky_js/src/targets/mac/press_key.js",
+          "bytes": 428,
+          "sha256": "12b9a808ecd832943b57a5998d9879fd084067a67b1b0650b2f2743337be872d"
+        },
+        {
+          "relative": "dist/project/cua/sky_js/src/targets/mac/scroll.d.ts",
+          "bytes": 125,
+          "sha256": "483bdc5e2080d3fdf2b7df43ef077bf943847f6389cf7fea7bcc2dc900412720"
+        },
+        {
+          "relative": "dist/project/cua/sky_js/src/targets/mac/scroll.js",
+          "bytes": 467,
+          "sha256": "f026bbeaca656bddb8212c535690d6acbb1a969b392657368ef964a0f015fe95"
+        },
+        {
+          "relative": "dist/project/cua/sky_js/src/targets/mac/select_text.d.ts",
+          "bytes": 138,
+          "sha256": "8293532b5040e9bc501524e092dd4557ee1b22748db5cd8a9f9ec14ac32ca523"
+        },
+        {
+          "relative": "dist/project/cua/sky_js/src/targets/mac/select_text.js",
+          "bytes": 504,
+          "sha256": "44fa3fcd8e1366ebfa5237bc20d570b1e08d38bb99f27a48bf3ee6eaac225ac5"
+        },
+        {
+          "relative": "dist/project/cua/sky_js/src/targets/mac/set_value.d.ts",
+          "bytes": 132,
+          "sha256": "6c9cd027a3c3e6179df9572038527e13d5a33b1ca701e31b1a78a778144550e3"
+        },
+        {
+          "relative": "dist/project/cua/sky_js/src/targets/mac/set_value.js",
+          "bytes": 441,
+          "sha256": "e4ac86f5b4d5ba8bd17ed7281148cd4f1ae1d4a493997fbfc10a3a8f328ed06a"
+        },
+        {
+          "relative": "dist/project/cua/sky_js/src/targets/mac/type_text.d.ts",
+          "bytes": 132,
+          "sha256": "ff4a4d3ccb6ceabe4578396e295128de029bde19aa1864ce841e7fd73adf3820"
+        },
+        {
+          "relative": "dist/project/cua/sky_js/src/targets/mac/type_text.js",
+          "bytes": 410,
+          "sha256": "29289fd08c109ff7f913ef92aea8f4df7d87f8ce59fb05172ee8c99d20b7e568"
+        },
+        {
+          "relative": "dist/project/cua/sky_js/src/targets/mac/window_result.d.ts",
+          "bytes": 257,
+          "sha256": "41920c377dc26959b2949536277cda7b8829541e28fb26e8c14c043bf9a36ec2"
+        },
+        {
+          "relative": "dist/project/cua/sky_js/src/targets/mac/window_result.js",
+          "bytes": 1408,
+          "sha256": "9169daf53e7516eecd2ba8680e990bc6570d16d955f0ffed183572202c5d5448"
+        },
+        {
+          "relative": "dist/project/cua/sky_js/src/targets/windows/create_client.d.ts",
+          "bytes": 132,
+          "sha256": "aed4edd65c6e0cd92b949298d21b59ad978c07c48238c10dc7fb37d57e230069"
+        },
+        {
+          "relative": "dist/project/cua/sky_js/src/targets/windows/create_client.js",
+          "bytes": 132,
+          "sha256": "43935a185c83827ea87e23295c7a44327f43e933da97da7cd1b8b7eb23aa6fab"
+        },
+        {
+          "relative": "dist/project/cua/sky_js/src/targets/windows/index.d.ts",
+          "bytes": 33,
+          "sha256": "3707118510f9015b6e1ff1ad063abb4ed17d913542049e0d4356072c5ae9f466"
+        },
+        {
+          "relative": "dist/project/cua/sky_js/src/targets/windows/internal/codex_turn_metadata.d.ts",
+          "bytes": 216,
+          "sha256": "98274ab227d6b53ee8add571b221c2660c077fc99970db7ca64444ebb83d9fe8"
+        },
+        {
+          "relative": "dist/project/cua/sky_js/src/targets/windows/internal/codex_turn_metadata.js",
+          "bytes": 744,
+          "sha256": "284ca7197ed514ca272c728d6ab0eda116f4fc44b3485435c004adcf2d95f3fb"
+        },
+        {
+          "relative": "dist/project/cua/sky_js/src/targets/windows/internal/computer_use_client.d.ts",
+          "bytes": 568,
+          "sha256": "e057add5e0b0d1043a40b4655570a1b4467d0e765a8c44d913e5deb8c4dd4774"
+        },
+        {
+          "relative": "dist/project/cua/sky_js/src/targets/windows/internal/computer_use_client.js",
+          "bytes": 7646,
+          "sha256": "12f2952342ee3e3e4ae2cd509de48f59c935a925607aee24f41d7797510802f7"
+        },
+        {
+          "relative": "dist/project/cua/sky_js/src/targets/windows/internal/computer_use_client_base.d.ts",
+          "bytes": 2073,
+          "sha256": "6afb8fbcd3f554e715f1b2d7d80b7237dcc6dfe48725deda730903da35e302eb"
+        },
+        {
+          "relative": "dist/project/cua/sky_js/src/targets/windows/internal/computer_use_client_base.js",
+          "bytes": 9682,
+          "sha256": "617d8e6e18fdde25f06d4cba2c84c994e076e05f30a8c55d09e918401c48b171"
+        },
+        {
+          "relative": "dist/project/cua/sky_js/src/targets/windows/internal/helper_transport.d.ts",
+          "bytes": 1055,
+          "sha256": "f3e75b0fbf6f16f0d8a422394c70b0b207032e8130f8fd847d475a8b930b474e"
+        },
+        {
+          "relative": "dist/project/cua/sky_js/src/targets/windows/internal/helper_transport.js",
+          "bytes": 10593,
+          "sha256": "993249ea69056fa0e725c295d7e9fca0a3e608ffd3e3f8d1e7bc20bc1fef5ddf"
+        },
+        {
+          "relative": "dist/project/cua/sky_js/src/types/Direction.d.ts",
+          "bytes": 82,
+          "sha256": "c1422b0e694b052fddb2ac0cb6ffeae7109c108012b22aa129e6c361afd9db4f"
+        },
+        {
+          "relative": "dist/project/cua/sky_js/src/types/MouseButton.d.ts",
+          "bytes": 73,
+          "sha256": "dbb548c19b958c48b07114ae6e6c691aab83c648a9849ab60c990eb050880dad"
+        },
+        {
+          "relative": "dist/project/cua/sky_js/src/types/Point.d.ts",
+          "bytes": 200,
+          "sha256": "452ee6fb49dda75266fe4679c31dc4f323b80125666fd6f5c1ec3668aa4a6908"
+        },
+        {
+          "relative": "dist/project/cua/sky_js/src/types/SkyClient.d.ts",
+          "bytes": 655,
+          "sha256": "dbe3d8669f2abb294e9c6ab19cb346b66722cd44279f8d002a32edcbb607baf2"
+        },
+        {
+          "relative": "dist/project/cua/sky_js/src/types/full-desktop/ActivateWindow.d.ts",
+          "bytes": 301,
+          "sha256": "8b2b2ee8503a0d4f339746b02599559c09ae529efab8fe7433885aaf654d2223"
+        },
+        {
+          "relative": "dist/project/cua/sky_js/src/types/full-desktop/Audio.d.ts",
+          "bytes": 202,
+          "sha256": "d3a5c44212d1be1e643b2a3989272f91c1f111ed83bbef7c5d5abb2967671ff8"
+        },
+        {
+          "relative": "dist/project/cua/sky_js/src/types/full-desktop/Click.d.ts",
+          "bytes": 1406,
+          "sha256": "43efd0608a0a68c769d09d726ccf7833398a09deba74190185a4a5be447de5f2"
+        },
+        {
+          "relative": "dist/project/cua/sky_js/src/types/full-desktop/ClipboardHandle.d.ts",
+          "bytes": 482,
+          "sha256": "fdfce5af076b291dba16248cb2db6ae6ed780aed182e330d7c82e43b05fa0e2c"
+        },
+        {
+          "relative": "dist/project/cua/sky_js/src/types/full-desktop/ClipboardRead.d.ts",
+          "bytes": 492,
+          "sha256": "05711085b2bf5c66f1006daaaeadfbcc76139b56e5c7851e855a0c06a987cd7e"
+        },
+        {
+          "relative": "dist/project/cua/sky_js/src/types/full-desktop/ClipboardRelease.d.ts",
+          "bytes": 379,
+          "sha256": "e2d949c360bde02fca08f52eadfc50f9a38d0512b81578cf307ffa5ba00d42d2"
+        },
+        {
+          "relative": "dist/project/cua/sky_js/src/types/full-desktop/ClipboardWrite.d.ts",
+          "bytes": 534,
+          "sha256": "8bf1e382ce825fa6311bbe5e3db2cfad9584990dff187e96c71cb232730630db"
+        },
+        {
+          "relative": "dist/project/cua/sky_js/src/types/full-desktop/Drag.d.ts",
+          "bytes": 627,
+          "sha256": "20b5cfe44c3799706ace5cda8ba3aab34f3b4381d2825f6977edd562603c6af4"
+        },
+        {
+          "relative": "dist/project/cua/sky_js/src/types/full-desktop/DragHandle.d.ts",
+          "bytes": 633,
+          "sha256": "f8ce88c408d59f956be85cf85e3c4e48dd284a1438588b9038284da92de4b0f3"
+        },
+        {
+          "relative": "dist/project/cua/sky_js/src/types/full-desktop/FullDesktopComputerUseClient.d.ts",
+          "bytes": 2168,
+          "sha256": "6bd636ced639eeabce1db6dc044ff919cbee21b2215134bae8a61e74f2c15ba4"
+        },
+        {
+          "relative": "dist/project/cua/sky_js/src/types/full-desktop/GetScreenshot.d.ts",
+          "bytes": 217,
+          "sha256": "08ea22ad5e5eabcc275f9ffc46343fd24d38f426f578cc185a234c941f14745a"
+        },
+        {
+          "relative": "dist/project/cua/sky_js/src/types/full-desktop/GetWindowState.d.ts",
+          "bytes": 648,
+          "sha256": "7862d7e421213527c9520b5c51ad6235f5bdb1577c3845a950c3e8eca89a6ed9"
+        },
+        {
+          "relative": "dist/project/cua/sky_js/src/types/full-desktop/KeyDown.d.ts",
+          "bytes": 516,
+          "sha256": "be23eaa767ca6620536c1da19c662ec99dee69fd6c779564d69a7d0057f843b2"
+        },
+        {
+          "relative": "dist/project/cua/sky_js/src/types/full-desktop/KeyUp.d.ts",
+          "bytes": 530,
+          "sha256": "77b9b83a337498e3e57e6847f08ef7c7520f70340845a21e62bb2fbba3aeae2e"
+        },
+        {
+          "relative": "dist/project/cua/sky_js/src/types/full-desktop/LaunchApp.d.ts",
+          "bytes": 271,
+          "sha256": "44b065de5a1951757408185b2ab61e02fcba1b140af907084db73f89464b97f4"
+        },
+        {
+          "relative": "dist/project/cua/sky_js/src/types/full-desktop/ListApps.d.ts",
+          "bytes": 563,
+          "sha256": "bab3b8f15b532d01e25fe8cddf302cf04d09584cfa31988885c1e1e826ff86da"
+        },
+        {
+          "relative": "dist/project/cua/sky_js/src/types/full-desktop/ListWindows.d.ts",
+          "bytes": 230,
+          "sha256": "1330bdb44cfd834ab17975eafd085a9ecb3936e8c03cec1fdc0f0bc1c5f79737"
+        },
+        {
+          "relative": "dist/project/cua/sky_js/src/types/full-desktop/Move.d.ts",
+          "bytes": 631,
+          "sha256": "7cd646a6f0a74b078b9d9cda064d26ea43884b5cf3651bea7b4b8b863d02bc6e"
+        },
+        {
+          "relative": "dist/project/cua/sky_js/src/types/full-desktop/MoveRelative.d.ts",
+          "bytes": 479,
+          "sha256": "c222bef6bdd845cf0aef13e4cdf684c99c999f1e20d42797ad58dcf25f6336ce"
+        },
+        {
+          "relative": "dist/project/cua/sky_js/src/types/full-desktop/Options.d.ts",
+          "bytes": 657,
+          "sha256": "2f988c2f4d8b0c3a32a9cc197cbd3ffbe83749de5fb288ede6a31b782aa29abe"
+        },
+        {
+          "relative": "dist/project/cua/sky_js/src/types/full-desktop/PerformSecondaryAction.d.ts",
+          "bytes": 629,
+          "sha256": "f84b1ba8e020f48787feb3f52e86b9d36052286b27061f4b50f85a423a7333a0"
+        },
+        {
+          "relative": "dist/project/cua/sky_js/src/types/full-desktop/PressKey.d.ts",
+          "bytes": 742,
+          "sha256": "c96547c2ac078280ce21030e6b1369174eb146f1c15b87f953f3f8bf7903e773"
+        },
+        {
+          "relative": "dist/project/cua/sky_js/src/types/full-desktop/Screenshot.d.ts",
+          "bytes": 185,
+          "sha256": "39229aa7a8543e7437871b8f6dc79ccfdcce3f4368139a10f60e1955e0876647"
+        },
+        {
+          "relative": "dist/project/cua/sky_js/src/types/full-desktop/Scroll.d.ts",
+          "bytes": 943,
+          "sha256": "bc062204d078718ded990d123fadc7aad9be76cc4bbf54515e3b34b6c67de9e6"
+        },
+        {
+          "relative": "dist/project/cua/sky_js/src/types/full-desktop/StartAudioRecording.d.ts",
+          "bytes": 309,
+          "sha256": "c771576fd04f6d4d0a0cc15f816663d73cc26a2297f79365687ea56510c427ee"
+        },
+        {
+          "relative": "dist/project/cua/sky_js/src/types/full-desktop/StopAudioRecording.d.ts",
+          "bytes": 219,
+          "sha256": "8856774f165020d3ea3ce43c200285b8ce3e25fa6d4e820dfec849be5243102a"
+        },
+        {
+          "relative": "dist/project/cua/sky_js/src/types/full-desktop/TypeCharacters.d.ts",
+          "bytes": 555,
+          "sha256": "74da6138586f53a86f8af478803550d7e14aa083f93b9f4700bfde625a3b48a6"
+        },
+        {
+          "relative": "dist/project/cua/sky_js/src/types/full-desktop/TypeText.d.ts",
+          "bytes": 597,
+          "sha256": "dcf32711d7e5ac671f699d32940c669becdec3b2886a947500d7a1dfc31e7cca"
+        },
+        {
+          "relative": "dist/project/cua/sky_js/src/types/full-desktop/Window.d.ts",
+          "bytes": 883,
+          "sha256": "97972830741a96cad1bbe9452b5dec70fe343dc4dad4feb16a35ee0bf42f59c2"
+        },
+        {
+          "relative": "dist/project/cua/sky_js/src/types/full-desktop/WindowState.d.ts",
+          "bytes": 2220,
+          "sha256": "1b667949910642015ff3fad0ad9b8b935e3fb53c607fded7f947f5af1aa25b7e"
+        },
+        {
+          "relative": "dist/project/cua/sky_js/src/types/full-desktop/index.d.ts",
+          "bytes": 1473,
+          "sha256": "5af2468c7ea74cc4b159b50416f3944a694278079ee140302cd6dc1806161a59"
+        },
+        {
+          "relative": "dist/project/cua/sky_js/src/types/index.d.ts",
+          "bytes": 325,
+          "sha256": "0983ad7650dc6d5472e65fa9c4fdc1b23db08c739c362d00ea6b32b6e597ec0f"
+        },
+        {
+          "relative": "dist/project/cua/sky_js/src/types/window/AppIdentifier.d.ts",
+          "bytes": 36,
+          "sha256": "d686d5c341aac7e0c06dabc58230cef7677bd907f48b7583bc30495d9e61750f"
+        },
+        {
+          "relative": "dist/project/cua/sky_js/src/types/window/AppState.d.ts",
+          "bytes": 408,
+          "sha256": "8923aeeb7f60715493de2c29e19067b1e24211f77f63c6c64a96543fa4dfb78f"
+        },
+        {
+          "relative": "dist/project/cua/sky_js/src/types/window/Audio.d.ts",
+          "bytes": 204,
+          "sha256": "d2909971b4798effc9271aff29bbafe8cc475542ef0296ba9434802ac2c6c71b"
+        },
+        {
+          "relative": "dist/project/cua/sky_js/src/types/window/Click.d.ts",
+          "bytes": 989,
+          "sha256": "6adc3625069b8ecdf64ca393d1b5ec23a20b1befd27a985866b7806448c230c0"
+        },
+        {
+          "relative": "dist/project/cua/sky_js/src/types/window/Drag.d.ts",
+          "bytes": 668,
+          "sha256": "10aeba9607f10a62924f7dced3c77aab5314fb85d178499bac6c0a5f805441b3"
+        },
+        {
+          "relative": "dist/project/cua/sky_js/src/types/window/GetAppState.d.ts",
+          "bytes": 538,
+          "sha256": "996dd4e45f7b2e119dfa074cf5b4b5893248ae79323596da0dcfc3bc3c8c8b55"
+        },
+        {
+          "relative": "dist/project/cua/sky_js/src/types/window/ListApps.d.ts",
+          "bytes": 595,
+          "sha256": "8298eb3a109963fdc0a07a6a30349025dd19c745a241b8ee502bc0779f5617a0"
+        },
+        {
+          "relative": "dist/project/cua/sky_js/src/types/window/Options.d.ts",
+          "bytes": 83,
+          "sha256": "d239ee4c8c1e248e46b056a5452a7ba4761ab84c55773d4907f0cc77ddf7abb7"
+        },
+        {
+          "relative": "dist/project/cua/sky_js/src/types/window/Paste.d.ts",
+          "bytes": 571,
+          "sha256": "3d3ac35d0a85332d85ef07d0aebea837321ce5c3d17b5d60f33cba974f18ca4b"
+        },
+        {
+          "relative": "dist/project/cua/sky_js/src/types/window/PerformSecondaryAction.d.ts",
+          "bytes": 534,
+          "sha256": "9420653e6f1531094a893bde59cf229a5982976263655cbbee97fbe29e20ec44"
+        },
+        {
+          "relative": "dist/project/cua/sky_js/src/types/window/PressKey.d.ts",
+          "bytes": 724,
+          "sha256": "0d8bfc2ade64d7f996cee102909a8158760ce869bf1e9523ba55872e49c68b34"
+        },
+        {
+          "relative": "dist/project/cua/sky_js/src/types/window/Screenshot.d.ts",
+          "bytes": 90,
+          "sha256": "e30ea72625d59780f1f8b4aad00f52dfaea59703f94eb49ea04d784429cdb228"
+        },
+        {
+          "relative": "dist/project/cua/sky_js/src/types/window/Scroll.d.ts",
+          "bytes": 789,
+          "sha256": "800ac84854c3c64fee6678fb36d7a47ccaa823953cedc5543ef092cd78bf88a7"
+        },
+        {
+          "relative": "dist/project/cua/sky_js/src/types/window/SelectText.d.ts",
+          "bytes": 917,
+          "sha256": "dfdc885f128699dc4b7721b161c40a8fdc62185cc3f305bc446d896e7e822619"
+        },
+        {
+          "relative": "dist/project/cua/sky_js/src/types/window/SetValue.d.ts",
+          "bytes": 512,
+          "sha256": "1c55428ade82bf7a37db01aece1faaeae7acf8b22301fbd318abd585c52f93e1"
+        },
+        {
+          "relative": "dist/project/cua/sky_js/src/types/window/StartAudioRecording.d.ts",
+          "bytes": 314,
+          "sha256": "223888166843db29924aaa18d1955682a7614681135145a61b9dfef067a29d15"
+        },
+        {
+          "relative": "dist/project/cua/sky_js/src/types/window/StopAudioRecording.d.ts",
+          "bytes": 219,
+          "sha256": "8856774f165020d3ea3ce43c200285b8ce3e25fa6d4e820dfec849be5243102a"
+        },
+        {
+          "relative": "dist/project/cua/sky_js/src/types/window/TypeText.d.ts",
+          "bytes": 413,
+          "sha256": "a6891c01a84202e00f7d2a156d6222281afe853fa5109f3053fa6e8623f15c0a"
+        },
+        {
+          "relative": "dist/project/cua/sky_js/src/types/window/WindowComputerUseClient.d.ts",
+          "bytes": 1203,
+          "sha256": "4978f3303c28acd2306e7012614b49f24522122b4c2f254fd4b71cb93373dcb0"
+        },
+        {
+          "relative": "dist/project/cua/sky_js/src/types/window/index.d.ts",
+          "bytes": 893,
+          "sha256": "ae5d3c33ded6056204304ae6b2a98c93651519b8bc1645c7e5a8d28d56ec42d6"
+        },
+        {
+          "relative": "dist/project/cua/sky_js/src/types/window2/ActivateWindow.d.ts",
+          "bytes": 392,
+          "sha256": "f0e9b316f2bfd4eac22d66c100af40533cd537d8996b0cfd27a23b3120436ddc"
+        },
+        {
+          "relative": "dist/project/cua/sky_js/src/types/window2/Audio.d.ts",
+          "bytes": 204,
+          "sha256": "d2909971b4798effc9271aff29bbafe8cc475542ef0296ba9434802ac2c6c71b"
+        },
+        {
+          "relative": "dist/project/cua/sky_js/src/types/window2/Click.d.ts",
+          "bytes": 897,
+          "sha256": "3820ce4debf5d5f731ea5259f731b5bd74d9999fd59b95b3a1e24922d0e9d57c"
+        },
+        {
+          "relative": "dist/project/cua/sky_js/src/types/window2/Drag.d.ts",
+          "bytes": 713,
+          "sha256": "994cc79a582b94f2fe060c1b621690017bfa62fe67366dfdd7cd2d80e06bf565"
+        },
+        {
+          "relative": "dist/project/cua/sky_js/src/types/window2/GetWindow.d.ts",
+          "bytes": 503,
+          "sha256": "cddb10da21916fb903f7efd60f6acd2aaef6a58f2abbbb075c4af083c6e7408f"
+        },
+        {
+          "relative": "dist/project/cua/sky_js/src/types/window2/GetWindowState.d.ts",
+          "bytes": 612,
+          "sha256": "68bfc1e35dddaaeb2d89d259373aff50965340b32b7d922abef2741f863f3322"
+        },
+        {
+          "relative": "dist/project/cua/sky_js/src/types/window2/LaunchApp.d.ts",
+          "bytes": 528,
+          "sha256": "16306b8f623eeeb41461b46733b587afd2340ff43e6080e57b2bbacf38dce847"
+        },
+        {
+          "relative": "dist/project/cua/sky_js/src/types/window2/ListApps.d.ts",
+          "bytes": 803,
+          "sha256": "b3d5135bb2ba9df98fca022e46aefcaaa873a329e88e5503e102d9800b2ec0dd"
+        },
+        {
+          "relative": "dist/project/cua/sky_js/src/types/window2/ListWindows.d.ts",
+          "bytes": 188,
+          "sha256": "c2e3c794d75924e5b751d5b7c62ef676c9e721d87fec1f457d93267a3633c67c"
+        },
+        {
+          "relative": "dist/project/cua/sky_js/src/types/window2/Options.d.ts",
+          "bytes": 95,
+          "sha256": "f4d7927600da6f29840b3f59eab7c20ef903fdf155674457f714a8e652a156e9"
+        },
+        {
+          "relative": "dist/project/cua/sky_js/src/types/window2/PerformSecondaryAction.d.ts",
+          "bytes": 649,
+          "sha256": "c9ed5eacae59d99a752bf4ce11c3d1ecc4c187f53ed48879d1378f540c01dd26"
+        },
+        {
+          "relative": "dist/project/cua/sky_js/src/types/window2/PressKey.d.ts",
+          "bytes": 657,
+          "sha256": "67632d226030d8740267e4b12a8806e3997f43c290c68758c4487fd189cb270e"
+        },
+        {
+          "relative": "dist/project/cua/sky_js/src/types/window2/Screenshot.d.ts",
+          "bytes": 675,
+          "sha256": "2734de416038a1ba93229996eb7020c98dd0faacd6566dcdc62dc8c417331b50"
+        },
+        {
+          "relative": "dist/project/cua/sky_js/src/types/window2/Scroll.d.ts",
+          "bytes": 793,
+          "sha256": "f618d4c72097a0a3a69454ee240f8401f664d5fcfe72976bf5ddb6c12b0615d2"
+        },
+        {
+          "relative": "dist/project/cua/sky_js/src/types/window2/SetValue.d.ts",
+          "bytes": 507,
+          "sha256": "0cd338e16395b9416f4f58204fe9f8e29afae1591f2213daf1759b666f8e7bb2"
+        },
+        {
+          "relative": "dist/project/cua/sky_js/src/types/window2/StartAudioRecording.d.ts",
+          "bytes": 314,
+          "sha256": "223888166843db29924aaa18d1955682a7614681135145a61b9dfef067a29d15"
+        },
+        {
+          "relative": "dist/project/cua/sky_js/src/types/window2/StopAudioRecording.d.ts",
+          "bytes": 219,
+          "sha256": "8856774f165020d3ea3ce43c200285b8ce3e25fa6d4e820dfec849be5243102a"
+        },
+        {
+          "relative": "dist/project/cua/sky_js/src/types/window2/TypeText.d.ts",
+          "bytes": 367,
+          "sha256": "93e489baaac67ec8ab7272452071b7a8724fa301a3219786f2a3b8cd42962235"
+        },
+        {
+          "relative": "dist/project/cua/sky_js/src/types/window2/Window.d.ts",
+          "bytes": 391,
+          "sha256": "e870fdd3389a8050d90a2c4d637f90ce008b6fef6b877f73e5084f07c772377a"
+        },
+        {
+          "relative": "dist/project/cua/sky_js/src/types/window2/Window2ComputerUseClient.d.ts",
+          "bytes": 1427,
+          "sha256": "e721a9cad11263d56e8dc296bc22afe35ea6cb7c058487000944babbde138ad7"
+        },
+        {
+          "relative": "dist/project/cua/sky_js/src/types/window2/WindowState.d.ts",
+          "bytes": 967,
+          "sha256": "19a04c5477425816c395ec039049912243207c8e0e0c8c657928ebd5b8e80daa"
+        },
+        {
+          "relative": "dist/project/cua/sky_js/src/types/window2/index.d.ts",
+          "bytes": 1073,
+          "sha256": "18b84d14f9d7d1cb41cca598df6bee0668eb1f8284a9881bffc611ec1e3c4366"
+        },
+        {
+          "relative": "docs/skills/oai_sky_lib/linux/SKILL.md",
+          "bytes": 12604,
+          "sha256": "6e59af3e5fe9c393994f9ae4a8e50d96198293c972072f540a83e97635c2a07f"
+        },
+        {
+          "relative": "docs/skills/oai_sky_lib/macos/SKILL.md",
+          "bytes": 7491,
+          "sha256": "3d755c8541af4c6b07995a9e82e29a17cd11ff5189517fbc3e4b78532e032410"
+        },
+        {
+          "relative": "docs/skills/oai_sky_lib/windows/SKILL.md",
+          "bytes": 13042,
+          "sha256": "a1e99df21d9b1eb5f273e0d46d7609f054b9af533b8bb5bfd89b54d44a216fb4"
+        },
+        {
+          "relative": "docs/sky-full-desktop-api.md",
+          "bytes": 11421,
+          "sha256": "d350efea10ef818f7080ed7ba3a941bae764bde2a94e10cbae93a46794cac335"
+        },
+        {
+          "relative": "docs/sky-window-api.md",
+          "bytes": 6471,
+          "sha256": "18d387e9c5d2a131fb697dce038ccd58e78059eb406d010db171e987de1cc6f5"
+        },
+        {
+          "relative": "docs/sky-window2-api.md",
+          "bytes": 8047,
+          "sha256": "85fa55b935d78ce65381bfb316a2e7db7ae1927fc0eed96f8faf0543c9701cec"
+        },
+        {
+          "relative": "package.json",
+          "bytes": 2991,
+          "sha256": "6c5f3ddc0623bcc90f0e93430a029d66bdcb8df4cdc16070b4d84296c4070981"
+        }
+      ],
+      "inventorySHA256": "4feba04ffab4552b4f060bececdf31bac91c68f690f477a1941d0b6e1a7deb1f"
+    },
+    "@oai/browser-desktop": {
+      "version": "0.1.1",
+      "path": "/Applications/ChatGPT.app/Contents/Resources/cua_node/lib/node_modules/@oai/browser-desktop",
+      "manifestSHA256": "a7bfc13a4f9a8a22fd4a275adedf352e5f10ea57f8259301b905c3e997bc3b63",
+      "inventory": [
+        {
+          "relative": "environment-docs/cloud/api-use-behavior.md",
+          "bytes": 3815,
+          "sha256": "9f602b5e5904ff08d53bc684f29a70c5a81cd14dd5a7af3e6bca00a44fb2b710"
+        },
+        {
+          "relative": "environment-docs/cloud/api.json",
+          "bytes": 66615,
+          "sha256": "afc25cc80c0abb56fff443642791f2b797113209fb435f686ac4a1dd3654f725"
+        },
+        {
+          "relative": "environment-docs/cloud/bootstrap-troubleshooting.md",
+          "bytes": 680,
+          "sha256": "bbf69be0ecff6b45e70a71d96487a6932426b3377df389ec7376107e8c1e0416"
+        },
+        {
+          "relative": "environment-docs/cloud/browser-safety.md",
+          "bytes": 3636,
+          "sha256": "9ae8500b67fed7bfd5b13a4ed0a3e340b12a8a7b7b9d83f9666068227424ae0b"
+        },
+        {
+          "relative": "environment-docs/cloud/browser-troubleshooting.md",
+          "bytes": 928,
+          "sha256": "76ca57503fc2b11c602ad090326b6f0fec2d037826ec828607945f4c333b206b"
+        },
+        {
+          "relative": "environment-docs/cloud/browserAuthSafetyPrecheck.md",
+          "bytes": 1892,
+          "sha256": "adb8070aa86c48dc313cf2acccaf8a3d5d068b7be56e83cf9c05e51f9c6797f3"
+        },
+        {
+          "relative": "environment-docs/cloud/capabilities/browser/management.md",
+          "bytes": 5843,
+          "sha256": "c7718517d2e1db86b07f9b26e9f66c268e6f0e632ec2e204ec945c4cb2bd353e"
+        },
+        {
+          "relative": "environment-docs/cloud/capabilities/browser/viewport.md",
+          "bytes": 1014,
+          "sha256": "c9857bf5aae8bfc73630751363ce27204792b88b1cd95d4da19c03833501921a"
+        },
+        {
+          "relative": "environment-docs/cloud/capabilities/browser/visibility.md",
+          "bytes": 888,
+          "sha256": "8cb1588084cd3372ffc78b8c500dfa2f359d8a63a3c250f014fd55fad7336b08"
+        },
+        {
+          "relative": "environment-docs/cloud/capabilities/tab/botDetection.md",
+          "bytes": 3072,
+          "sha256": "d40282e95a0c3dfcb9a94096e2ae64684af35a551fecc6c1fbfe21a9ccae5c65"
+        },
+        {
+          "relative": "environment-docs/cloud/capabilities/tab/browserAuth.md",
+          "bytes": 22070,
+          "sha256": "3f9dddd9731311dcc18015f78667c26ed95fde2fcb909f6eb45e6a12ca501f2a"
+        },
+        {
+          "relative": "environment-docs/cloud/capabilities/tab/cdp.md",
+          "bytes": 2232,
+          "sha256": "8e4d8cc937b7213d9c946f082762e31ece226b05ff42e49e535841c7209ac9a6"
+        },
+        {
+          "relative": "environment-docs/cloud/capabilities/tab/pageAssets.md",
+          "bytes": 1870,
+          "sha256": "ad372fa68fa3af13a22c1d5a60f3437af19ef24be68197a0602d43cf2ee1950d"
+        },
+        {
+          "relative": "environment-docs/cloud/capabilities/tab/webmcp.md",
+          "bytes": 341,
+          "sha256": "02326ba566c5446c8e642fc98ac7aae3044c46d48432272d81b7c7e164d42beb"
+        },
+        {
+          "relative": "environment-docs/cloud/cloud-auth.md",
+          "bytes": 11788,
+          "sha256": "27e00916588e2daf34906c01db7c7c66707945ce42e5365377214d72f170925b"
+        },
+        {
+          "relative": "environment-docs/cloud/cloud-no-auth.md",
+          "bytes": 14042,
+          "sha256": "4215e8e7cea8ac2422893213d5533c1f24ee3c252aa4434bfbef5b712c9261f5"
+        },
+        {
+          "relative": "environment-docs/cloud/cloud-shared-files.md",
+          "bytes": 3351,
+          "sha256": "409f04bb73715d4bf27631b3a913273a64d6d323b93d105593564b3c5aff46ac"
+        },
+        {
+          "relative": "environment-docs/cloud/confirmations.md",
+          "bytes": 5812,
+          "sha256": "5897041e3b121ac9193d69eac9d46e74c4eb3a77a5aa5f0e2dd06c0d5d22a458"
+        },
+        {
+          "relative": "environment-docs/cloud/documents.json",
+          "bytes": 3024,
+          "sha256": "13e3a3478712710df3de8b60812cf447d537a62e8d6e294758d280dab256997c"
+        },
+        {
+          "relative": "environment-docs/cloud/file-uploads.md",
+          "bytes": 960,
+          "sha256": "be58df64881903636d16bb11f65e98c8e77f34b82a2d27566df320284c9d37f6"
+        },
+        {
+          "relative": "environment-docs/cloud/screenshots.md",
+          "bytes": 576,
+          "sha256": "e157ebeed24968438fa8ae6150e2c5c82b11e51bac6a3cfb214220dba4929bb7"
+        },
+        {
+          "relative": "environment-docs/cloud/tab-claiming-cdp.md",
+          "bytes": 697,
+          "sha256": "d6ed229df46068ef8989432f52cb52eef887e3f77f37db55098fb6f146ebcff6"
+        },
+        {
+          "relative": "environment-docs/cloud/tab-cleanup-chrome.md",
+          "bytes": 1104,
+          "sha256": "d20b4073125929f2b61960b1513ecd9e0fb261c88a4d8077e34f22520e7a1de8"
+        },
+        {
+          "relative": "environment-docs/cloud/visibility.md",
+          "bytes": 601,
+          "sha256": "7cb1870c425f6b80521722fe5091a76328d53c41bca69705277231e815610ed0"
+        },
+        {
+          "relative": "environment-docs/cloud/webmcp.md",
+          "bytes": 750,
+          "sha256": "87416e2dda6e0d1116103b35c727677f9a1e5547d3994736301a54040522e9de"
+        },
+        {
+          "relative": "environment-docs/codex-app/accessibility.md",
+          "bytes": 5570,
+          "sha256": "25e1aa573ad8e26d5a11754b32f75b20787fb98a39a8f532f6bfedbeda04e1be"
+        },
+        {
+          "relative": "environment-docs/codex-app/api-use-behavior.md",
+          "bytes": 3815,
+          "sha256": "9f602b5e5904ff08d53bc684f29a70c5a81cd14dd5a7af3e6bca00a44fb2b710"
+        },
+        {
+          "relative": "environment-docs/codex-app/api.json",
+          "bytes": 66615,
+          "sha256": "afc25cc80c0abb56fff443642791f2b797113209fb435f686ac4a1dd3654f725"
+        },
+        {
+          "relative": "environment-docs/codex-app/bootstrap-troubleshooting.md",
+          "bytes": 680,
+          "sha256": "bbf69be0ecff6b45e70a71d96487a6932426b3377df389ec7376107e8c1e0416"
+        },
+        {
+          "relative": "environment-docs/codex-app/browser-control-interruption.md",
+          "bytes": 345,
+          "sha256": "2fd73066304bc822ce3fba35eeba6456a0505f32f2f1364424639a08e49d1d5a"
+        },
+        {
+          "relative": "environment-docs/codex-app/browser-safety.md",
+          "bytes": 3319,
+          "sha256": "1d34bbfd82e75deaeaac667eed6c4df211568a358d9e99d94f4d444614964da8"
+        },
+        {
+          "relative": "environment-docs/codex-app/browser-troubleshooting.md",
+          "bytes": 928,
+          "sha256": "76ca57503fc2b11c602ad090326b6f0fec2d037826ec828607945f4c333b206b"
+        },
+        {
+          "relative": "environment-docs/codex-app/capabilities/browser/management.md",
+          "bytes": 5843,
+          "sha256": "c7718517d2e1db86b07f9b26e9f66c268e6f0e632ec2e204ec945c4cb2bd353e"
+        },
+        {
+          "relative": "environment-docs/codex-app/capabilities/browser/viewport.md",
+          "bytes": 1014,
+          "sha256": "c9857bf5aae8bfc73630751363ce27204792b88b1cd95d4da19c03833501921a"
+        },
+        {
+          "relative": "environment-docs/codex-app/capabilities/browser/visibility.md",
+          "bytes": 888,
+          "sha256": "8cb1588084cd3372ffc78b8c500dfa2f359d8a63a3c250f014fd55fad7336b08"
+        },
+        {
+          "relative": "environment-docs/codex-app/capabilities/tab/botDetection.md",
+          "bytes": 3072,
+          "sha256": "d40282e95a0c3dfcb9a94096e2ae64684af35a551fecc6c1fbfe21a9ccae5c65"
+        },
+        {
+          "relative": "environment-docs/codex-app/capabilities/tab/browserAuth.md",
+          "bytes": 22070,
+          "sha256": "3f9dddd9731311dcc18015f78667c26ed95fde2fcb909f6eb45e6a12ca501f2a"
+        },
+        {
+          "relative": "environment-docs/codex-app/capabilities/tab/cdp.md",
+          "bytes": 2232,
+          "sha256": "8e4d8cc937b7213d9c946f082762e31ece226b05ff42e49e535841c7209ac9a6"
+        },
+        {
+          "relative": "environment-docs/codex-app/capabilities/tab/pageAssets.md",
+          "bytes": 1870,
+          "sha256": "ad372fa68fa3af13a22c1d5a60f3437af19ef24be68197a0602d43cf2ee1950d"
+        },
+        {
+          "relative": "environment-docs/codex-app/capabilities/tab/webmcp.md",
+          "bytes": 341,
+          "sha256": "02326ba566c5446c8e642fc98ac7aae3044c46d48432272d81b7c7e164d42beb"
+        },
+        {
+          "relative": "environment-docs/codex-app/chrome-file-upload-troubleshooting.md",
+          "bytes": 696,
+          "sha256": "fe75442ac53d6a0fe5e45712e86d2ab0d40318b113d0c74121f4bb84e9460182"
+        },
+        {
+          "relative": "environment-docs/codex-app/chrome-troubleshooting.md",
+          "bytes": 5015,
+          "sha256": "70b27f1b1331e81653b0bcb0c84b91ee7e884304bb7a2c6d5df60133df482580"
+        },
+        {
+          "relative": "environment-docs/codex-app/confirmations.md",
+          "bytes": 5812,
+          "sha256": "5897041e3b121ac9193d69eac9d46e74c4eb3a77a5aa5f0e2dd06c0d5d22a458"
+        },
+        {
+          "relative": "environment-docs/codex-app/documents.json",
+          "bytes": 4156,
+          "sha256": "6b8d82101e7148c7036529651557f551581ebc3210a8f78f2d53f91f1b362686"
+        },
+        {
+          "relative": "environment-docs/codex-app/file-uploads.md",
+          "bytes": 960,
+          "sha256": "be58df64881903636d16bb11f65e98c8e77f34b82a2d27566df320284c9d37f6"
+        },
+        {
+          "relative": "environment-docs/codex-app/local-web-development.md",
+          "bytes": 346,
+          "sha256": "0bc8a4455b4469e17bd4cfd5192d90d079fcaa9894fbd763552281117535a32c"
+        },
+        {
+          "relative": "environment-docs/codex-app/mcp-apps.md",
+          "bytes": 1217,
+          "sha256": "b7d4fd0fb0a93f95bf9323fdfabf98bd76a68815d850b978391a9c282c057ae5"
+        },
+        {
+          "relative": "environment-docs/codex-app/screenshots.md",
+          "bytes": 576,
+          "sha256": "e157ebeed24968438fa8ae6150e2c5c82b11e51bac6a3cfb214220dba4929bb7"
+        },
+        {
+          "relative": "environment-docs/codex-app/session-naming.md",
+          "bytes": 274,
+          "sha256": "385cfcc20ff5778b81c59f218152381f65c9fd4ad0970bb59c847a009726a003"
+        },
+        {
+          "relative": "environment-docs/codex-app/tab-claiming-chrome.md",
+          "bytes": 2170,
+          "sha256": "9cd2b24253ff7376e317f39cac4dd8ba276ea2a98385d9d3f7f12349ba5706aa"
+        },
+        {
+          "relative": "environment-docs/codex-app/tab-claiming-dot.md",
+          "bytes": 776,
+          "sha256": "926e329bf228c8cbecd139f35fc9bdce53711b46bca4227d473daab5ad3d484c"
+        },
+        {
+          "relative": "environment-docs/codex-app/tab-cleanup-chrome.md",
+          "bytes": 1104,
+          "sha256": "d20b4073125929f2b61960b1513ecd9e0fb261c88a4d8077e34f22520e7a1de8"
+        },
+        {
+          "relative": "environment-docs/codex-app/tab-cleanup-iab.md",
+          "bytes": 565,
+          "sha256": "cf14b2134734b17d80801b30a9febcdb06b7bed25cd2b12ea2277835022e4a36"
+        },
+        {
+          "relative": "environment-docs/codex-app/tab-mentions-iab.md",
+          "bytes": 1319,
+          "sha256": "10a36c2bd1b856c1b594fc36b5280f2cad5391be971ba8a5b834924fa76763cb"
+        },
+        {
+          "relative": "environment-docs/codex-app/visibility.md",
+          "bytes": 601,
+          "sha256": "7cb1870c425f6b80521722fe5091a76328d53c41bca69705277231e815610ed0"
+        },
+        {
+          "relative": "environment-docs/codex-app/webmcp.md",
+          "bytes": 750,
+          "sha256": "87416e2dda6e0d1116103b35c727677f9a1e5547d3994736301a54040522e9de"
+        },
+        {
+          "relative": "environment-docs/orbit/api-use-behavior.md",
+          "bytes": 3815,
+          "sha256": "9f602b5e5904ff08d53bc684f29a70c5a81cd14dd5a7af3e6bca00a44fb2b710"
+        },
+        {
+          "relative": "environment-docs/orbit/api.json",
+          "bytes": 66615,
+          "sha256": "afc25cc80c0abb56fff443642791f2b797113209fb435f686ac4a1dd3654f725"
+        },
+        {
+          "relative": "environment-docs/orbit/bootstrap-troubleshooting.md",
+          "bytes": 680,
+          "sha256": "bbf69be0ecff6b45e70a71d96487a6932426b3377df389ec7376107e8c1e0416"
+        },
+        {
+          "relative": "environment-docs/orbit/browser-auth-orbit-intro.md",
+          "bytes": 724,
+          "sha256": "4b0055a44eb6c283d74d5bb5ea16990c4b540ea7ed852369224e3ec1849b4ccc"
+        },
+        {
+          "relative": "environment-docs/orbit/browser-safety.md",
+          "bytes": 3636,
+          "sha256": "9ae8500b67fed7bfd5b13a4ed0a3e340b12a8a7b7b9d83f9666068227424ae0b"
+        },
+        {
+          "relative": "environment-docs/orbit/browser-troubleshooting.md",
+          "bytes": 928,
+          "sha256": "76ca57503fc2b11c602ad090326b6f0fec2d037826ec828607945f4c333b206b"
+        },
+        {
+          "relative": "environment-docs/orbit/browserAuthSafetyPrecheck.md",
+          "bytes": 1892,
+          "sha256": "adb8070aa86c48dc313cf2acccaf8a3d5d068b7be56e83cf9c05e51f9c6797f3"
+        },
+        {
+          "relative": "environment-docs/orbit/capabilities/browser/management.md",
+          "bytes": 5843,
+          "sha256": "c7718517d2e1db86b07f9b26e9f66c268e6f0e632ec2e204ec945c4cb2bd353e"
+        },
+        {
+          "relative": "environment-docs/orbit/capabilities/browser/viewport.md",
+          "bytes": 1014,
+          "sha256": "c9857bf5aae8bfc73630751363ce27204792b88b1cd95d4da19c03833501921a"
+        },
+        {
+          "relative": "environment-docs/orbit/capabilities/browser/visibility.md",
+          "bytes": 888,
+          "sha256": "8cb1588084cd3372ffc78b8c500dfa2f359d8a63a3c250f014fd55fad7336b08"
+        },
+        {
+          "relative": "environment-docs/orbit/capabilities/tab/botDetection.md",
+          "bytes": 3072,
+          "sha256": "d40282e95a0c3dfcb9a94096e2ae64684af35a551fecc6c1fbfe21a9ccae5c65"
+        },
+        {
+          "relative": "environment-docs/orbit/capabilities/tab/browserAuth.md",
+          "bytes": 24959,
+          "sha256": "7e09090e87af56f583013c3e5e3af797c53a217bc4f8608b7021f5961c679718"
+        },
+        {
+          "relative": "environment-docs/orbit/capabilities/tab/cdp.md",
+          "bytes": 2232,
+          "sha256": "8e4d8cc937b7213d9c946f082762e31ece226b05ff42e49e535841c7209ac9a6"
+        },
+        {
+          "relative": "environment-docs/orbit/capabilities/tab/pageAssets.md",
+          "bytes": 1870,
+          "sha256": "ad372fa68fa3af13a22c1d5a60f3437af19ef24be68197a0602d43cf2ee1950d"
+        },
+        {
+          "relative": "environment-docs/orbit/capabilities/tab/webmcp.md",
+          "bytes": 341,
+          "sha256": "02326ba566c5446c8e642fc98ac7aae3044c46d48432272d81b7c7e164d42beb"
+        },
+        {
+          "relative": "environment-docs/orbit/cloud-no-auth.md",
+          "bytes": 13256,
+          "sha256": "b87a8a8454747ed51ba9a997429f7f1841ddb7e272ce39ad1c2451adf8ca2a93"
+        },
+        {
+          "relative": "environment-docs/orbit/confirmations.md",
+          "bytes": 5812,
+          "sha256": "5897041e3b121ac9193d69eac9d46e74c4eb3a77a5aa5f0e2dd06c0d5d22a458"
+        },
+        {
+          "relative": "environment-docs/orbit/documents.json",
+          "bytes": 3025,
+          "sha256": "50f3e7952f453eb92e71f014ca92119d308a77c912c0c74f0ee8817e58190312"
+        },
+        {
+          "relative": "environment-docs/orbit/file-uploads.md",
+          "bytes": 960,
+          "sha256": "be58df64881903636d16bb11f65e98c8e77f34b82a2d27566df320284c9d37f6"
+        },
+        {
+          "relative": "environment-docs/orbit/orbit-auth.md",
+          "bytes": 11002,
+          "sha256": "370342440280b1c5db092c86025533ac3da70e3981d14555c507023f59f4de77"
+        },
+        {
+          "relative": "environment-docs/orbit/orbit-shared-files.md",
+          "bytes": 309,
+          "sha256": "ddc83bc6536e36c6abf4795dbbfba5c81d43d691aabf19cf35bbd4a4ee5ea333"
+        },
+        {
+          "relative": "environment-docs/orbit/screenshots.md",
+          "bytes": 576,
+          "sha256": "e157ebeed24968438fa8ae6150e2c5c82b11e51bac6a3cfb214220dba4929bb7"
+        },
+        {
+          "relative": "environment-docs/orbit/tab-claiming-cdp.md",
+          "bytes": 697,
+          "sha256": "d6ed229df46068ef8989432f52cb52eef887e3f77f37db55098fb6f146ebcff6"
+        },
+        {
+          "relative": "environment-docs/orbit/tab-cleanup-chrome.md",
+          "bytes": 1104,
+          "sha256": "d20b4073125929f2b61960b1513ecd9e0fb261c88a4d8077e34f22520e7a1de8"
+        },
+        {
+          "relative": "environment-docs/orbit/visibility.md",
+          "bytes": 601,
+          "sha256": "7cb1870c425f6b80521722fe5091a76328d53c41bca69705277231e815610ed0"
+        },
+        {
+          "relative": "environment-docs/orbit/webmcp.md",
+          "bytes": 750,
+          "sha256": "87416e2dda6e0d1116103b35c727677f9a1e5547d3994736301a54040522e9de"
+        },
+        {
+          "relative": "environment-docs/training/api.json",
+          "bytes": 66615,
+          "sha256": "afc25cc80c0abb56fff443642791f2b797113209fb435f686ac4a1dd3654f725"
+        },
+        {
+          "relative": "environment-docs/training/bootstrap-troubleshooting.md",
+          "bytes": 680,
+          "sha256": "bbf69be0ecff6b45e70a71d96487a6932426b3377df389ec7376107e8c1e0416"
+        },
+        {
+          "relative": "environment-docs/training/browser-safety-training.md",
+          "bytes": 824,
+          "sha256": "734079c58cdd938673c73a84fe6bd9f1ed131d411f7e4cce9cf6b11819c79e41"
+        },
+        {
+          "relative": "environment-docs/training/browser-troubleshooting.md",
+          "bytes": 928,
+          "sha256": "76ca57503fc2b11c602ad090326b6f0fec2d037826ec828607945f4c333b206b"
+        },
+        {
+          "relative": "environment-docs/training/capabilities/browser/management.md",
+          "bytes": 5843,
+          "sha256": "c7718517d2e1db86b07f9b26e9f66c268e6f0e632ec2e204ec945c4cb2bd353e"
+        },
+        {
+          "relative": "environment-docs/training/capabilities/browser/viewport.md",
+          "bytes": 1014,
+          "sha256": "c9857bf5aae8bfc73630751363ce27204792b88b1cd95d4da19c03833501921a"
+        },
+        {
+          "relative": "environment-docs/training/capabilities/browser/visibility.md",
+          "bytes": 888,
+          "sha256": "8cb1588084cd3372ffc78b8c500dfa2f359d8a63a3c250f014fd55fad7336b08"
+        },
+        {
+          "relative": "environment-docs/training/capabilities/tab/botDetection.md",
+          "bytes": 3072,
+          "sha256": "d40282e95a0c3dfcb9a94096e2ae64684af35a551fecc6c1fbfe21a9ccae5c65"
+        },
+        {
+          "relative": "environment-docs/training/capabilities/tab/browserAuth.md",
+          "bytes": 22070,
+          "sha256": "3f9dddd9731311dcc18015f78667c26ed95fde2fcb909f6eb45e6a12ca501f2a"
+        },
+        {
+          "relative": "environment-docs/training/capabilities/tab/cdp.md",
+          "bytes": 2232,
+          "sha256": "8e4d8cc937b7213d9c946f082762e31ece226b05ff42e49e535841c7209ac9a6"
+        },
+        {
+          "relative": "environment-docs/training/capabilities/tab/pageAssets.md",
+          "bytes": 1870,
+          "sha256": "ad372fa68fa3af13a22c1d5a60f3437af19ef24be68197a0602d43cf2ee1950d"
+        },
+        {
+          "relative": "environment-docs/training/capabilities/tab/webmcp.md",
+          "bytes": 341,
+          "sha256": "02326ba566c5446c8e642fc98ac7aae3044c46d48432272d81b7c7e164d42beb"
+        },
+        {
+          "relative": "environment-docs/training/documents.json",
+          "bytes": 1930,
+          "sha256": "361fe0b19d7dc370db19638afd1347df48643e2d79cc92e9b2b849f8db2923a6"
+        },
+        {
+          "relative": "environment-docs/training/file-uploads.md",
+          "bytes": 960,
+          "sha256": "be58df64881903636d16bb11f65e98c8e77f34b82a2d27566df320284c9d37f6"
+        },
+        {
+          "relative": "environment-docs/training/tab-claiming-cdp.md",
+          "bytes": 697,
+          "sha256": "d6ed229df46068ef8989432f52cb52eef887e3f77f37db55098fb6f146ebcff6"
+        },
+        {
+          "relative": "environment-docs/training/tab-cleanup-chrome.md",
+          "bytes": 1104,
+          "sha256": "d20b4073125929f2b61960b1513ecd9e0fb261c88a4d8077e34f22520e7a1de8"
+        },
+        {
+          "relative": "environment-docs/training/visibility.md",
+          "bytes": 601,
+          "sha256": "7cb1870c425f6b80521722fe5091a76328d53c41bca69705277231e815610ed0"
+        },
+        {
+          "relative": "package.json",
+          "bytes": 308,
+          "sha256": "a7bfc13a4f9a8a22fd4a275adedf352e5f10ea57f8259301b905c3e997bc3b63"
+        },
+        {
+          "relative": "scripts/browser-client.mjs",
+          "bytes": 170116,
+          "sha256": "ccde4b71fbbe3b73ba7c9b359110371c233f44fb59e8231efdf1f5bc8c29c852"
+        },
+        {
+          "relative": "scripts/browser-service.mjs",
+          "bytes": 2084727,
+          "sha256": "3b3fdb19a1f4642898e2bf974f8ff98767d453fd4500cf2e89415720b1e36ad4"
+        }
+      ],
+      "inventorySHA256": "802d2c52e0fe055c1146c205cc34471ecd8550278586661058a165a9d4c34c0d"
+    }
+  },
+  "files": {
+    "asar": {
+      "path": "/Applications/ChatGPT.app/Contents/Resources/app.asar",
+      "bytes": 626349077,
+      "sha256": "c9945f821fcbaf48424933a82860beac4dd4ad8b8a5444a75568fa6e38a1ad4b"
+    },
+    "appExecutable": {
+      "path": "/Applications/ChatGPT.app/Contents/MacOS/ChatGPT",
+      "bytes": 71008,
+      "sha256": "a6755e5c694d3bf5292a69c0db98a76b255e23d8b697525e24082f950d491944"
+    },
+    "nativePipe": {
+      "path": "/Applications/ChatGPT.app/Contents/Resources/cua_node/lib/node_modules/@oai/sky/dist/project/cua/sky_js/src/targets/mac/native-pipe.js",
+      "bytes": 8829,
+      "sha256": "51a1138a0f0d7f01fe5d4d0a4f0753c67b2c3f3ed55c7540c26d182274e116f4"
+    },
+    "macClient": {
+      "path": "/Applications/ChatGPT.app/Contents/Resources/cua_node/lib/node_modules/@oai/sky/dist/project/cua/sky_js/src/targets/mac/client.js",
+      "bytes": 5138,
+      "sha256": "71134f10354fe9f7be23a62df52789908a8592151685286a7965b297a81cef8f"
+    },
+    "serviceJs": {
+      "path": "/Applications/ChatGPT.app/Contents/Resources/cua_node/lib/node_modules/@oai/sky/dist/project/cua/sky_js/src/service.js",
+      "bytes": 1953,
+      "sha256": "789e3daf847da27432a816f51493a0ad452f36b67b40b99713c87bf662adb07d"
+    },
+    "skyApi": {
+      "path": "/Applications/ChatGPT.app/Contents/Resources/cua_node/lib/node_modules/@oai/sky/dist/project/cua/sky_js/src/sky.js",
+      "bytes": 2077,
+      "sha256": "0123da875a2eef5648fac407fcfedad5147ef9a1616b623ad615f4c337aee285"
+    },
+    "replLauncher": {
+      "path": "/Applications/ChatGPT.app/Contents/Resources/cua_node/lib/node_modules/@oai/cua-repl/dist/lib/js/oai_js_cua_repl/src/launch.js",
+      "bytes": 2149,
+      "sha256": "97ce061a09cba0e701e83c2508c276ed573ce864d2478993f873c0650a84e316"
+    },
+    "macAppBinding": {
+      "path": "/Applications/ChatGPT.app/Contents/Resources/cua_node/lib/node_modules/@oai/cua/dist/lib/js/oai_js_cua/src/tinysky_alt/bind_mac_app.js",
+      "bytes": 2539,
+      "sha256": "1c210ebf411e196622c6fa294fd255df10ddbb44038ab4523e68d2dcc351ea14"
+    },
+    "facadeTypes": {
+      "path": "/Applications/ChatGPT.app/Contents/Resources/cua_node/lib/node_modules/@oai/cua/dist/lib/js/oai_js_cua/src/tinysky_alt/types.d.ts",
+      "bytes": 9497,
+      "sha256": "44c1ab373013950c2d266d9591f63e1fa9af452477ff9b8b0d4f848a552e057f"
+    },
+    "nativeService": {
+      "path": "/Users/aa/.codex/computer-use/Codex Computer Use.app/Contents/MacOS/SkyComputerUseService",
+      "bytes": 25016528,
+      "sha256": "ef4f4dc20e64ee29027bf178f553c0c39b9cfa517a4cd39734510259f23c058a",
+      "macho": {
+        "architecture": "arm64",
+        "uuid": "374107F0-B948-3F44-A251-E9E7D5FEBC70",
+        "minimumOS": "14.4.0",
+        "sdk": "26.1.0"
+      }
+    },
+    "bundledNativeService": {
+      "path": "/Applications/ChatGPT.app/Contents/Resources/cua_node/lib/node_modules/@oai/sky/Codex Computer Use.app/Contents/MacOS/SkyComputerUseService",
+      "bytes": 25016528,
+      "sha256": "ef4f4dc20e64ee29027bf178f553c0c39b9cfa517a4cd39734510259f23c058a"
+    }
+  },
+  "comparison": {
+    "appIdentityChanged": true,
+    "previousPath": "docs/evidence-manifest.json",
+    "previousAppVersion": "26.1013.31256",
+    "packageChanges": {
+      "@oai/cua-repl": {
+        "previous": "0.1.0",
+        "current": "0.1.2",
+        "versionChanged": true,
+        "inventoryChanged": null
+      },
+      "@oai/cua": {
+        "previous": "0.2.6",
+        "current": "0.2.6",
+        "versionChanged": false,
+        "inventoryChanged": null
+      },
+      "@oai/sky": {
+        "previous": "0.7.8",
+        "current": "0.7.12",
+        "versionChanged": true,
+        "inventoryChanged": null
+      },
+      "@oai/browser-desktop": {
+        "previous": null,
+        "current": "0.1.1",
+        "versionChanged": null,
+        "inventoryChanged": null
+      }
+    },
+    "files": {
+      "asar": {
+        "status": "changed",
+        "previousSHA256": "bf9c41fa9770fbfacfba93042ff71c24cb65c82935819377275faac08103383f",
+        "currentSHA256": "c9945f821fcbaf48424933a82860beac4dd4ad8b8a5444a75568fa6e38a1ad4b"
+      },
+      "appExecutable": {
+        "status": "not-recorded",
+        "previousSHA256": null,
+        "currentSHA256": "a6755e5c694d3bf5292a69c0db98a76b255e23d8b697525e24082f950d491944"
+      },
+      "nativePipe": {
+        "status": "changed",
+        "previousSHA256": "60b3653f7ee052007b02a79e11416a89d424d73dac450e429a93b214839c267f",
+        "currentSHA256": "51a1138a0f0d7f01fe5d4d0a4f0753c67b2c3f3ed55c7540c26d182274e116f4"
+      },
+      "macClient": {
+        "status": "unchanged",
+        "previousSHA256": "71134f10354fe9f7be23a62df52789908a8592151685286a7965b297a81cef8f",
+        "currentSHA256": "71134f10354fe9f7be23a62df52789908a8592151685286a7965b297a81cef8f"
+      },
+      "serviceJs": {
+        "status": "changed",
+        "previousSHA256": "5b2fa2f0e19c8401a9be8c71be17008d88049ab107972c1e4a5cb615f4ef5993",
+        "currentSHA256": "789e3daf847da27432a816f51493a0ad452f36b67b40b99713c87bf662adb07d"
+      },
+      "skyApi": {
+        "status": "unchanged",
+        "previousSHA256": "0123da875a2eef5648fac407fcfedad5147ef9a1616b623ad615f4c337aee285",
+        "currentSHA256": "0123da875a2eef5648fac407fcfedad5147ef9a1616b623ad615f4c337aee285"
+      },
+      "replLauncher": {
+        "status": "changed",
+        "previousSHA256": "3e52a41f4da41d35be8cc3723fe97251711087a998c1ed7f2cfdf7e20b50fc2b",
+        "currentSHA256": "97ce061a09cba0e701e83c2508c276ed573ce864d2478993f873c0650a84e316"
+      },
+      "macAppBinding": {
+        "status": "not-recorded",
+        "previousSHA256": null,
+        "currentSHA256": "1c210ebf411e196622c6fa294fd255df10ddbb44038ab4523e68d2dcc351ea14"
+      },
+      "facadeTypes": {
+        "status": "not-recorded",
+        "previousSHA256": null,
+        "currentSHA256": "44c1ab373013950c2d266d9591f63e1fa9af452477ff9b8b0d4f848a552e057f"
+      },
+      "nativeService": {
+        "status": "changed",
+        "previousSHA256": "f21c31c0ee5df419dbd165bf76ebd65c64d864c6fec5b6c6c3a23c42ff3d2e13",
+        "currentSHA256": "ef4f4dc20e64ee29027bf178f553c0c39b9cfa517a4cd39734510259f23c058a"
+      },
+      "bundledNativeService": {
+        "status": "not-recorded",
+        "previousSHA256": null,
+        "currentSHA256": "ef4f4dc20e64ee29027bf178f553c0c39b9cfa517a4cd39734510259f23c058a"
+      }
+    }
+  },
+  "limits": [
+    "File identity and static inventory are not behavioral equivalence.",
+    "New fields without a historical digest are not classified as changed.",
+    "No original module was executed; no service socket or credential was accessed."
+  ]
+}

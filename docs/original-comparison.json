@@ -1,0 +1,604 @@
+{
+  "schemaVersion": 1,
+  "localReviewDate": "2026-10-22",
+  "baselineManifest": "docs/original-baseline.json",
+  "scope": "Local installed macOS reference and independent v1 runtime; owned fixture only",
+  "jsAnalysis": {
+    "sky": {
+      "oldEvidenceId": "ev_c7f7319b09d212c0e5b203582491f1074fa5ec420417f0ad371e8b1f0e1069ee",
+      "newEvidenceId": "ev_d77dcb2e8382ad6e8bc24bd7577bd56b09220d2be8461d3cf6ab3e903c0bbb17",
+      "oldStatistics": {
+        "relevant_files": 229,
+        "nested_asar_containers": 0,
+        "text_bytes_read": 167587,
+        "invalid_utf8_files": 0,
+        "parsed_javascript_files": 228,
+        "visited_ast_nodes": 31528,
+        "findings": 1053,
+        "modules": 0,
+        "parse_failures": 0
+      },
+      "newStatistics": {
+        "relevant_files": 234,
+        "nested_asar_containers": 0,
+        "text_bytes_read": 171621,
+        "invalid_utf8_files": 0,
+        "parsed_javascript_files": 233,
+        "visited_ast_nodes": 32187,
+        "findings": 1077,
+        "modules": 0,
+        "parse_failures": 0
+      },
+      "unchangedFileCount": 221,
+      "changedFiles": [
+        "dist/project/cua/sky_js/src/service.js",
+        "dist/project/cua/sky_js/src/targets/linux/create_client.js",
+        "dist/project/cua/sky_js/src/targets/mac/audio_recording.js",
+        "dist/project/cua/sky_js/src/targets/mac/native-pipe.d.ts",
+        "dist/project/cua/sky_js/src/targets/mac/native-pipe.js",
+        "dist/project/cua/sky_js/src/types/full-desktop/FullDesktopComputerUseClient.d.ts",
+        "dist/project/cua/sky_js/src/types/full-desktop/index.d.ts",
+        "package.json"
+      ],
+      "addedFiles": [
+        "dist/project/cua/sky_js/src/require_audio_model_support.d.ts",
+        "dist/project/cua/sky_js/src/require_audio_model_support.js",
+        "dist/project/cua/sky_js/src/targets/linux/type_characters.d.ts",
+        "dist/project/cua/sky_js/src/targets/linux/type_characters.js",
+        "dist/project/cua/sky_js/src/types/full-desktop/TypeCharacters.d.ts"
+      ],
+      "removedFiles": [],
+      "nativePipeExports": [
+        "MacNativePipeTransport",
+        "decodeMessageFrames",
+        "encodeMessageFrame",
+        "requestComputerUseHost"
+      ]
+    },
+    "cua-repl": {
+      "oldEvidenceId": "ev_8b0502a7cfa643e67deff2e056dbce482d89cdb16efe2f42e0f5e41bbbfae4b0",
+      "newEvidenceId": "ev_f009325d56e7f2e940a13617920573220b1ca032796f0cc48cf45bf45202cf3b",
+      "oldStatistics": {
+        "relevant_files": 12,
+        "nested_asar_containers": 0,
+        "text_bytes_read": 6476,
+        "invalid_utf8_files": 0,
+        "parsed_javascript_files": 9,
+        "visited_ast_nodes": 893,
+        "findings": 28,
+        "modules": 0,
+        "parse_failures": 0
+      },
+      "newStatistics": {
+        "relevant_files": 12,
+        "nested_asar_containers": 0,
+        "text_bytes_read": 6660,
+        "invalid_utf8_files": 0,
+        "parsed_javascript_files": 9,
+        "visited_ast_nodes": 931,
+        "findings": 28,
+        "modules": 0,
+        "parse_failures": 0
+      },
+      "unchangedFileCount": 8,
+      "changedFiles": [
+        "dist/lib/js/oai_js_cua_repl/src/instructions.d.ts",
+        "dist/lib/js/oai_js_cua_repl/src/instructions.js",
+        "dist/lib/js/oai_js_cua_repl/src/launch.js",
+        "package.json"
+      ],
+      "addedFiles": [],
+      "removedFiles": [],
+      "nativePipeExports": []
+    }
+  },
+  "nativeFunctionIdentity": [
+    {
+      "symbol": "_$s11ComputerUse0aB6CursorC5style19motionConfigurationA2C5StyleC_AC06MotionF0Vtcfc",
+      "oldAddress": "0x100090f70",
+      "newAddress": "0x100090f70",
+      "oldSize": 444,
+      "newSize": 444,
+      "oldSHA256": "e7531bdcac6aab926128d39b2863d7fcca87cdcc535426d2c6bf3af2675049c8",
+      "newSHA256": "d3a230f18380f657bbb160573e046110770f5979ddb8cbcdcb0c7099d7b7589e",
+      "sameBytes": false
+    },
+    {
+      "symbol": "_$s11ComputerUse0aB6CursorC5press5countySi_tYaKF",
+      "oldAddress": "0x100091274",
+      "newAddress": "0x100091274",
+      "oldSize": 284,
+      "newSize": 284,
+      "oldSHA256": "30d288241f785de11a8dc7973e708ac2cb7b7af18312719214a183c9d54c92d9",
+      "newSHA256": "152bb055ff1192e88861651c0f023cc686513b4498ef5618383bfe8309cec513",
+      "sameBytes": false
+    },
+    {
+      "symbol": "_$s11ComputerUse0aB6CursorC4move2to13aboveWindowID010relativeToG021nextInteractionTiming8animated6fadeIn10isDelegateySo7CGPointV_s6UInt32VSgSbAC0c4NextlM0OS3btYaF",
+      "oldAddress": "0x100091e9c",
+      "newAddress": "0x100091e9c",
+      "oldSize": 176,
+      "newSize": 176,
+      "oldSHA256": "8d0d377cdb1225b32880ec5dd58f79d20e8e09865f5cf825f7db26cc7fcef772",
+      "newSHA256": "bc8c5e48415b849b94b5985e6605c7b8bddd06e87b444088f1da5f09ab8c767d",
+      "sameBytes": false
+    },
+    {
+      "symbol": "_$s11ComputerUse0aB6CursorC4show13aboveWindowIDys6UInt32VSg_tF",
+      "oldAddress": "0x100092f80",
+      "newAddress": "0x100092f80",
+      "oldSize": 212,
+      "newSize": 212,
+      "oldSHA256": "fa054e2989f0b48ed55cfaf75cdf728a2fbccb5a254dc528c205df9b0685660e",
+      "newSHA256": "5d911721bd9f2cb4d45553e529ae1e058efd09d81096acd738c20975e3288ff0",
+      "sameBytes": false
+    },
+    {
+      "symbol": "+[SAIVirtualKeyPress keyPressesForString:]",
+      "oldAddress": "0x10024c2e4",
+      "newAddress": "0x10024eb48",
+      "oldSize": 604,
+      "newSize": 604,
+      "oldSHA256": null,
+      "newSHA256": "e429e5f814d12d64840833d69492cad753b72a7cdf41700ba08f0c39a641bca0",
+      "sameBytes": null
+    },
+    {
+      "symbol": "_$s20AccessibilitySupport16SynthesizedEventV19pressKeysForHoldingyAC7keyDown_AC0I2UptSaySo18SAIVirtualKeyPressCGYaKFZ",
+      "oldAddress": "0x10075a1b8",
+      "newAddress": "0x10075ca20",
+      "oldSize": 96,
+      "newSize": 96,
+      "oldSHA256": "67bd4d98d53e6cb992824e7983d144cd67455670a21187ef4d5694dfc1ce09a8",
+      "newSHA256": "434460b153f60c7186a9c878958f003219159b9d0868a4ab76a310697420156e",
+      "sameBytes": false
+    },
+    {
+      "symbol": "_$s20AccessibilitySupport16SynthesizedEventV05mouseD011eventNumber4type10clickCount2at0E6Button5flags8inWindow12windowBounds0P22UsesFlippedCoordinatesACs5Int64V_AC05MouseD4TypeOSiSo7CGPointVSo07CGMouseL0VSo12CGEventFlagsVs6UInt32VSgSo6CGRectVSgSbtKFZ",
+      "oldAddress": "0x10075b260",
+      "newAddress": "0x10075dac8",
+      "oldSize": 652,
+      "newSize": 652,
+      "oldSHA256": "cf8ec69bd2467f40a6efc560d847b89e585f2628696a92e56499750157cacfaf",
+      "newSHA256": "3ee487ad02ba9e43db43c9c12c781d34265f8396686cb20ef87c30dc1125b8be",
+      "sameBytes": false
+    },
+    {
+      "symbol": "_$s20AccessibilitySupport16SynthesizedEventV4type6stringACSS_tYaKFZ",
+      "oldAddress": "0x10075ba60",
+      "newAddress": "0x10075e2c8",
+      "oldSize": 24,
+      "newSize": 24,
+      "oldSHA256": "c9c03fbf10fb25c730fece7f5b236dc9e5256335bcb38f40f20ae5fc6f6c4762",
+      "newSHA256": "e1422b9a80b08716c450776b4f25894f0fb57ef18363085d4da7bfda3875edf8",
+      "sameBytes": false
+    }
+  ],
+  "nativeInvestigation": {
+    "evidenceId": "ev_5f2e8c0d1643827bcdfd9b730d590f3da4b79581ee62b9e3c0b908c9b110977c",
+    "provider": {
+      "id": "ghidra",
+      "name": "Ghidra",
+      "version": "12.1.4"
+    },
+    "sliceSHA256": "22900ecfdb103297b837ee7908ec113828e4b711e7edef2534fd84210b82d890",
+    "sliceBytes": 1292,
+    "explicitFunctionSeeds": 8,
+    "methodAddress": "0x10024eb48",
+    "boundedMethodBytes": 604,
+    "typeEntry": "0x10075e2c8",
+    "selectorLoad": "0x10075e408",
+    "selectorReference": "0x1014cadb8",
+    "objcDispatchCall": "0x10075e418",
+    "confirmedImports": [
+      "TISCopyCurrentKeyboardLayoutInputSource",
+      "TISGetInputSourceProperty",
+      "CFDataGetBytePtr",
+      "LMGetKbdType",
+      "UCKeyTranslate",
+      "NSLog"
+    ],
+    "findings": [
+      "String typing calls SAIVirtualKeyPress keyPressesForString from its async continuation.",
+      "The converter searches virtual keys 0..127 across eight modifier configurations for each UTF-16 unit using the current keyboard layout.",
+      "No matching key logs and advances to the next unit rather than injecting that unit directly.",
+      "These instructions are consistent with the incomplete Chinese, emoji and combining-character input observed in this fixture."
+    ],
+    "limitations": [
+      "Full REA inspect-macho timed out at 180 seconds; native identity uses Mach-O load commands, nm and bounded LLVM instead.",
+      "Raw-slice pseudocode has bad-instruction/tail-boundary warnings and includes adjacent code. Core loop and calls were checked against bounded 604-byte instructions and indirect symbols.",
+      "Static path plus recipient observations do not prove that every input-method issue has this cause.",
+      "The full native RPC type_text dispatcher-to-async-entry chain was not reconstructed. The converter call and mechanism are static facts; linkage to the observed missing characters is supported by recipient behavior, not captured private RPC."
+    ],
+    "symbolSizeDefinition": "Entry range up to the next distinct text symbol; not the extent of all async continuations."
+  },
+  "behavior": {
+    "original": {
+      "report": "artifacts/reference-original-1792718932858/report.json",
+      "reportSHA256": "f1f1cebfdf479eec7092dda0ca4edb0ed598bf82af68b21d8c600379eb44c63c",
+      "status": "completed-with-differences",
+      "passedChecks": 9,
+      "totalChecks": 10,
+      "steps": [
+        {
+          "name": "nav",
+          "status": "passed",
+          "scroll": 1,
+          "input": "",
+          "count": 0,
+          "documentUTF16Length": 3591,
+          "selectedRange": {
+            "length": 0,
+            "location": 3591
+          }
+        },
+        {
+          "name": "type",
+          "status": "failed",
+          "scroll": 1,
+          "input": "",
+          "count": 0,
+          "documentUTF16Length": 3597,
+          "selectedRange": {
+            "length": 0,
+            "location": 3597
+          },
+          "expectedSuffix": "【基线 中文🙂 é 👩‍💻】",
+          "actualSuffix": "【  e 】"
+        },
+        {
+          "name": "selectAll",
+          "status": "passed",
+          "scroll": 1,
+          "input": "",
+          "count": 0,
+          "documentUTF16Length": 3597,
+          "selectedRange": {
+            "length": 3597,
+            "location": 0
+          }
+        },
+        {
+          "name": "top",
+          "status": "passed",
+          "scroll": 0,
+          "input": "",
+          "count": 0,
+          "documentUTF16Length": 3597,
+          "selectedRange": {
+            "length": 0,
+            "location": 0
+          }
+        },
+        {
+          "name": "drag",
+          "status": "passed",
+          "scroll": 0,
+          "input": "",
+          "count": 0,
+          "documentUTF16Length": 3597,
+          "selectedRange": {
+            "length": 31,
+            "location": 2
+          }
+        },
+        {
+          "name": "scroll",
+          "status": "passed",
+          "scroll": 0.17352941176470588,
+          "input": "",
+          "count": 0,
+          "documentUTF16Length": 3597,
+          "selectedRange": {
+            "length": 31,
+            "location": 2
+          }
+        },
+        {
+          "name": "capture",
+          "status": "passed",
+          "scroll": 0.17352941176470588,
+          "input": "",
+          "count": 0,
+          "documentUTF16Length": 3597,
+          "selectedRange": {
+            "length": 31,
+            "location": 2
+          },
+          "capture": {
+            "bytes": 120703,
+            "signature": [
+              255,
+              216,
+              255,
+              224,
+              0,
+              16,
+              74,
+              70
+            ],
+            "width": 1280,
+            "height": 984,
+            "mimeType": "image/jpeg"
+          }
+        },
+        {
+          "name": "click",
+          "status": "passed",
+          "scroll": 0.17352941176470588,
+          "input": "",
+          "count": 1,
+          "documentUTF16Length": 3597,
+          "selectedRange": {
+            "length": 31,
+            "location": 2
+          }
+        },
+        {
+          "name": "setValue",
+          "status": "passed",
+          "scroll": 0.17352941176470588,
+          "input": "baseline field 中文",
+          "count": 1,
+          "documentUTF16Length": 3597,
+          "selectedRange": {
+            "length": 31,
+            "location": 2
+          }
+        },
+        {
+          "name": "selectText",
+          "status": "passed",
+          "scroll": 0.17352941176470588,
+          "input": "baseline field 中文",
+          "count": 1,
+          "documentUTF16Length": 3597,
+          "selectedRange": {
+            "length": 31,
+            "location": 2
+          }
+        }
+      ],
+      "observation": {
+        "sampleCount": 25719,
+        "maxSampleGap": 0.11952412500977516,
+        "targetForegroundSamples": 0,
+        "targetKeyboardSamples": 0,
+        "recipientKeyDown": 9,
+        "recipientMouseDown": 3
+      },
+      "windowOrderSamples": 5722,
+      "windowOrderViolations": 0,
+      "completionGateReview": {
+        "requiredStepOrderVerified": true,
+        "uncoveredSteps": [],
+        "recipientTapAvailable": true,
+        "unresolvedFocusSamples": 0
+      }
+    },
+    "independent": {
+      "report": "artifacts/reference-independent-1792719107287/report.json",
+      "reportSHA256": "0b3fb94ebb35dbb1f855b343de5febae1e51a8f334f106e9c9c18078f0ff64fa",
+      "status": "passed",
+      "passedChecks": 10,
+      "totalChecks": 10,
+      "steps": [
+        {
+          "name": "nav",
+          "status": "passed",
+          "scroll": 1,
+          "input": "",
+          "count": 0,
+          "documentUTF16Length": 3591,
+          "selectedRange": {
+            "length": 0,
+            "location": 3591
+          }
+        },
+        {
+          "name": "type",
+          "status": "passed",
+          "scroll": 1,
+          "input": "",
+          "count": 0,
+          "documentUTF16Length": 3609,
+          "selectedRange": {
+            "length": 0,
+            "location": 3609
+          },
+          "expectedSuffix": "【基线 中文🙂 é 👩‍💻】",
+          "actualSuffix": "【基线 中文🙂 é 👩‍💻】"
+        },
+        {
+          "name": "selectAll",
+          "status": "passed",
+          "scroll": 1,
+          "input": "",
+          "count": 0,
+          "documentUTF16Length": 3609,
+          "selectedRange": {
+            "length": 3609,
+            "location": 0
+          }
+        },
+        {
+          "name": "top",
+          "status": "passed",
+          "scroll": 0,
+          "input": "",
+          "count": 0,
+          "documentUTF16Length": 3609,
+          "selectedRange": {
+            "length": 0,
+            "location": 0
+          }
+        },
+        {
+          "name": "drag",
+          "status": "passed",
+          "scroll": 0,
+          "input": "",
+          "count": 0,
+          "documentUTF16Length": 3609,
+          "selectedRange": {
+            "length": 31,
+            "location": 2
+          }
+        },
+        {
+          "name": "scroll",
+          "status": "passed",
+          "scroll": 0.1388235294117647,
+          "input": "",
+          "count": 0,
+          "documentUTF16Length": 3609,
+          "selectedRange": {
+            "length": 31,
+            "location": 2
+          }
+        },
+        {
+          "name": "capture",
+          "status": "passed",
+          "scroll": 0.1388235294117647,
+          "input": "",
+          "count": 0,
+          "documentUTF16Length": 3609,
+          "selectedRange": {
+            "length": 31,
+            "location": 2
+          },
+          "capture": {
+            "bytes": 214362,
+            "signature": [
+              137,
+              80,
+              78,
+              71,
+              13,
+              10,
+              26,
+              10
+            ],
+            "width": 1280,
+            "height": 984
+          }
+        },
+        {
+          "name": "click",
+          "status": "passed",
+          "scroll": 0.1388235294117647,
+          "input": "",
+          "count": 1,
+          "documentUTF16Length": 3609,
+          "selectedRange": {
+            "length": 31,
+            "location": 2
+          }
+        },
+        {
+          "name": "setValue",
+          "status": "passed",
+          "scroll": 0.1388235294117647,
+          "input": "baseline field 中文",
+          "count": 1,
+          "documentUTF16Length": 3609,
+          "selectedRange": {
+            "length": 31,
+            "location": 2
+          }
+        },
+        {
+          "name": "selectText",
+          "status": "passed",
+          "scroll": 0.1388235294117647,
+          "input": "baseline field 中文",
+          "count": 1,
+          "documentUTF16Length": 3609,
+          "selectedRange": {
+            "length": 31,
+            "location": 2
+          }
+        }
+      ],
+      "observation": {
+        "sampleCount": 1281,
+        "maxSampleGap": 0.01409737509675324,
+        "targetForegroundSamples": 0,
+        "targetKeyboardSamples": 0,
+        "recipientKeyDown": 5,
+        "recipientMouseDown": 8
+      },
+      "windowOrderSamples": 213,
+      "windowOrderViolations": 0,
+      "completionGateReview": {
+        "requiredStepOrderVerified": true,
+        "uncoveredSteps": [],
+        "recipientTapAvailable": true,
+        "unresolvedFocusSamples": 0
+      }
+    },
+    "referenceWindowGeometry": [
+      {
+        "windowId": 96628,
+        "sampleCount": 5722,
+        "uniqueFrames": 1,
+        "firstFrame": {
+          "Y": 303,
+          "Height": 126,
+          "X": 332,
+          "Width": 126
+        },
+        "firstSeenSeconds": 0.022449208423495293,
+        "lastSeenSeconds": 136.48253708332777
+      },
+      {
+        "windowId": 96728,
+        "sampleCount": 2716,
+        "uniqueFrames": 5,
+        "firstFrame": {
+          "Y": 558,
+          "X": 237,
+          "Width": 126,
+          "Height": 126
+        },
+        "firstSeenSeconds": 82.45779108349234,
+        "lastSeenSeconds": 136.48253708332777
+      }
+    ]
+  },
+  "validation": {
+    "regressionTestsPassed": 30,
+    "regressionTestsSkipped": 0,
+    "baselineCheck": "passed",
+    "intentionalDigestDriftRejected": true,
+    "productionRuntimeChanged": false,
+    "finalCompletionGateRecheckedAgainstRecordedReports": true,
+    "existingRegressionTestsPassed": 25,
+    "baselineCompletionTestsPassed": 5,
+    "intentionalBuildDriftRejected": true
+  },
+  "retainedAttempts": [
+    {
+      "report": "artifacts/reference-original-1792718552983/report.json",
+      "reason": "Observer rejected a test-only duration above its documented 180-second cap; no input was sent."
+    },
+    {
+      "report": "artifacts/reference-original-1792718592910/report.json",
+      "reason": "Controller timed out; its capture check also incorrectly assumed PNG. Logical-coordinate drag failed, then screenshot-pixel drag selected 31 UTF-16 units. Raw failures retained; supplemental field observation is separate."
+    },
+    {
+      "report": "artifacts/reference-independent-1792719859022/report.json",
+      "reason": "A later completion/observer-metadata retest stopped before input when CG x=1646 disagreed with AX x=260. No keyDown/mouseDown reached the target; source runtime was unchanged. Earlier passing run is retained separately."
+    }
+  ],
+  "limits": [
+    "One macOS 26.6.2 arm64 Retina display and a first-party AppKit fixture.",
+    "No new human concurrency test; old manual IME acceptance is not silently renewed.",
+    "Image format and Mac AX-only coordinate behavior are first measured in this audit, not proven newly introduced changes.",
+    "Live original actions use legitimate cua_repl only; no original socket/module injection or credentials.",
+    "Original service-window geometry candidates are not all proven to be cursor windows; polling cannot recover every rendered frame.",
+    "Original v1.0.0 tag and distributed archives are retained; this is a baseline/test/document update.",
+    "The original trace windowPollRequestedInterval metadata said 0.05; optional reference-window geometry polling in that source requested 1/60 second. Metadata corrected in the observer; original trace is not rewritten."
+  ]
+}

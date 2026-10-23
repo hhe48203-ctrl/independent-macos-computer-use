@@ -1,5 +1,7 @@
 # Codex Computer Use 调查记录
 
+当前安装物已更新。2026-10-22的组件身份、接口/行为对照和重新逆向函数见 [ORIGINAL_BASELINE.md](ORIGINAL_BASELINE.md)。本页保留历史日期及原生哈希范围，旧地址不能直接套用于新服务。
+
 调查日期：2026-10-17（America/Edmonton）。本报告针对本机安装物；不是对所有版本的断言。摘要、版本和 SHA-256 在 [evidence-manifest.json](evidence-manifest.json)。原始 REA Evidence、ASAR 区域和反汇编只保留在被 Git 忽略的 `.research/`，源码交付包明确排除它们。
 
 ## 证据分类

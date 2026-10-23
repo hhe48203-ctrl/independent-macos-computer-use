@@ -81,3 +81,5 @@ npm run package
 `artifacts/` 保留本机测试结果和失败记录，默认不进入 Git。`dist/` 生成预编译插件 ZIP、源码包和 SHA256；打包须验证工作线程及 helper 在仓库外运行。新版已通过真人输入法/大小写切换对照；首次失败与后续修正分开保留。仓库外打包验证见 docs/VALIDATION.md。旧 v0.3 结果不作为新版验收。
 
 架构与研究：[REPL/光标证据](docs/REPL_CURSOR_RESEARCH.md)、[原生后台机制](docs/FOCUS_FIDELITY.md)、[原始逆向记录](docs/REVERSE_ENGINEERING.md)。后两者包含 v0.3 历史接口名称；当前公开接口以 JS API 为准。
+
+原版对照已于2026-10-22更新至App26.1016.61520、sky0.7.12。接口差异、原版9/10与独立版10/10行为结果、Unicode函数重新逆向及复现命令见 [当前原版基线](docs/ORIGINAL_BASELINE.md)。本次不改变v1运行时或移动既有标签。
