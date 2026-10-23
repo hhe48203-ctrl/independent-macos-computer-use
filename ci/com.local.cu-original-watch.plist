@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Optional local scheduler for the authoritative installed-app check.
+  Replace __REPO__ with the absolute repository path, then:
+    cp ci/com.local.cu-original-watch.plist ~/Library/LaunchAgents/
+    launchctl load -w ~/Library/LaunchAgents/com.local.cu-original-watch.plist
+  `gh` must be authenticated for this user (keyring or GH_TOKEN in the program
+  environment); no original module, socket or credential is touched by the job.
+-->
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+  <key>Label</key><string>com.local.cu-original-watch</string>
+  <key>ProgramArguments</key>
+  <array>
+    <string>/bin/sh</string>
+    <string>-lc</string>
+    <string>cd __REPO__ &amp;&amp; exec node scripts/watch-original.mjs --local --issue</string>
+  </array>
+  <key>EnvironmentVariables</key>
+  <dict>
+    <key>PATH</key><string>/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin</string>
+  </dict>
+  <key>StartCalendarInterval</key>
+  <dict><key>Hour</key><integer>9</integer><key>Minute</key><integer>17</integer></dict>
+  <key>StandardOutPath</key><string>/tmp/cu-original-watch.log</string>
+  <key>StandardErrorPath</key><string>/tmp/cu-original-watch.err</string>
+  <key>RunAtLoad</key><false/>
+</dict>
+</plist>
