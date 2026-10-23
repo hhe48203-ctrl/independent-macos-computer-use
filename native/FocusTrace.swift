@@ -30,6 +30,8 @@ import ApplicationServices
     var lastWindowPoll:Double = -1
     var lastEmission:Double = -1
     var cachedWindows:[[String:Int]]=[]
+    // Optional reference-cursor geometry only. Never captures another app's text.
+    var cachedReferenceWindows:[[String:Any]]=[]
     var lastState:NSDictionary?
     var terminationSource:DispatchSourceSignal?
     init(_ directory: String, _ seconds: Double) {
@@ -139,15 +141,23 @@ import ApplicationServices
         var row=SystemInputFocus.observe().json
         let point=CGEvent(source:nil)?.location ?? .zero
         row["pointer"]=["x":point.x,"y":point.y]
-        if now-lastWindowPoll>=0.05 {
+        let referencePID=ProcessInfo.processInfo.environment["CU_TRACE_WINDOW_OWNER_PID"].flatMap(Int32.init)
+        if now-lastWindowPoll >= (referencePID == nil ? 0.05 : 1.0/60) {
             let windows=CGWindowListCopyWindowInfo([.optionOnScreenOnly,.excludeDesktopElements],kCGNullWindowID) as? [[String:Any]] ?? []
             cachedWindows=windows.filter { ($0[kCGWindowLayer as String] as? Int) == 0 }.compactMap { window -> [String:Int]? in
                 guard let id=window[kCGWindowNumber as String] as? Int,let pid=window[kCGWindowOwnerPID as String] as? Int else{return nil}
                 return ["id":id,"pid":pid]
             }
+            if let referencePID {
+                cachedReferenceWindows=windows.filter{($0[kCGWindowOwnerPID as String] as? Int32)==referencePID}.compactMap { window in
+                    guard let id=window[kCGWindowNumber as String] as? Int,let bounds=window[kCGWindowBounds as String] as? [String:Any] else{return nil}
+                    return ["id":id,"frame":bounds,"layer":window[kCGWindowLayer as String] ?? 0,"alpha":window[kCGWindowAlpha as String] ?? 0]
+                }
+            }
             lastWindowPoll=now
         }
         row["windows"]=cachedWindows
+        if referencePID != nil {row["referenceWindows"]=cachedReferenceWindows}
         let state=NSDictionary(dictionary:row)
         if lastState?.isEqual(state) != true || now-lastEmission>=0.05 {
             row["t"]=now;samples.append(row);lastState=state;lastEmission=now
