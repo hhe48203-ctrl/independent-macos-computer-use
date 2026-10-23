@@ -60,7 +60,7 @@ setup 仅写本项目 `.pi/mcp.json`，不改全局配置或凭证。当前 macO
 
 后台默认不激活、不移动系统鼠标、不回退前台。目标可完全被覆盖，但应在当前解锁桌面且未最小化。AXPress 与验证后的 AX 文本默认优先。真实鼠标/键盘事件为可选路径，依赖未公开的 CGEventSetWindowLocation 等系统行为，应用可能忽略或自行重排窗口；隔离错误需要停止并观察。实验局部 AppKit 焦点路径仅在指定本机版本验证，不能承诺任意应用兼容。
 
-可设 CU_ALLOWED_BUNDLE_IDS 限定应用，空值拒绝所有目标；此模式禁用显示器截图。CU_AGENT_CURSOR=0 关闭可见覆盖层。普通截图排除光标，显式 `cua.getScreenshot({region,includeAgentCursor:true})` 可作视觉验证。
+可设 CU_ALLOWED_BUNDLE_IDS 限定应用，空值拒绝所有目标；此模式禁用显示器截图。CU_AGENT_CURSOR=0 关闭可见覆盖层；CU_AGENT_CURSOR_STYLE=ring 换成琥珀色圆环十字样式，便于与 Codex 自身光标区分（默认仍是原有的浅色小箭头）。普通截图排除光标，显式 `cua.getScreenshot({region,includeAgentCursor:true})` 可作视觉验证。
 
 当前没有浏览器 API和富文本粘贴；不支持的选项明确报错。纯文本 paste 使用 AX 插入，无需剪贴板。只有一块物理 Retina 屏幕完成实测，多屏坐标公式测试不等价于真实多屏验收。不包含锁屏、隐藏桌面、TCC 绕过或凭证提取。
 

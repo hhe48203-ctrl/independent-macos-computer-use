@@ -8,13 +8,37 @@ final class AgentCursorPanel: NSPanel {
     override func constrainFrameRect(_ frameRect: NSRect, to screen: NSScreen?) -> NSRect { frameRect }
 }
 
+// Two visually distinct styles. `arrow` keeps the original translucent outline
+// with a soft glow; `ring` is a compact amber reticle whose shape and color do
+// not read as a pointer, so it cannot be mistaken for the Codex cursor.
+enum AgentCursorStyle: String {
+    case arrow, ring
+    static var configured: AgentCursorStyle {
+        AgentCursorStyle(rawValue:(ProcessInfo.processInfo.environment["CU_AGENT_CURSOR_STYLE"] ?? "").lowercased()) ?? .arrow
+    }
+    var summary: String {
+        switch self {
+        case .arrow: return "translucent light outline with soft glow"
+        case .ring: return "amber reticle with crosshair ticks"
+        }
+    }
+}
+
 final class AgentCursorView: NSView {
     var pressed=false
     var activity="move"
+    var style:AgentCursorStyle = .arrow
     override var isFlipped: Bool {true}
     override func draw(_ dirtyRect: NSRect) {
         NSColor.clear.setFill(); bounds.fill(using:.copy)
         NSGraphicsContext.saveGraphicsState()
+        switch style {
+        case .arrow: drawArrow()
+        case .ring: drawRing()
+        }
+        NSGraphicsContext.restoreGraphicsState()
+    }
+    private func drawArrow() {
         let arrow=NSBezierPath()
         arrow.move(to:NSPoint(x:25,y:24))
         arrow.curve(to:NSPoint(x:27,y:24),controlPoint1:NSPoint(x:25,y:23.5),controlPoint2:NSPoint(x:26,y:23.5))
@@ -31,7 +55,22 @@ final class AgentCursorView: NSView {
         let shadow=NSShadow();shadow.shadowColor=NSColor(calibratedRed:0.63,green:0.77,blue:0.96,alpha:0.55);shadow.shadowBlurRadius=12;shadow.shadowOffset = .zero;shadow.set()
         NSColor(calibratedRed:0.63,green:0.72,blue:0.85,alpha:pressed ? 0.48:0.22).setFill();arrow.fill()
         NSColor(calibratedWhite:1,alpha:pressed ? 1:0.85).setStroke();arrow.lineWidth=1.6;arrow.lineJoinStyle = .round;arrow.stroke()
-        NSGraphicsContext.restoreGraphicsState()
+    }
+    private func drawRing() {
+        // Same anchor as the arrow tip, so positioning math is unchanged.
+        let center=NSPoint(x:24,y:24)
+        let radius:CGFloat = pressed ? 8:11
+        let ring=NSBezierPath(ovalIn:NSRect(x:center.x-radius,y:center.y-radius,width:radius*2,height:radius*2))
+        NSColor(calibratedWhite:0,alpha:0.35).setStroke();ring.lineWidth=4.4;ring.stroke()
+        NSColor(calibratedRed:0.98,green:0.72,blue:0.22,alpha:pressed ? 1:0.95).setStroke();ring.lineWidth=2.2;ring.stroke()
+        let ticks=NSBezierPath(),inner=radius+2.5,outer=radius+6.5
+        for (dx,dy) in [(1.0,0.0),(-1.0,0.0),(0.0,1.0),(0.0,-1.0)] {
+            ticks.move(to:NSPoint(x:center.x+CGFloat(dx)*inner,y:center.y+CGFloat(dy)*inner))
+            ticks.line(to:NSPoint(x:center.x+CGFloat(dx)*outer,y:center.y+CGFloat(dy)*outer))
+        }
+        ticks.lineWidth=2.2;ticks.lineCapStyle = .round;ticks.stroke()
+        let dot=NSBezierPath(ovalIn:NSRect(x:center.x-2,y:center.y-2,width:4,height:4))
+        NSColor(calibratedWhite:1,alpha:pressed ? 1:0.9).setFill();dot.fill()
     }
 }
 
@@ -83,6 +122,7 @@ final class AgentCursorView: NSView {
         }
     }
     private let enabled=ProcessInfo.processInfo.environment["CU_AGENT_CURSOR"] != "0"
+    private let style=AgentCursorStyle.configured
     static func appKitOrigin(global:CGPoint, primaryTop:Double, size:Double=80)->CGPoint {
         // The pointer tip is (24,24) from the panel's top-left. Cocoa uses
         // bottom-left coordinates; CG uses primary-display top-left coordinates.
@@ -101,7 +141,7 @@ final class AgentCursorView: NSView {
             p.ignoresMouseEvents=true;p.hidesOnDeactivate=false;p.isFloatingPanel=true;p.becomesKeyOnlyIfNeeded=true
             p.level = .statusBar;p.collectionBehavior=[.canJoinAllSpaces,.fullScreenAuxiliary,.stationary,.ignoresCycle]
             p.isExcludedFromWindowsMenu=true;p.setAccessibilityElement(false)
-            let v=AgentCursorView(frame:NSRect(x:0,y:0,width:80,height:80));v.setAccessibilityElement(false);p.contentView=v
+            let v=AgentCursorView(frame:NSRect(x:0,y:0,width:80,height:80));v.setAccessibilityElement(false);v.style=style;p.contentView=v
             panel=p;view=v
         }
         position(frame)
@@ -127,6 +167,6 @@ final class AgentCursorView: NSView {
     }
     func hide() {motionGeneration+=1;panel?.orderOut(nil);timer?.invalidate();timer=nil;pressed=false;pulseUntil = .distantPast}
     var state:Object {
-        ["enabled":enabled,"moving":moving,"style":"translucent light outline with soft glow","visible":panel?.isVisible ?? false,"windowId":Int(panel?.windowNumber ?? 0),"targetPID":Int(pid),"targetWindowId":Int(windowID),"relative":["x":relative.x,"y":relative.y],"global":["x":global.x,"y":global.y],"panelFrame":rectJSON(panel?.frame ?? .zero),"backingScale":panel?.backingScaleFactor ?? 1,"pressed":pressed,"activity":activity,"sequence":sequence,"ignoresMouseEvents":panel?.ignoresMouseEvents ?? true,"canBecomeKey":panel?.canBecomeKey ?? false,"canBecomeMain":panel?.canBecomeMain ?? false,"history":history]
+        ["enabled":enabled,"moving":moving,"style":style.rawValue,"styleDescription":style.summary,"visible":panel?.isVisible ?? false,"windowId":Int(panel?.windowNumber ?? 0),"targetPID":Int(pid),"targetWindowId":Int(windowID),"relative":["x":relative.x,"y":relative.y],"global":["x":global.x,"y":global.y],"panelFrame":rectJSON(panel?.frame ?? .zero),"backingScale":panel?.backingScaleFactor ?? 1,"pressed":pressed,"activity":activity,"sequence":sequence,"ignoresMouseEvents":panel?.ignoresMouseEvents ?? true,"canBecomeKey":panel?.canBecomeKey ?? false,"canBecomeMain":panel?.canBecomeMain ?? false,"history":history]
     }
 }
