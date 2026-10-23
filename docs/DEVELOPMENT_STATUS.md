@@ -1,21 +1,23 @@
-# 当前检查点：2026-10-22
+# Current checkpoint: 2026-10-22
 
-本轮更新原版对照基线，App26.1016.61520、cua-repl0.1.2、sky0.7.12；安装与附带原生服务哈希一致。原版10项行为9项通过，Unicode精确追加失败；独立版同组10项通过，25项原有回归和5项新基线判定检查通过且无跳过。已重新逆向当前文字转虚拟键函数，明确JPEG、AX后像素坐标、滚动距离等差异。详见 [ORIGINAL_BASELINE.md](ORIGINAL_BASELINE.md)。
+[中文版本](zh-CN/DEVELOPMENT_STATUS.md)
 
-本轮没有改变生产运行时，不覆盖v1.0.0标签和已验收发布包；没有新的人机并用验收，不能把旧真人结果自动续期。原始失败和测试器更正保留。
+This round refreshed the original reference baseline: App 26.1016.61520, cua-repl 0.1.2, sky 0.7.12, with the installed and bundled native service hashes matching. 9 of the original's 10 behaviors passed; exact Unicode appending failed. The independent build passed the same 10 checks, and the 25 existing regressions plus 5 new baseline-decision checks passed with no skips. The current text-to-virtual-key function was reverse engineered again, and the JPEG, post-AX pixel-coordinate and scroll-distance differences are now explicit. See [ORIGINAL_BASELINE.md](ORIGINAL_BASELINE.md).
 
-下面是原v1交付检查点。
+This round did not change the production runtime and did not move the v1.0.0 tag or the already-accepted release packages. There was no new human concurrent-use acceptance, so earlier human results cannot be renewed automatically. Original failures and harness corrections are retained.
+
+Below is the original v1 delivery checkpoint.
 
 ---
 
-# v1.0.0 交付检查点（2026-10-19 UTC）
+# v1.0.0 delivery checkpoint (2026-10-19 UTC)
 
-功能与本机真人阶段已完成：只公开js/js_reset；真正的词法持久REPL与await；cua/app、AX差分、富截图与OCR；连续移动且不抢系统鼠标的独立光标；窗口移动、缩放失效、取消/重置/退出清理。25项回归、真实文档与生命周期、pi9次js完成7项真实事件操作通过。
+The functional and local human phase is complete: only `js`/`js_reset` are exposed; a real lexical persistent REPL with `await`; cua/app objects, AX diffs, rich screenshots and OCR; an independent cursor that moves continuously without taking over the system pointer; cleanup on window movement, resize invalidation, cancellation, reset and exit. 25 regressions, real documents and lifecycle, and pi completing 7 real event operations in 9 js calls all passed.
 
-输入法/大小写问题的最初新版真人轮仍保留为失败。动画已提前到局部焦点通知之前；修正后的10秒空闲/20秒后台对照中，参与者报告“两阶段都正常，没有明显差异”。该轮不读取草稿，没有逐字符自动证明；原因仍作推断。无需再重复普通短句测试。
+The first new-release human round on the input-method/case issue is still recorded as a failure. Cursor animation now runs before the app-local focus notice; in the corrected 10-second idle / 20-second background comparison the participant reported "both phases normal, no obvious difference". That round did not read drafts, so character-level integrity is not proven automatically and the cause remains an inference. Repeating ordinary short-phrase tests is unnecessary.
 
-最终交付必须以实际1.0.0 ZIP和源码tar.gz的仓库外验收为准；稳定报告路径与发布门槛见 [VALIDATION.md](VALIDATION.md) 和 [validation-index.json](validation-index.json)。标签仅在这些检查全部通过后创建。本文件记录功能检查点，不以旧rc包或v0.3证据代替最终包验收。
+Final delivery must be judged by out-of-repository acceptance of the actual 1.0.0 ZIP and source tar.gz; stable report paths and release gates are in [VALIDATION.md](VALIDATION.md) and [validation-index.json](validation-index.json). The tag is created only after all of those checks pass. This file records functional checkpoints and does not substitute an old rc package or v0.3 evidence for final-package acceptance.
 
-旧17工具测试已重定向到新接口或在执行前明确退役；历史实现仍可在Git中查阅。按功能提交，最终本地标签v1.0.0，不自动推送或公开发布。
+Legacy 17-tool tests are redirected to the new interface or are explicitly retired before execution; the historical implementations remain visible in Git. Commits are functional, the final tag is local v1.0.0, and nothing is pushed or published publicly by default.
 
-范围：单台macOS26.6.2 arm64、单块物理Retina屏；真实多屏及任意应用/OS兼容没有验证。正常TCC、独立实现、不提取凭证、不分发专有代码，未修改或注入原版应用。
+Scope: one machine running macOS 26.6.2 arm64 with a single physical Retina display; real multi-display and arbitrary application/OS compatibility are not verified. Normal TCC, independent implementation, no credential extraction, no distribution of proprietary code, and no modification or injection of the original app.

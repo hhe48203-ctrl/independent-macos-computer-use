@@ -1,5 +1,7 @@
-# 项目约定
+# Project conventions
 
-开始一个项目前初始化 Git 仓库，开发过程中及时按功能提交。
+[中文版本](docs/zh-CN/AGENTS.md)
 
-本项目已初始化 Git。全部目标实现并通过验收后，打 v1.0.0 标签。
+Initialize a Git repository before starting a project, and commit promptly by feature while developing.
+
+This project already has Git initialized. Tag v1.0.0 once every goal is implemented and accepted.

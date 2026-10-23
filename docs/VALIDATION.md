@@ -1,25 +1,27 @@
-# v1.0.0 本机验收
+# v1.0.0 local acceptance
 
-2026-10-19 UTC，macOS26.6.2 (25G83)、arm64、Node24.15.0、pi1.2.0，单块物理 Retina 屏幕。正常 Accessibility/Screen Recording 授权；新客户端仍须正常授权。
+[中文版本](zh-CN/VALIDATION.md)
 
-| 验证 | 结果与范围 |
+2026-10-19 UTC, macOS 26.6.2 (25G83), arm64, Node 24.15.0, pi 1.2.0, one physical Retina display. Normal Accessibility/Screen Recording authorization; new clients still need to authorize normally.
+
+| Verification | Result and scope |
 | --- | --- |
-| 自动回归 | 25项通过、0跳过：真实词法绑定/TLA、错误恢复、取消/超时/重置、旧回调隔离、跨VM图片、MCP发现、原生策略与坐标公式 |
-| 新公开接口 | 只有js/js_reset；持久应用对象、AX差分、富PNG、截图坐标映射，窗口歧义和缩放失效明确报错 |
-| 真实文档 | 被覆盖的自建AppKit文档中，真实Unicode（中文、emoji、NFD、ZWJ、换行）、导航键、CMD+A、选择拖动、滚动、点击均读回；SCK截图及Vision OCR通过 |
-| 可见光标 | 连续中间帧和屏幕裁剪已核对；浅色半透明箭头、柔和光晕。最后生命周期测试有36个真实拖动包，窗口移动跟随、缩放失效隐藏、拖动中重置释放及目标退出清理通过，系统鼠标位置不变 |
-| pi | 仅9次js调用、0工具错误，跨调用复用app，完成7项真实事件操作并验证文档/选区/滚动条/按钮结果；基础中文输入闭环另有5次js测试 |
-| 真人并用对照 | 10.001秒空闲与20.159秒后台，29次真实后台动作；参与者确认“两阶段都正常，没有明显差异” |
+| Automated regressions | 25 passed, 0 skipped: real lexical bindings/TLA, error recovery, cancel/timeout/reset, stale-callback isolation, cross-VM images, MCP discovery, native policy and coordinate formulas |
+| New public interface | only `js`/`js_reset`; persistent app objects, AX diffs, rich PNG, screenshot coordinate mapping, with explicit errors for window ambiguity and resize invalidation |
+| Real documents | in a covered owned AppKit document, real Unicode (Chinese, emoji, NFD, ZWJ, newline), navigation keys, CMD+A, selection drag, scrolling and click all read back; SCK screenshots and Vision OCR pass |
+| Visible cursor | continuous intermediate frames and screen crops checked; light translucent arrow with soft glow. The final lifecycle test had 36 real drag packets, and window-follow, hide-on-resize, release-on-reset-during-drag and cleanup-on-target-exit passed with the system pointer unchanged |
+| pi | only 9 js calls, 0 tool errors, reusing the app across calls, completing 7 real event operations and verifying document, selection, scrollbar and button results; a separate 5-call js test covers the basic Chinese input loop |
+| Human concurrent-use comparison | 10.001 s idle and 20.159 s background, 29 real background actions; the participant confirmed "both phases normal, no obvious difference" |
 
-真人对照中，两个阶段均观察到Canadian/SCIM输入源及Caps Lock/Globe切换，后台阶段43次硬件keyDown进入Codex，helper的17次keyDown只投往目标。未读取Codex草稿，**没有本轮逐字符自动完整性证明**。前台/按键元数据和人工体验分开计量，单人单机结果不外推为所有IME或应用兼容。
+In the human comparison, the Canadian/SCIM input source and Caps Lock/Globe switching were observed in both phases; 43 hardware keyDowns reached Codex during the background phase while the helper's 17 keyDowns were delivered only to the target. Codex drafts were not read, so **there is no character-level automatic integrity proof for this round**. Foreground/key metadata and human experience are measured separately, and a single person on a single machine is not extrapolated into compatibility with every IME or application.
 
-最初新版真人轮出现输入法/大小写切换困难，仍记作失败。随后将text/key的光标动画移到局部AppKit焦点通知之前，避免数百毫秒动画占用局部激活区间；新增时间指标及先后顺序断言。受控诊断未发现持续的全局修饰状态变化，但不证明没有瞬态；动画时序是可能原因，未证明唯一根因。失败、测量和人工复核全部保留，不倒改旧报告。
+The first new-release human round hit input-method/case-switch difficulty and is still recorded as a failure. Text/key cursor animation was then moved before the app-local AppKit focus notice so that hundreds of milliseconds of animation no longer occupy the local activation window; timing metrics and ordering assertions were added. Controlled diagnostics found no sustained global modifier state change, which does not prove the absence of a transient; animation timing is a possible cause, not a proven unique root cause. Failures, measurements and human review are all retained, and old reports were not rewritten.
 
-## 交付文件的独立验证
+## Independent verification of the deliverables
 
-最终包的权威结果保存在证据包的 `artifacts/release-verification-v1/`。预编译验收解压**实际ZIP**到仓库外 `/tmp`、去掉NODE_PATH，通过该包的独立worker/helper完成上述真实文档操作、PNG和OCR。源码验收解压**实际tar.gz**到另一临时目录，用隔离npm配置安装锁定依赖（关闭安装脚本），重建原生helper并执行全部25项测试，要求0跳过。
+Authoritative results for the final packages live in the evidence package at `artifacts/release-verification-v1/`. The prebuilt acceptance extracts the **actual ZIP** to `/tmp` outside the repository, drops NODE_PATH, and performs the real document operations, PNG and OCR through that package's own worker/helper. The source acceptance extracts the **actual tar.gz** to another temporary directory, installs locked dependencies with an isolated npm configuration (install scripts disabled), rebuilds the native helper and runs all 25 tests requiring 0 skips.
 
-发布门槛为该目录的 `packaged-repl.json`、`packaged-document.json` 和 `source-package.json` 都通过；`release-gate.json` 核对它们与最终SHA256一致。不能用候选包或旧v0.3记录替代。复现：
+The release gate requires `packaged-repl.json`, `packaged-document.json` and `source-package.json` in that directory to pass, and `release-gate.json` to confirm they match the final SHA-256. Candidate packages or old v0.3 records cannot substitute. Reproduce with:
 
 ```sh
 npm run build
@@ -28,22 +30,22 @@ node scripts/packaged-repl-test.mjs
 node scripts/source-package-test.mjs
 ```
 
-打包验证曾遇到CG/AX窗口坐标不一致，另一次光标移动中目标和遮挡窗口同步大幅平移；两次均明确失败并停止，未尝试跟随变化投递或恢复布局。后续新建测试窗口后，同一ZIP通过；触发源未确认，不能倒改前次结果。默认桌面测试另有一次APP_GONE，原因未确定；随后对同一原生调用路径的逐请求诊断成功。此类错误要求重新观察，不能自动重试输入。相关记录随最终证据的prior-attempt-failures保存。
+Packaged verification previously hit CG/AX window-coordinate disagreement, and on another attempt the target and cover windows shifted together during cursor motion; both failed explicitly and stopped without trying to follow the change or restore the layout. After creating new test windows, the same ZIP passed; the trigger is unconfirmed and the earlier results were not rewritten. A default desktop test also hit APP_GONE once with an undetermined cause, followed by a successful per-request diagnostic of the same native call path. Such errors require re-observation rather than automatic input retry. The records are stored with the final evidence as prior-attempt-failures.
 
-真人测试需要协调开始时间；不在自动发布检查中重复。原生真实事件测试显式开启本机限定的实验局部焦点路径，默认关闭。默认AX路径、可见布置、真实事件及人工判断不能互相替代。
+The human test needs a coordinated start time and is not repeated in automated release checks. Native real-event tests explicitly enable the machine-limited experimental app-local focus route, which is off by default. Default AX paths, visible arrangement, real events and human judgement cannot substitute for one another.
 
-当前索引见 [validation-index.json](validation-index.json)，研究与架构见 [REPL_CURSOR_RESEARCH.md](REPL_CURSOR_RESEARCH.md)、[JS_API.md](JS_API.md)。[v0.3验证记录](VALIDATION_V03.md)及其索引是历史证据，旧17工具接口已退役。
+The current index is [validation-index.json](validation-index.json); research and architecture are in [REPL_CURSOR_RESEARCH.md](REPL_CURSOR_RESEARCH.md) and [JS_API.md](JS_API.md). The [v0.3 validation record](VALIDATION_V03.md) and its index are historical evidence, and the old 17-tool interface is retired.
 
-## 未覆盖的范围
+## Not covered
 
-Intel、其他macOS版本、真实多屏、任意Electron/浏览器、复杂IME composition、锁屏及其他Space、长期运行仍未实机验收。多屏坐标公式测试不能替代多屏测试。原始后台事件使用系统SPI，应用可能忽略或自行升层；检测到隔离错误即停止，不恢复前台或过滤真人事件掩盖问题。采样间隔也不能证明每个瞬间均无干扰。
+Intel, other macOS versions, real multi-display, arbitrary Electron/browsers, complex IME composition, lock screen and other Spaces, and long-running operation are not machine-verified. Multi-display coordinate-formula tests are not a substitute for multi-display testing. Raw background events use a system SPI, so applications may ignore them or raise themselves; isolation errors stop the operation instead of restoring the foreground or filtering human events to hide the problem. Sampling gaps also cannot prove every instant is interference-free.
 
-证据ZIP仅收录自建测试UI、结果和必要的输入/焦点元数据；不收录前台草稿截图、原版专有代码、研究切片或凭证。
+The evidence ZIP contains only owned test UI, results and necessary input/focus metadata; it excludes foreground draft screenshots, original proprietary code, research slices and credentials.
 
-## v1.1.0 增量验收
+## v1.1.0 incremental acceptance
 
-v1.0 记录及标签保持原位；本轮环境仍为同一Mac、单块物理Retina屏幕。新增原版像素坐标模式、真实修饰键多选与0..5000ms按键/按钮保持、取消释放、显式重启重连。39项回归通过且0跳过。独立版 AppKit/WebKit × 两种窗口尺寸的20组滚动，逐项核对真实偏移，12组垂直位移与原版已测值一致。默认坐标仍为adaptive、默认绑定仍严格；垂直距离已调整，legacy可恢复旧系数。
+v1.0 records and the tag stay in place; the environment is still the same Mac with one physical Retina display. This round adds the original pixel-coordinate mode, real modifier-key multi-select and 0..5000 ms key/button holds, release on cancellation, and explicit restart reconnection. 39 regressions pass with 0 skips. The independent build's 20 scroll cases across AppKit/WebKit × two window sizes each match the real offset, and 12 vertical displacements agree with the values measured on the original. The default coordinate mode remains adaptive and default binding remains strict; vertical distance was adjusted and `legacy` restores the old coefficient.
 
-新交付验证扩展为解压实际ZIP后，执行文档、修饰键/保持/取消、重启重连三个完整MCP用例；源码包在仓库外重新安装、编译和测试。版本专用索引和最终包校验门槛见 [validation-index-v1.1.json](validation-index-v1.1.json)，实现、样本表与原版失败轨迹见 [COMPATIBILITY_V1_1.md](COMPATIBILITY_V1_1.md)。
+The new deliverable verification was extended to extract the actual ZIP and run three full MCP cases — document, modifier/hold/cancel, restart reconnection — while the source package is reinstalled, compiled and tested outside the repository. The version-specific index and final-package gate are in [validation-index-v1.1.json](validation-index-v1.1.json); implementation, sample tables and original failure traces are in [COMPATIBILITY_V1_1.md](COMPATIBILITY_V1_1.md).
 
-本轮没有新增真人长按/IME并用验收。水平仍不宣称原版兼容，原版水平无位移、AppKit升层和独立版几何变化时停止均保留；不能由后续通过覆盖先前失败。
+This round added no new human long-hold/IME concurrent acceptance. Horizontal compatibility is still not claimed; the original's zero horizontal displacement, the AppKit raise and the independent build's stop on geometry change are all retained, and later passes cannot overwrite earlier failures.

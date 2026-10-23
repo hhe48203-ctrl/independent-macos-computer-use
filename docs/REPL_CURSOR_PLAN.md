@@ -1,24 +1,26 @@
-# cua REPL 与独立光标目标
+# cua REPL and independent cursor goals
 
-在现有独立 macOS 后端上提供接近原版的持久 JavaScript 体验；不依赖原版运行时、私有 socket、认证或专有代码。
+[中文版本](zh-CN/REPL_CURSOR_PLAN.md)
 
-## 验收要求
+Provide a persistent JavaScript experience close to the original on the existing independent macOS backend, without depending on the original runtime, private sockets, authentication or proprietary code.
 
-- 对 Agent 仅暴露 JS 执行、重置入口，移除17个旧显式工具；旧原生方法仅作为内部后端。
-- 顶层 await、var/let/const 与应用对象跨执行保留，错误可恢复；无限循环、超时、取消、重置有界清理，禁止旧执行在重置后继续操作。
-- cua.getState()/getApp() 及 app 观察、截图、点击、键入、按键、滚动、拖动、选择等对象方法可用，窗口绑定、ID和截图坐标行为明确。
-- 首次文档提示、AX 状态/差分、自动状态输出、截图富内容呈现有真实验证。
-- 原生可见 Agent 光标显示实际坐标、点击和拖动；跟随窗口移动、屏幕/截图缩放和多屏坐标，不移动用户鼠标、不截获输入、不激活窗口。
-- 光标取消、重置、断开和目标关闭时清理；截图是否包含光标有明确行为与验证。
-- pi 只通过新接口完成真实桌面任务，包含可见光标与人机并用验收。
-- 文档、源码与预编译包都使用新接口，仓库外独立运行验证，保留已知限制和失败证据。
-- 按功能 Git 提交；全部完成后打 v1.0.0 标签。
+## Acceptance requirements
 
-## 实施顺序
+- Expose only JS execution and reset to the agent; remove the 17 explicit legacy tools. Legacy native methods remain an internal backend only.
+- Top-level `await`, `var`/`let`/`const` and app objects persist across executions, and errors are recoverable. Infinite loops, timeouts, cancellation and reset have bounded cleanup, and a stale execution may not keep acting after reset.
+- `cua.getState()`/`getApp()` plus object methods for observing, screenshotting, clicking, typing, pressing keys, scrolling, dragging and selecting are available, with explicit window binding, identifiers and screenshot-coordinate behavior.
+- First-use documentation hints, AX state/diffs, automatic state output and rich screenshot content are verified for real.
+- The native visible agent cursor shows actual coordinates, clicks and drags; it follows window movement, screen/screenshot scale and multi-display coordinates without moving the user's pointer, tapping input or activating windows.
+- The cursor is cleaned up on cancellation, reset, disconnect and target close; whether screenshots include it has defined behavior and verification.
+- pi completes a real desktop task only through the new interface, including the visible cursor and human concurrent-use acceptance.
+- Documentation, sources and prebuilt packages all use the new interface, verified by running outside the repository, with known limits and failure evidence retained.
+- Commit per feature in Git; tag v1.0.0 only when everything is complete.
 
-1. 核对原版 JS/runtime 与光标实现的可观察契约，记录事实和推测。
-2. 实现独立持久 REPL、cua/app 对象、富输出和两个 MCP 入口；以真实词法绑定与错误恢复验证。
-3. 实现原生、穿透点击且不激活的独立光标与操作进度，验证移动/缩放/点击/拖动。
-4. 对新接口进行真实应用、pi、并用、打包验收，更新文档并发布标签。
+## Implementation order
 
-开发基线：756b043（v0.3.0）。现在新接口、光标、pi及真人对照已完成，最终包独立检查与可验证边界见 VALIDATION.md；不将单机测试外推为任意应用或多屏兼容。
+1. Check the observable contract of the original JS/runtime and cursor implementation, recording facts and inferences.
+2. Implement the independent persistent REPL, cua/app objects, rich output and the two MCP entry points; verify with real lexical bindings and error recovery.
+3. Implement the native, click-through, nonactivating independent cursor and operation progress; verify movement, resize, click and drag.
+4. Run real-application, pi, concurrent-use and packaging acceptance on the new interface, update documentation and publish the tag.
+
+Development baseline: 756b043 (v0.3.0). The new interface, cursor, pi and human comparison are now complete; final out-of-repository package checks and verifiable limits are in VALIDATION.md. A single-machine test is not extrapolated into arbitrary-application or multi-display compatibility.

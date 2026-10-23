@@ -1,12 +1,14 @@
 # Independent macOS Computer Use MCP
 
-本机运行的独立 Computer Use MCP。Agent 只使用 `js`、`js_reset` 两个入口，在持久 JavaScript REPL 内调用 `cua` 和应用对象。Swift helper 提供 Accessibility、ScreenCaptureKit、Vision OCR、后台输入，以及可见、穿透点击、不抢焦点的独立光标。
+[中文版本](docs/zh-CN/README.md)
 
-v1.1 增加原版坐标兼容模式、修饰键点击/定时按键、垂直滚动校准和显式重连，保持持久 REPL 与独立光标接口。运行不需要 Codex、`@oai/sky`、原版服务、OpenAI API key 或 REA。研究使用了 [REA](https://github.com/morluto/rea)；交付物不含原版专有模块、二进制或图形资源，不修改原版应用或系统权限数据库。
+An independent Computer Use MCP server that runs locally. The agent uses only two entry points, `js` and `js_reset`, and calls `cua` plus app objects inside a persistent JavaScript REPL. A Swift helper provides Accessibility, ScreenCaptureKit, Vision OCR, background input, and a visible, click-through, non-focus-stealing independent cursor.
 
-## 构建和启动
+v1.1 adds the original coordinate-compatibility mode, modifier clicks/timed keys, vertical scroll calibration and explicit reconnection while keeping the persistent REPL and cursor interface. Running it needs no Codex, `@oai/sky`, original service, OpenAI API key or REA. The research used [REA](https://github.com/morluto/rea); the deliverable contains no original proprietary modules, binaries or image assets, and does not modify the original app or the system permission database.
 
-源码需要 macOS14.4+、Node.js22+、Xcode Command Line Tools。本机验证 macOS26.6.2 arm64、Node24.15.0。预编译包只需 macOS 与 Node，无须编译器或 npm install。其他系统/架构尚未实机验证。
+## Build and start
+
+Building from source needs macOS 14.4+, Node.js 22+ and Xcode Command Line Tools. Verified on macOS 26.6.2 arm64 with Node 24.15.0. Prebuilt packages need only macOS and Node, with no compiler or `npm install`. Other systems/architectures are not machine-verified.
 
 ```sh
 npm ci --ignore-scripts
@@ -15,38 +17,38 @@ npm run doctor
 node /absolute/path/to/computer_use_mcp/src/server.mjs
 ```
 
-最后一条启动 MCP stdio 服务，等待客户端 JSON-RPC 输入；不是交互式终端。stdout 保持协议输出。正常授予启动终端/Agent/helper 的辅助功能与屏幕录制权限，换启动链后重新运行 doctor。本项目无法代替用户授予 TCC。构建会拒绝覆盖仍在运行的 helper，先关闭其客户端或指定独立 CU_BUILD_DIRECTORY。
+The last command starts the MCP stdio service and waits for client JSON-RPC input; it is not an interactive terminal. stdout stays protocol-only. Grant Accessibility and Screen Recording to the launching terminal/agent/helper normally, and re-run doctor after changing the launch chain. This project cannot grant TCC on the user's behalf. The build refuses to overwrite a helper that is still running; close its client first or choose a separate `CU_BUILD_DIRECTORY`.
 
-## Agent 接口
+## Agent interface
 
-`js` 参数为 `{code,timeout_ms?,title?}`，`js_reset` 参数为 `{}`。`cua`、`nodeRepl` 已初始化；顶层 await、var/let/const 和应用对象跨调用保留。
+`js` takes `{code,timeout_ms?,title?}` and `js_reset` takes `{}`. `cua` and `nodeRepl` are already initialized; top-level `await`, `var`/`let`/`const` and app objects persist across calls.
 
 ```js
 let state = await cua.getState();
-let app = await cua.getApp({pid:123,windowId:456}); // 从真实 inventory 选择
+let app = await cua.getApp({pid:123,windowId:456}); // choose from the real inventory
 ```
 
-下一次 `js` 调用继续使用同一个 app：
+The next `js` call keeps using the same app:
 
 ```js
 await app.getAXStateAndScreenshot();
-// 按最新观察到的索引操作：await app.click(7)
+// act on the newest observed index: await app.click(7)
 // await app.typeText('你好'); await app.pressKey('CMD+A')
 ```
 
-观察会自动显示 AX 文本/差分及 MCP 图像。`emit:false` 只返回内容。移植原版脚本可用 `cua.getApp(reference,{coordinateMode:"original"})`，AX-only 后仍保留截图像素坐标；每次观察明确报告单位、缩放和范围。`app.reconnect()` 预览候选，显式选择 PID/窗口后返回新绑定。完整方法、截图坐标规则和差异见 [JS API](docs/JS_API.md)。每个桌面操作都应 await；调用结束后的异步回调不能继续操作桌面。超时、取消或重置会清除绑定并停止原生输入，已经发生的副作用不会回滚。REPL 是可信本地 Node.js，不是安全沙箱。
+Observations automatically display AX text/diffs and MCP images. `emit:false` only returns the content. When porting original scripts use `cua.getApp(reference,{coordinateMode:"original"})`, which keeps screenshot-pixel coordinates after AX-only observation; every observation reports its unit, scale and range explicitly. `app.reconnect()` previews candidates and returns a new binding after an explicit PID/window choice. Full methods, screenshot-coordinate rules and differences are in [JS API](docs/JS_API.md). Await every desktop operation; an asynchronous callback that fires after the call ends cannot keep acting on the desktop. A timeout, cancellation or reset clears bindings and stops native input, and side effects already delivered are not rolled back. The REPL is a trusted local Node.js process, not a security sandbox.
 
-光标按参考样式独立绘制为浅色描边、半透明箭头及柔和光晕，连续缓入缓出移动，到位后才投递输入。拖动位置随真实事件包更新；不会移动系统鼠标。它不可成为 key/main，穿透点击，随窗口移动；大小变化、目标关闭、重置、断开及空闲超时会隐藏。文本操作指向元素中心，并不声称测量到插入点。
+The cursor is drawn independently from a reference style: a light outline, translucent arrow and soft glow, moving with continuous ease-in/ease-out and delivering input only after arrival. Drag positions follow real event packets; the system pointer never moves. It cannot become key/main, is click-through and follows window movement; size changes, target close, reset, disconnect and idle timeout hide it. Text operations point at an element centre and do not claim a measured insertion point. The default style is now an amber ring reticle so it cannot be mistaken for Codex's own pointer; `CU_AGENT_CURSOR_STYLE=arrow` restores the translucent arrow described above.
 
-## MCP 客户端和 pi
+## MCP clients and pi
 
-普通 stdio 配置：
+Plain stdio configuration:
 
 ```json
 {"mcpServers":{"macos-computer-use":{"command":"/absolute/path/to/node","args":["/absolute/path/to/computer_use_mcp/src/server.mjs"]}}}
 ```
 
-`mcp.json` 可供支持 PLUGIN_ROOT 的本地插件客户端使用；[SDK 示例](examples/mcp-client.mjs) 展示真实调用。
+`mcp.json` serves local plugin clients that support PLUGIN_ROOT; the [SDK example](examples/mcp-client.mjs) shows real calls.
 
 ```sh
 node scripts/setup-pi.mjs
@@ -54,17 +56,17 @@ pi --approve --extension builtin:mcp
 npm run test:pi
 ```
 
-setup 仅写本项目 `.pi/mcp.json`，不改全局配置或凭证。当前 macOS26.6.2 arm64 已验证的真实事件路径可显式用 `node scripts/setup-pi.mjs --background-events` 启用；默认关闭。pi 基础验收仅用5次 js 调用完成中文输入闭环；另用9次 js 完成7项真实文档事件操作，包括快捷键、中文/emoji、选择拖动、滚动和原始点击。
+setup only writes this project's `.pi/mcp.json` and never touches global configuration or credentials. On the verified macOS 26.6.2 arm64 the real-event route can be enabled explicitly with `node scripts/setup-pi.mjs --background-events`; it is off by default. The basic pi acceptance completed the Chinese input loop in only 5 js calls; another 9 js calls completed 7 real document event operations including shortcuts, Chinese/emoji, selection drag, scrolling and raw clicks.
 
-## 能力与边界
+## Capabilities and limits
 
-后台默认不激活、不移动系统鼠标、不回退前台。目标可完全被覆盖，但应在当前解锁桌面且未最小化。AXPress 与验证后的 AX 文本默认优先。真实鼠标/键盘事件为可选路径，依赖未公开的 CGEventSetWindowLocation 等系统行为，应用可能忽略或自行重排窗口；隔离错误需要停止并观察。实验局部 AppKit 焦点路径仅在指定本机版本验证，不能承诺任意应用兼容。
+Background operation does not activate apps, move the system pointer or fall back to the foreground by default. The target may be fully covered but must be on the current unlocked desktop and not minimized. AXPress and verified AX text are preferred by default. Real mouse/keyboard events are an optional path that depends on undocumented system behavior such as CGEventSetWindowLocation, so apps may ignore them or reorder themselves; isolation errors must stop and re-observe. The experimental app-local AppKit focus route is verified only on the specified local version and cannot promise arbitrary-app compatibility.
 
-可设 CU_ALLOWED_BUNDLE_IDS 限定应用，空值拒绝所有目标；此模式禁用显示器截图。CU_AGENT_CURSOR=0 关闭可见覆盖层。光标默认是琥珀色圆环十字（与 Codex 自身指针区分）；CU_AGENT_CURSOR_STYLE=arrow 可换回 v1 的浅色小箭头。普通截图排除光标，显式 `cua.getScreenshot({region,includeAgentCursor:true})` 可作视觉验证。
+`CU_ALLOWED_BUNDLE_IDS` restricts apps, and an empty value rejects every target; that mode disables display capture. `CU_AGENT_CURSOR=0` disables the visible overlay. The cursor defaults to the amber ring reticle (distinguishable from Codex's own pointer); `CU_AGENT_CURSOR_STYLE=arrow` restores the v1 light arrow. Ordinary screenshots exclude the cursor, and `cua.getScreenshot({region,includeAgentCursor:true})` is available for visual verification.
 
-当前没有浏览器 API和富文本粘贴；不支持的选项明确报错。纯文本 paste 使用 AX 插入，无需剪贴板。只有一块物理 Retina 屏幕完成实测，多屏坐标公式测试不等价于真实多屏验收。不包含锁屏、隐藏桌面、TCC 绕过或凭证提取。
+There are currently no browser APIs and no rich-text paste; unsupported options fail explicitly. Plain-text paste uses AX insertion and needs no clipboard. Only one physical Retina display was measured, and multi-display coordinate-formula tests are not equivalent to real multi-display acceptance. Lock screen, hidden desktops, TCC bypass and credential extraction are not included.
 
-## 验证和打包
+## Verification and packaging
 
 ```sh
 npm test
@@ -79,10 +81,10 @@ npm run test:pi:document
 npm run package
 ```
 
-桌面测试只操作临时自建 AppKit 窗口。原生事件测试显式启用本机已验证的局部焦点实验路径。真人并用测试必须先协调开始时间，自动脚本不能替代真人输入完整性。
+Desktop tests only operate temporary owned AppKit windows. Native event tests explicitly enable the locally verified experimental focus route. Human concurrent-use tests must coordinate a start time; automated scripts cannot replace human input integrity.
 
-`artifacts/` 保留本机测试结果和失败记录，默认不进入 Git。`dist/` 生成预编译插件 ZIP、源码包和 SHA256；打包须验证工作线程及 helper 在仓库外运行。v1.0 已通过真人输入法/大小写切换对照；v1.1新增功能的验收范围见下文，未新增真人长按并用验收；首次失败与后续修正分开保留。仓库外打包验证见 docs/VALIDATION.md。旧 v0.3 结果不作为新版验收。
+`artifacts/` keeps local test results and failure records and is not committed by default. `dist/` produces the prebuilt plugin ZIP, the source package and SHA-256 values; packaging must verify that the worker and helper run outside the repository. v1.0 passed a human input-method/case-switch comparison; the v1.1 feature acceptance scope is described below and added no new human long-hold concurrent acceptance; the first failure and its later correction are kept separate. Out-of-repository packaging verification is in docs/VALIDATION.md. Old v0.3 results are not new-version acceptance.
 
-架构与研究：[REPL/光标证据](docs/REPL_CURSOR_RESEARCH.md)、[原生后台机制](docs/FOCUS_FIDELITY.md)、[原始逆向记录](docs/REVERSE_ENGINEERING.md)。后两者包含 v0.3 历史接口名称；当前公开接口以 JS API 为准。
+Architecture and research: [REPL/cursor evidence](docs/REPL_CURSOR_RESEARCH.md), [native background mechanisms](docs/FOCUS_FIDELITY.md), [original reverse-engineering record](docs/REVERSE_ENGINEERING.md). The latter two contain v0.3 historical interface names; the current public interface is defined by the JS API.
 
-原版对照已于2026-10-22更新至App26.1016.61520、sky0.7.12。接口差异、原版9/10与独立版10/10行为结果、Unicode函数重新逆向及复现命令见 [当前原版基线](docs/ORIGINAL_BASELINE.md)。该页保留v1.0历史对照。v1.1实现、滚动多窗口/多应用数据、原版升层失败与新接口示例见 [兼容改进验收](docs/COMPATIBILITY_V1_1.md)。既有v1.0.0标签保留。
+The original baseline was refreshed on 2026-10-22 to App 26.1016.61520 and sky 0.7.12. Interface differences, the original's 9/10 versus the independent 10/10 behavior results, the re-derived Unicode function and reproduction commands are in the [current original baseline](docs/ORIGINAL_BASELINE.md); that page keeps the v1.0 historical comparison. The v1.1 implementation, multi-window/multi-app scroll data, original raise failures and new-interface examples are in the [compatibility acceptance](docs/COMPATIBILITY_V1_1.md). The existing v1.0.0 tag stays.

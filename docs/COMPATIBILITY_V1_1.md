@@ -1,63 +1,65 @@
-# v1.1 兼容改进与实测
+# v1.1 compatibility improvements and measurements
 
-本轮围绕原版坐标、修饰键/按住时长、滚动距离和重启重连实现。仍是独立 MCP，只公开 js/js_reset，不引入原版运行时，不连接其私有 socket。已有 v1.0.0 标签不移动。
+[中文版本](zh-CN/COMPATIBILITY_V1_1.md)
 
-## 坐标
+This round implements the original's coordinate handling, modifier keys/hold durations, scroll distance and restart reconnection. It is still an independent MCP server that exposes only `js`/`js_reset`, introduces no original runtime, and connects to no private socket. The existing v1.0.0 tag is not moved.
 
-`cua.getApp(reference,{coordinateMode:'original'})` 保留截图像素数组映射，AX-only 和动作自动读回不再切回逻辑点；默认 adaptive 保留 v1.0 规则。第一次 original AX-only 静默捕获实际截图比例，尺寸改变重新测量；无权限或无法测量即报错，不猜2倍比例。
+## Coordinates
 
-每次 AX 全量/差分都有 Coordinates：unit、scaleX/Y、左上原点、有效范围（上界不含）以及 axFrameUnit。AX/OCR矩形始终使用逻辑点。`getCoordinateInfo()` 可读取当前映射；`getAXStateAndScreenshot()` 另返回 coordinates。实时多选测试在 original 模式下跨多次 AX 自动读回点击不同像素位置，验证了映射没有恢复成逻辑点。真实重连测试使用 maxDimension:640（比例1而非固定2），新对象保留像素单位与640宽范围。
+`cua.getApp(reference,{coordinateMode:'original'})` keeps screenshot-pixel array mapping, so AX-only and automatic action read-back no longer switch back to logical points; the default `adaptive` mode keeps the v1.0 rule. The first `original` AX-only capture silently measures the actual screenshot scale and re-measures when the size changes; without permission or without a measurable scale it errors instead of guessing a 2× ratio.
 
-## 修饰键、持续时间与取消
+Every full or diff AX result carries `coordinates`: unit, scaleX/Y, top-left origin, valid range (upper bound exclusive) and `axFrameUnit`. AX/OCR rectangles always use logical points. `getCoordinateInfo()` reads the current mapping; `getAXStateAndScreenshot()` also returns `coordinates`. A live multi-select test in `original` mode clicked different pixel positions across several automatic AX read-backs, proving the mapping did not revert to logical points. The real reconnection test used `maxDimension:640` (a scale of 1 rather than a fixed 2), and the new object kept pixel units with a 640-wide range.
 
-click 的 key 接受 super/cmd/command/meta、shift、ctrl/control、alt/option（+组合）；click/pressKey 接受 durationMs 0..5000，明确指定时强制后台事件。显式 ax 策略拒绝修饰键/按住点击。不生成全局修饰键事件，也不模拟系统自动重复。
+## Modifiers, durations and cancellation
 
-路由仍只匹配本 helper 的源 PID、每操作 nonce、目标 PID/窗口。现在按包保存调用方要求的 flags：临时 Command 被移除，真正要求的 Command 保留。激活点准备点击仍不带调用方修饰键，不会把 Shift/Command 意外用于标题栏。key-up 时间戳在释放时生成。重置/取消尝试向原目标释放；硬终止或目标消失不能保证收件。
+`click`'s `key` accepts super/cmd/command/meta, shift, ctrl/control and alt/option (joined with `+`); `click`/`pressKey` accept `durationMs` 0..5000, and specifying it explicitly forces background events. An explicit `ax` strategy rejects modifier or held clicks. No global modifier events are generated and system auto-repeat is not simulated.
 
-真实 AppKit NSTableView 通过普通点击选中第0行，Shift点击第2行得到[0,1,2]，Command点击第1行得到[0,2]，不是只断言发送函数无错误。接收队列记录真实 down/up 与修饰 flags；按键同时核对 NSEvent 时间戳差。NSTableView 跟踪循环直接消费 mouse-up，因此测试 logger 在 nextEvent 队列记录，不能仅依赖 local monitor。重置分别中断5秒键盘和鼠标长按，确认收到了对应释放。
+Routing still matches only this helper's source PID, the per-operation nonce and the target PID/window. The caller-requested flags are now retained per packet: a temporary Command is removed while a genuinely requested Command is kept. Activation-point preparation clicks still carry no caller modifiers, so Shift/Command is never applied to a title bar by accident. Key-up timestamps are generated at release. Reset/cancel attempt to release toward the original target; a hard kill or a vanished target cannot guarantee reception.
 
-这些是目标事件/收件结果与采样检查，不是新的真人 IME 验收。可选实验 AppKit 通知覆盖请求的按住区间，长按不外推为任意应用或输入法并用兼容。
+A real AppKit NSTableView selected row 0 with a plain click, rows [0,1,2] with a Shift click on row 2, and rows [0,2] with a Command click on row 1 — not merely asserting that the send function returned no error. The receive queue recorded real down/up and modifier flags, and key tests cross-checked NSEvent timestamp differences. NSTableView's tracking loop consumes mouse-up directly, so the harness logger records in the `nextEvent` queue instead of relying on the local monitor alone. Reset interrupted a 5-second keyboard hold and a 5-second mouse hold separately and confirmed the matching releases arrived.
 
-## 滚动测量与取舍
+These are target-event/recipient results and sampling checks, not a new human IME acceptance. The optional experimental AppKit notices cover the requested hold interval, so long holds are not extrapolated into concurrent-use compatibility with arbitrary applications or input methods.
 
-使用两个**自建应用**：AppKit NSScrollView 自绘大画布，和 WKWebView 本地 HTML 大容器（无网络页面）。窗口总尺寸420×360、900×700；内容视口分别高328、668；从x/y=2000开始，避开边界。读回各自真实 content offset，覆盖单次、连续三次、反向和水平。原版输入仅由合法 cua_repl 发出；控制器只调整/观察自己的夹具。
+## Scroll measurements and the trade-off
 
-| 操作 | 原版 AppKit / WebKit | 独立版 v1.0 | 独立版 v1.1 |
+Two **owned applications** were used: an AppKit NSScrollView with a large self-drawn canvas, and a WKWebView with a local HTML container (no network page). Window sizes were 420×360 and 900×700; content viewport heights were 328 and 668; scrolling started at x/y=2000 to avoid edges. Each application's real content offset was read back, covering single, three consecutive, reverse and horizontal input. Original input was sent only through legitimate `cua_repl`; the controller only arranged/observed its own fixtures.
+
+| Operation | Original AppKit / WebKit | Independent v1.0 | Independent v1.1 |
 | --- | --- | --- | --- |
-| 高360，向下0.6页 | 216 | 173 | 216 |
-| 高360，连续三次0.6页 | 648 | 519 | 648 |
-| 高360，向上0.3页 | -108 | -86 | -108 |
-| 高700，向下0.6页 | 420 | 336 | 420 |
-| 高700，连续三次0.6页 | 1260 | 1008 | 1260 |
-| 高700，向上0.3页 | -210 | -168 | -210 |
+| height 360, down 0.6 page | 216 | 173 | 216 |
+| height 360, three × 0.6 page | 648 | 519 | 648 |
+| height 360, up 0.3 page | -108 | -86 | -108 |
+| height 700, down 0.6 page | 420 | 336 | 420 |
+| height 700, three × 0.6 page | 1260 | 1008 | 1260 |
+| height 700, up 0.3 page | -210 | -168 | -210 |
 
-垂直结果支持使用**窗口总高度×页数**，并非内容视口高度。v1.1 默认 `round(height*pages)`；`scroll(target,direction,pages,{distanceMode:'legacy'})` 保留0.8系数。整数样本不能证明原版的所有小数取整规则，最多允许合理的单点舍入差。返回 scrollDistance 明确实际发送的逻辑点增量，应用仍可能限幅/忽略。
+The vertical results support using the **total window height × pages**, not the content viewport height. v1.1 defaults to `round(height*pages)`; `scroll(target,direction,pages,{distanceMode:'legacy'})` keeps the 0.8 coefficient. Integer samples cannot prove the original's rounding rule for every fractional case; at most a plausible single-point rounding difference is allowed. The returned `scrollDistance` states the actual logical-point delta sent, and the application may still clamp or ignore it.
 
-原版本轮水平输入在两种应用/两档尺寸都未观察到位移；其中一次 AppKit 大窗口向左还报 noWindowsAvailable，错误单独保存，不把0当成功。独立版水平可正常产生202/-101点（宽420）及432/-216点（宽900）。因此水平保持原有 `round(width*0.8*pages)`，不宣称原版兼容，不复刻零位移。
+The original produced no observed horizontal displacement in this round for either application or size; one AppKit large-window leftward attempt also reported noWindowsAvailable, and that error is stored separately rather than counting 0 as success. The independent build does produce 202/-101 points (width 420) and 432/-216 points (width 900). Horizontal therefore keeps `round(width*0.8*pages)`, does not claim original compatibility, and does not replicate the zero displacement.
 
-为解释水平异常，对当前哈希 ef4f4d… 的函数做了有边界的静态分析：`SynthesizedEvent.scroll` 入口0x10075dd54，在0x10075dde4将 wheelCount 参数设为1，再调用0x1002611ac的命名封装。封装保留六个参数并跳到延迟解析函数指针；本轮没有继续证明该指针在运行时的最终地址。Apple SDK中对应接口第二轮轴需要 wheelCount=2。本机**只构造、不投递**事件的探针也显示：同样 wheel2=-252，wheelCount=1时axis2=0，wheelCount=2时axis2=-252。这是与现象相符的静态解释，不能等同于已捕获完整原版动态调用链。没有分发反编译代码。
+To explain the horizontal anomaly, a bounded static analysis was done on the current hash `ef4f4d…`: `SynthesizedEvent.scroll` enters at 0x10075dd54, sets the wheelCount argument to 1 at 0x10075dde4, then calls the named wrapper at 0x1002611ac. The wrapper keeps six arguments and jumps to a lazily resolved function pointer; this round did not go on to prove the pointer's runtime destination. The corresponding Apple SDK interface needs wheelCount=2 for the second axis. A local probe that **only constructs and never posts** events also shows wheel2=-252 for both, axis2=0 with wheelCount=1, and axis2=-252 with wheelCount=2. That is a static explanation consistent with the symptom, not a captured full original dynamic call chain. No decompiled code is distributed.
 
-## 隔离与失败记录
+## Isolation and failure records
 
-独立版完整20组矩阵（12组垂直、8组水平）逐项精确核对收件偏移，全部通过前后覆盖/非激活检查。WebKit原版10组观测也完成，但水平为无位移。AppKit原版较早的完整垂直组有正常覆盖记录；后续补测却出现目标升到遮挡窗口上方，尽管 active/key仍为false。本轮保留升层轨迹并停止该补测，没有恢复前台/堆叠来掩盖结果。
+The independent build's full 20-case matrix (12 vertical, 8 horizontal) checked the recipient offset item by item and passed pre/post coverage and nonactivation checks throughout. The original's 10 WebKit observations also completed, but horizontal showed no displacement. An earlier complete vertical set on the original AppKit had normal coverage records, yet a later retest raised the target above the cover window even though active/key remained false. This round keeps the raise trace and stops that retest rather than restoring the foreground/stacking to hide the result.
 
-还保留了：非交互stdin导致原版控制器0组完成、初轮大窗口覆盖检查失败、原版AppKit noWindowsAvailable、独立版光标接近途中 WINDOW_MOVED 的停止。新版夹具在动作前观察几何稳定，自己的校准窗口可跨Space显示；这仅是测试布置，产品仍要求目标处于当前解锁桌面，不因此扩展跨Space保证。原生移动/焦点检查没有降低，失败动作没有盲目重试。
+Also retained: the original controller completing 0 groups because of non-interactive stdin, the initial large-window coverage failure, the original AppKit `noWindowsAvailable`, and the independent cursor stopping with WINDOW_MOVED while approaching. The newer fixture observes geometry stability before acting and its own calibration window can display across Spaces; that is test arrangement only, and the product still requires the target on the current unlocked desktop, so no cross-Space guarantee is extended. Native move/focus checks were not relaxed, and failed actions were not blindly retried.
 
-重连初轮测试错误地假定只有一个CG窗口，实际还有隐藏辅助窗口；已改为明确选择已观察的PID/窗口。API本身始终列出候选，未自动选第一项。构建保护测试改用自建签名进程的ready握手；旧复制/bin/sleep进程提前SIGKILL的问题保留，原因未确认。
+The first reconnection test wrongly assumed a single CG window when a hidden helper window also existed; it now explicitly selects the observed PID/window. The API always listed candidates and never auto-selected the first. The build-protection test now uses a ready handshake from an owned signed process; the earlier problem of a copied `/bin/sleep` process being SIGKILLed early is retained with an unconfirmed cause.
 
-## 复现
+## Reproduce
 
 ```sh
 npm test
 npm run test:input-options
 npm run test:reconnect
 npm run test:scroll
-# 旧距离算法（同样逐项检查真实偏移）
+# legacy distance algorithm (also checked item by item against real offsets)
 node scripts/scroll-calibration-test.mjs --independent --legacy
-# 原版只读控制器，正常 cua_repl 操作所打印的自建 bundle
+# original read-only controller operating the owned bundle printed by a normal cua_repl session
 node scripts/scroll-calibration-test.mjs --webkit-only
 ```
 
-原版控制器stdin：prepare包含flavor和size；每次完成对应原版输入及观察后发送checkpoint（direction/pages/count，可记录error）；finish检查整个矩阵，缺组不通过。每档依次为down/0.6/1、down/0.6/3、up/0.3/1、right/0.6/1、left/0.3/1。不能把未执行项或异常后的0偏移当成功。隔离字段是前后及应用自采状态，不是无间隙硬件证明。本轮没有新增第三方真实应用、多屏、长期运行或真人长按验收。
+Original controller stdin: `prepare` carries flavor and size; after each original input and observation completes, send a checkpoint (direction/pages/count, may record an error); `finish` checks the whole matrix and fails if a group is missing. Each size runs down/0.6/1, down/0.6/3, up/0.3/1, right/0.6/1, left/0.3/1. Unexecuted items or a 0 offset after an exception cannot count as success. The isolation fields are before/after and application-sampled state, not a gapless hardware proof. This round added no new third-party application, multi-display, long-running or human long-hold acceptance.
 
-本机原始结果与精简可分发清单见 [compatibility-v1.1.json](compatibility-v1.1.json)。
+Machine results and the trimmed distributable list are in [compatibility-v1.1.json](compatibility-v1.1.json).

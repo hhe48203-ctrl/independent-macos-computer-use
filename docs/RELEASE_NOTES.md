@@ -1,57 +1,59 @@
-# v1.0.0 — cua REPL 与连续独立光标
+# v1.0.0 — cua REPL and a continuous independent cursor
 
-公开 MCP 接口从17个 cu_* 工具变为 js/js_reset；旧客户端须迁移，脚本与语法见 JS_API.md。真正保留顶层 await、var/let/const 和应用对象，自动输出 AX 差分与富截图；超时/取消/重置有界清理。
+[中文版本](zh-CN/RELEASE_NOTES.md)
 
-独立原生光标按参考图绘制浅色描边、半透明小箭头与柔和光晕。约60Hz缓入缓出移动，操作等待到位，真实拖动包驱动进度；穿透点击、不可成为key/main、不移动系统鼠标，窗口移动跟随、缩放失效、取消/重置/目标退出清理。
+The public MCP interface moved from 17 `cu_*` tools to `js`/`js_reset`; existing clients must migrate (scripts and syntax in JS_API.md). Top-level `await`, `var`/`let`/`const` and app objects are genuinely preserved, AX diffs and rich screenshots are emitted automatically, and timeout/cancel/reset have bounded cleanup.
 
-本机验证：25项回归；pi仅9次js调用完成真实快捷键、中文/emoji、选择拖动、滚动、原始点击；真实桌面与生命周期测试；10秒空闲/20秒后台真人对照。失败那轮输入法/大小写切换困难保留。将动画移到局部AppKit焦点通知前后，29次真实后台操作与43次真人Codex keyDown并存，参与者报告两阶段都正常。时间重叠是推断的原因，单轮对照不证明任意输入法/应用兼容。
+The independent native cursor was drawn from the reference image as a light outline, translucent small arrow and soft glow (a later default change switched it to an amber ring reticle so it cannot be confused with Codex's own pointer; `CU_AGENT_CURSOR_STYLE=arrow` restores the old look). It eases in and out at about 60 Hz, operations wait for arrival, and real drag packets drive progress; it is click-through, can never become key/main, never moves the system pointer, follows window movement, and is cleaned up on resize invalidation, cancellation, reset and target exit.
 
-源码和预编译包独立运行，不包含原版模块/二进制/图形资源，不依赖Codex、原版服务或密钥。macOS正常TCC仍必需。只有一台macOS26.6.2 arm64/单物理Retina屏实测；原始事件路径包含系统SPI，局部AppKit焦点默认关闭并限定已验证OS。浏览器API、富文本paste、修饰键点击和按住时长未实现；明确报错。普通截图排除独立光标。
+Local verification: 25 regressions; pi completing real shortcuts, Chinese/emoji, selection drag, scrolling and raw clicks in only 9 js calls; real desktop and lifecycle tests; a 10-second idle / 20-second background human comparison. The failing round's input-method/case-switch difficulty is retained. After moving the animation relative to the app-local AppKit focus notice, 29 real background operations coexisted with 43 human Codex keyDowns and the participant reported both phases as normal. Timing overlap is the inferred cause; a single comparison does not prove compatibility with any input method or application.
 
-v0.3的公开接口已退役，以下仅为历史发布说明。
+Sources and prebuilt packages run independently and contain no original modules, binaries or image assets, and need no Codex, original service or key. Normal macOS TCC is still required. Only one macOS 26.6.2 arm64 machine with a single physical Retina display was tested; the raw event path uses a system SPI, and the app-local AppKit focus route is off by default and limited to the verified OS. Browser APIs, rich-text paste, modifier-key clicks and hold durations are not implemented and fail explicitly. Ordinary screenshots exclude the independent cursor.
+
+The v0.3 public interface is retired; the rest is historical release notes.
 
 ---
 
-# v0.3.0 — 独立后台真实输入
+# v0.3.0 — independent background real input
 
-Node MCP stdio 与独立 Swift helper，17 个工具；运行时无需 Codex、原版 Sky 服务、私有 socket 或 API key。源码及预编译 arm64 包只包含独立实现与已列明许可证的依赖。
+Node MCP stdio and an independent Swift helper, 17 tools; the runtime needs no Codex, no original Sky service, no private socket and no API key. Sources and the prebuilt arm64 package contain only the independent implementation plus dependencies with listed licenses.
 
-## 选择运行方式
+## Choosing how to run
 
-默认保留经过验证的 AX 文本/按钮路径和独立截图、OCR、定向事件；不允许前台控制。真实文字使用 `cu_type_text strategy:"event"`，真实按键使用 `cu_key strategy:"event"`，真实单击使用 `cu_click strategy:"event"`；服务不会暗中把它们换成 AX 或前台操作。
+By default the verified AX text/button paths plus independent screenshots, OCR and directed events are kept, and foreground control is not allowed. Real text uses `cu_type_text strategy:"event"`, real keys use `cu_key strategy:"event"`, and real single clicks use `cu_click strategy:"event"`; the service never silently swaps them for AX or foreground operations.
 
-`cu_launch` 默认只返回已有唯一实例；启动新应用必须显式 `allowVisibleWindows:true` 接受可见布置。`activates=false` 不能保证新窗口不升层。多个实例应先选择 PID，服务不盲目重开其中一个。
+`cu_launch` returns the single existing instance by default; starting a new app requires an explicit `allowVisibleWindows:true` accepting a visible arrangement. `activates=false` cannot guarantee a new window will not raise. With multiple instances, select a PID first; the service does not blindly reopen one of them.
 
-在本轮验证的 **macOS 26.6.2 arm64**，可显式启用局部 AppKit 焦点路径，改善未激活窗口的真实控件处理：
+On the **macOS 26.6.2 arm64** verified in this round, the app-local AppKit focus route can be enabled explicitly to improve real control handling in unactivated windows:
 
 ```sh
 CU_EXPERIMENTAL_APPKIT_FOCUS=1 node /absolute/path/to/independent-macos-computer-use/src/server.mjs
 ```
 
-MCP 客户端可参考 `examples/mcp-background-events.json`，将该变量放入服务器配置的 `env`。源码项目的 pi 安装命令为 `node scripts/setup-pi.mjs --background-events`；只更新项目内配置，保留已有服务器环境设置，不改全局配置或凭证。本机项目已配置此模式。默认插件清单不开启实验路径。
+MCP clients can follow `examples/mcp-background-events.json` and put that variable in the server's `env`. For a source checkout, install pi with `node scripts/setup-pi.mjs --background-events`; it only updates project-local configuration, keeps existing server environment settings, and does not touch global configuration or credentials. This machine's project is configured that way. The default plugin manifest does not enable the experimental route.
 
-## 已验证的范围
+## Verified scope
 
-| 路径 | 实际证据 |
+| Path | Actual evidence |
 | --- | --- |
-| 完全遮挡的自建 AppKit 文档 | 真实 Unicode（中文、emoji、NFD、ZWJ、换行）、导航键、CMD+A、点击、拖动选择、滚动，全部精确读回 |
-| pi → 标准 MCP → 独立 helper | 16 次工具调用、7 次真实操作、0 工具错误；普通中文/emoji 文本精确一致。编码边界另由直接 MCP 测试验证 |
-| 真人前台并用 | 133 次后台真实操作；前台完整15字符、32次按下和32次松开接收、1759个指针位置；用户确认有手动改字/退格。窗口和焦点采样无目标升层/获焦 |
-| 系统计算器 | 5 次真实按钮点击，7×8=56；操作阶段完全遮挡 |
-| 系统 TextEdit | 真实 Unicode 精确追加、点击、拖动选中30个 UTF-16 单元、滚动；操作阶段完全遮挡 |
-| 默认模式与回归 | 11 项静默桌面检查、18 项单元/传输/原生检查，包括取消、超时、Unicode 分包、事件记录器及运行中程序覆盖保护 |
-| 实际交付包 | ZIP 在仓库外运行截图、OCR 和7次真实文档操作；源码 tar 在仓库外安装锁定依赖、重建 helper、通过18项检查且无跳过 |
+| Fully occluded owned AppKit document | real Unicode (Chinese, emoji, NFD, ZWJ, newline), navigation keys, CMD+A, click, drag selection and scroll, all read back exactly |
+| pi → standard MCP → independent helper | 16 tool calls, 7 real operations, 0 tool errors; ordinary Chinese/emoji text exact. Encoding edges are verified separately by direct MCP tests |
+| Human foreground concurrent use | 133 real background operations; the foreground kept all 15 characters, 32 keyDown and 32 keyUp receptions, and 1759 pointer positions; the user confirmed manual edits/backspaces. Window and focus sampling saw no target raise/focus |
+| System Calculator | 5 real button clicks, 7×8=56; fully occluded during the operations |
+| System TextEdit | exact real Unicode append, click, drag-selecting 30 UTF-16 units, scroll; fully occluded during the operations |
+| Default mode and regressions | 11 quiet desktop checks and 18 unit/transport/native checks, including cancellation, timeout, Unicode packetization, the event recorder and the running-executable overwrite guard |
+| Actual deliverables | the ZIP runs screenshots, OCR and 7 real document operations outside the repository; the source tar installs locked dependencies outside the repository, rebuilds the helper, and passes 18 checks with no skips |
 
-系统应用的**可见布置单独计量**：本任务新建窗口可短暂显示，再用正常系统 API 回到原前台。后台验收从布置完成后开始；MCP 后台实现不依赖操作后的前台恢复。
+**Visible arrangement of stock apps is measured separately**: windows created for this task may appear briefly and are then returned to the previous foreground with normal system APIs. Background acceptance starts after the arrangement completes; the MCP background implementation does not depend on restoring the foreground afterwards.
 
-历史测试曾有真实升层、长输入丢字、人工观察未确认，以及测试记录器自身异常。它们仍保留，未倒改成成功。新证据索引见 `validation-index.json`，机制与更正见 `FOCUS_FIDELITY.md`。
+Historical tests really did raise windows, drop characters on long input, have unconfirmed human observation, and hit harness bugs. They are retained and were not rewritten into successes. The new evidence index is `validation-index.json`; mechanisms and corrections are in `FOCUS_FIDELITY.md`.
 
-复现交付文件验收：先 `npm run package`，再运行 `CU_EXPERIMENTAL_APPKIT_FOCUS=1 node scripts/packaged-document-test.mjs` 和 `node scripts/source-package-test.mjs`。后者先尝试离线缓存，必要时通过隔离 npm 配置访问公共 registry，关闭安装脚本，不读取用户 npm 认证配置。真人输入只在安排参与者后单独进行；自动验收不会模拟参与者输入。
+Reproducing the deliverable checks: run `npm run package`, then `CU_EXPERIMENTAL_APPKIT_FOCUS=1 node scripts/packaged-document-test.mjs` and `node scripts/source-package-test.mjs`. The latter tries an offline cache first, and when needed reaches the public registry through an isolated npm configuration with install scripts disabled, without reading the user's npm auth configuration. Human input happens separately with an arranged participant; automated acceptance never simulates participant input.
 
-## 边界
+## Limits
 
-实验路径默认关闭，并对未核对的 OS/架构在发包前拒绝。默认功能最低编译目标为 macOS14.4，其他 OS、Intel、多显示器仍未实机验收。使用了动态解析的系统 SPI；不能保证以后系统更新或任意应用兼容。
+The experimental route is off by default and refuses to package for an unverified OS/architecture. The minimum build target is macOS 14.4; other OS versions, Intel and multiple displays are not machine-verified. It uses a dynamically resolved system SPI, so future OS updates and arbitrary applications are not guaranteed.
 
-没有移植原版全部 ViewBridge 焦点抑制/键盘转送状态机，也不冻结画面、注入进程、改 TCC、压制他人硬件事件或操作后抢回焦点。采样存在间隔；一次真人通过不代表所有瞬态时序都无干扰。应用可能自行激活或升层，检测到即失败并停止，不自动重发输入。
+The original ViewBridge focus-suppression/keystroke-rerouting state machine is not ported, and this does not freeze the screen, inject into processes, alter TCC, suppress other people's hardware events, or reclaim focus after acting. Sampling has gaps; one human pass does not mean every transient timing is interference-free. Applications may activate or raise themselves; that is detected, treated as a failure, and input stops rather than being resent automatically.
 
-正常 Accessibility / Screen Recording 授权仍是必要条件。隐藏、最小化、其他 Space、锁屏和独立桌面不在支持保证内。Unicode 是事件载荷输入，不模拟 IME composition。
+Normal Accessibility / Screen Recording authorization is still required. Hidden, minimized, other-Space, lock-screen and separate-desktop cases are outside the supported guarantees. Unicode is delivered as event payload; IME composition is not simulated.

@@ -1,66 +1,68 @@
-# 原版更新监控（bot）
+# Original-update watcher (bot)
 
-一个只读的巡检 bot：发现原版 Codex/ChatGPT 相关组件相对**已记录的基线**发生变化时，自动开/更新一个去重的 GitHub issue。
+[中文版本](zh-CN/BASELINE_WATCH.md)
 
-它不下载、不执行原版应用，不连接其私有 socket，不导入其专有模块，也不读取凭证或用户配置。
+A read-only watcher: when a Codex/ChatGPT component moves away from the **recorded baseline**, it opens or updates one deduplicated GitHub issue.
 
-## 两类信号（互补，不能互相替代）
+It does not download or run the original app, connect to its private socket, import its proprietary modules, or read credentials or user configuration.
 
-| 模式 | 权威性 | 需要的环境 | 检测内容 |
+## Two signal types (complementary, not interchangeable)
+
+| Mode | Authority | Environment | What it checks |
 | --- | --- | --- | --- |
-| `--upstream` | 提示性 | 任意（含 GitHub 托管 runner） | 公共发布元数据：Homebrew cask `chatgpt` 版本、npm `@openai/codex` 版本 |
-| `--local` | **权威** | 装有 ChatGPT.app 的 macOS | 与 `docs/original-baseline.json` 逐文件 SHA-256、包版本/清单哈希、App 版本与 build 对比 |
+| `--upstream` | advisory | anywhere, including hosted GitHub runners | public release metadata: the Homebrew cask `chatgpt` version and the npm `@openai/codex` version |
+| `--local` | **authoritative** | macOS with ChatGPT.app installed | per-file SHA-256, package versions/manifest hashes, and app version plus build against `docs/original-baseline.json` |
 
-公共元数据只能说明**上游发布了一个新版本**，不能证明**本机安装物**变了；只有 `--local` 的哈希对比对已安装基线有权威性。两者结论都写进 issue，但不合并成单一断言。
+Public metadata can only show that **upstream published a new version**; it cannot prove **the local install changed**. Only the `--local` hash comparison is authoritative for the installed baseline. Both conclusions are written into the issue but are never merged into a single assertion.
 
-## 手动运行
+## Manual use
 
 ```sh
-# 提示性：对比公共上游版本
+# advisory: compare public upstream versions
 node scripts/watch-original.mjs --upstream
 
-# 权威：对比本机安装物哈希（内部调用 reference-baseline.mjs --check）
+# authoritative: compare installed hashes (calls reference-baseline.mjs --check)
 node scripts/watch-original.mjs --local
 
-# 真正开/更新 issue（需要已登录的 gh，或 GH_TOKEN）
+# actually open/update the issue (requires an authenticated gh or GH_TOKEN)
 node scripts/watch-original.mjs --upstream --issue
 node scripts/watch-original.mjs --local --issue
 
-# 记录当前上游版本为"已确认"，之后只在再次变化时告警
+# record the current upstream versions as acknowledged; alert only on the next change
 node scripts/watch-original.mjs --ack
 ```
 
-退出码：`0` 无漂移，`1` 检测到漂移，`2` 无法判定（信号不可达或无基线）。不加 `--issue` 时只打印 JSON 报告，不产生任何副作用。
+Exit codes: `0` no drift, `1` drift detected, `2` inconclusive (signal unreachable or no baseline). Without `--issue` only a JSON report is printed and nothing is changed.
 
-## issue 去重语义
+## Issue dedupe semantics
 
-- 每个模式有**固定标题**（`titles.local` / `titles.upstream`），避免互相去重。
-- 已存在同名 open issue 时，只有当前观测与 issue 正文里的 `<!-- original-watch:... -->` 标记不同才追加一条评论，否则完全静默——因此每日运行不会刷屏。
-- 标签固定为 `original-watch`，bot 会自动创建该标签。
-- 关闭该 issue 即表示"本轮已确认"；上游/本机再次变化时会重新触发。
+- Each mode has a **fixed title** (`titles.local` / `titles.upstream`) so the two cannot dedupe over each other.
+- When an open issue with that title exists, a comment is added only if the current observation differs from the `<!-- original-watch:... -->` marker in the issue body; otherwise the run is completely silent, so daily runs do not spam.
+- The label is always `original-watch`; the bot creates it when missing.
+- Closing the issue means "this round is acknowledged"; the next upstream/local change triggers it again.
 
-## 调度
+## Scheduling
 
-**GitHub Actions**（默认，已启用）：`.github/workflows/original-baseline-watch.yml`，每天 06:17 UTC + 手动触发，用 `GITHUB_TOKEN` 以 `github-actions[bot]` 身份开 issue。上游 job 在 `ubuntu-latest` 上跑，不需要桌面环境。workflow 把退出码 `1`（漂移）视为成功——漂移由 issue 承载，**红色只代表 bot 自身故障**（如 `gh` 失败或全部信号不可达，退出码 `2`）。
+**GitHub Actions** (default, enabled): `.github/workflows/original-baseline-watch.yml`, daily at 06:17 UTC plus manual dispatch, opening issues as `github-actions[bot]` via `GITHUB_TOKEN`. The upstream job runs on `ubuntu-latest` and needs no desktop. The workflow treats exit code `1` (drift) as success — drift is carried by the issue, so **red only means the bot itself broke** (for example a `gh` failure or all signals unreachable, exit code `2`).
 
-**可选的自托管 macOS job**：`reference-baseline.mjs --local` 需要真实安装物，仓库变量 `CU_SELF_HOSTED_MACOS=1` 时启用 `[self-hosted, macOS]` 上的权威 job。
+**Optional self-hosted macOS job**: `reference-baseline.mjs --local` needs a real install, so setting the repository variable `CU_SELF_HOSTED_MACOS=1` enables the authoritative job on `[self-hosted, macOS]`.
 
-**本机 launchd**：`ci/com.local.cu-original-watch.plist`（把 `__REPO__` 换成绝对路径后放入 `~/Library/LaunchAgents/`）。
+**Local launchd**: `ci/com.local.cu-original-watch.plist` (replace `__REPO__` with the absolute path, then place it in `~/Library/LaunchAgents/`).
 
-## 确认与刷新流程
+## Acknowledge and refresh flow
 
-1. 在装有应用的机器上跑 `node scripts/reference-baseline.mjs --check` 确认本机是否同步漂移。
-2. 用 `--previous docs/original-baseline.json --output artifacts/next-reference.json` 生成新清单，刷新 `docs/ORIGINAL_BASELINE.md` 与 `docs/original-comparison.json`；旧清单保留在 Git 历史，不覆盖。
-3. 重跑 `npm test` 与 `node scripts/reference-behavior-test.mjs --independent`。
-4. `node scripts/watch-original.mjs --ack` 记录已确认的上游版本，然后关闭 issue。
+1. On a machine with the app installed, run `node scripts/reference-baseline.mjs --check` to confirm whether the install drifted too.
+2. Generate a new manifest with `--previous docs/original-baseline.json --output artifacts/next-reference.json`, then refresh `docs/ORIGINAL_BASELINE.md` and `docs/original-comparison.json`; the old manifest stays in Git history and is not overwritten.
+3. Re-run `npm test` and `node scripts/reference-behavior-test.mjs --independent`.
+4. Run `node scripts/watch-original.mjs --ack` to record the acknowledged upstream versions, then close the issue.
 
-## 首次状态说明
+## Initial state
 
-`ci/upstream-watch.json` 记录的是**当前基线所确认**的上游版本（`chatgpt-cask` = 本机已验收的 `26.1016.61520`）。而当前 Homebrew cask 已是 `26.1016.62342`，即上游已领先于我们验收过的基线——这是真实、可执行的漂移，bot 首次运行就会为它开 issue，而不是被静默忽略。
+`ci/upstream-watch.json` records the upstream versions **confirmed by the current baseline** (`chatgpt-cask` = the locally accepted `26.1016.61520`). The Homebrew cask is already at `26.1016.62342`, so upstream is ahead of the baseline we accepted — a real, actionable drift that the first run reports instead of silently ignoring.
 
-## 限制
+## Limits
 
-- 巡检基于 Hash/版本，**不是行为等价**；新版本必须重新跑行为对照才能声称等价。
-- 上游 cask 版本号与本机安装版本同源，但 cask 更新不等于本机已升级。
-- `codex-cli` 信号只跟踪 Codex CLI 的公共 npm 版本，与桌面 App 的 `@oai/*` 运行时无直接版本对应关系。
-- 公共信号不可达时该信号被排除，不计为漂移；全部不可达时退出码 `2`，不伪装成"无变化"。
+- The check is hash/version based and **is not behavioral equivalence**; a new version must re-run the behavior comparison before equivalence can be claimed.
+- The cask version and the local install version share a source, but a cask update does not mean the local install was upgraded.
+- The `codex-cli` signal only tracks the public npm version of the Codex CLI and has no direct version mapping to the desktop app's `@oai/*` runtime.
+- An unreachable public signal is excluded and never counted as drift; if all are unreachable the exit code is `2` rather than pretending "no change".
