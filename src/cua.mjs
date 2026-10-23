@@ -128,13 +128,17 @@ export function createCua({request, emit}) {
       options(opts,['duration']);const a=await this.#point(from),b=await this.#point(to);
       return this.#action('drag',{...this.#target,fromX:a.x,fromY:a.y,toX:b.x,toY:b.y,duration:opts.duration??0.4});
     }
-    async scroll(target,direction,pages=1) {
+    async scroll(target,direction,pages=1,opts={}) {
+      options(opts,['distanceMode']);
+      const distanceMode=opts.distanceMode??'calibrated';
+      if(!['calibrated','legacy'].includes(distanceMode))throw error('INVALID_ARGUMENT','distanceMode must be calibrated or legacy');
       if(!['up','down','left','right'].includes(direction)||typeof pages!=='number'||!Number.isFinite(pages)||pages<=0||pages>10)throw error('INVALID_ARGUMENT','Use up/down/left/right with pages >0 and <=10');
       const w=await this.#live();let at;
       if(Array.isArray(target))at=await this.#point(target);
       else {this.#ref(target);const n=this.#snapshot.nodes[target];if(!n.frame)throw error('NO_ELEMENT_FRAME','Element has no frame');at={x:n.frame.x+n.frame.width/2,y:n.frame.y+n.frame.height/2};}
-      const vertical=['up','down'].includes(direction);const delta=Math.round((vertical?w.frame.height:w.frame.width)*0.8*pages)*(direction==='down'||direction==='right'?-1:1);
-      return this.#action('scroll',{...this.#target,...at,deltaX:vertical?0:delta,deltaY:vertical?delta:0});
+      const vertical=['up','down'].includes(direction);const factor=vertical&&distanceMode==='calibrated'?1:0.8;const delta=Math.round((vertical?w.frame.height:w.frame.width)*factor*pages)*(direction==='down'||direction==='right'?-1:1);
+      const deltas={deltaX:vertical?0:delta,deltaY:vertical?delta:0};
+      return {...await this.#action('scroll',{...this.#target,...at,...deltas}),scrollDistance:{distanceMode,...deltas,unit:'logical points',factor,calibration:vertical&&distanceMode==='calibrated'?'original vertical: window height × pages':'v1 proportional: window dimension × 0.8 × pages'}};
     }
     async typeText(text,opts={}) {options(opts,['strategy']);return this.#action('type_text',{...this.#target,text,strategy:opts.strategy??'auto'});}
     async pressKey(key,opts={}) {options(opts,['strategy','durationMs']);return this.#action('key',{...this.#target,key,strategy:opts.strategy??'auto',...(opts.durationMs!==undefined?{durationMs:opts.durationMs}:{})});}

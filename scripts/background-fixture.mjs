@@ -3,7 +3,7 @@ import { mkdirSync, writeFileSync, readFileSync, existsSync, readdirSync, rmSync
 import { fileURLToPath } from 'node:url';
 import path from 'node:path';
 const root=fileURLToPath(new URL('../',import.meta.url));
-export async function startBackgroundFixture(directory,{roles=['target','cover'],background=true,regular=false,launchServices=false,documentInput=false,selectionInput=false,reference=false,resizable=false,beforeLaunch}={}){
+export async function startBackgroundFixture(directory,{roles=['target','cover'],background=true,regular=false,launchServices=false,documentInput=false,selectionInput=false,allSpaces=false,reference=false,resizable=false,beforeLaunch}={}){
   if(regular && !launchServices && process.env.CU_TEST_ALLOW_FOREGROUND_SETUP!=='1')throw Error('Direct regular AppKit launch may activate itself; CU_TEST_ALLOW_FOREGROUND_SETUP=1 is required.');
   mkdirSync(directory,{recursive:true});const children=[];const apps={};
   const driver=path.join(root,'.build/background-test-driver');
@@ -20,7 +20,7 @@ export async function startBackgroundFixture(directory,{roles=['target','cover']
     const app=path.join(root,'.build',name+'.app');const executable=path.join(app,'Contents/MacOS/fixture');mkdirSync(path.dirname(executable),{recursive:true});
     writeFileSync(path.join(app,'Contents/Info.plist'),`<?xml version="1.0"?><plist version="1.0"><dict><key>CFBundleIdentifier</key><string>${bundle}</string><key>CFBundleName</key><string>${name}</string><key>CFBundleExecutable</key><string>fixture</string><key>CFBundleVersion</key><string>1</string></dict></plist>`);
     run('xcrun',['swiftc','-parse-as-library','-swift-version','5','-O',path.join(root,'native/BackgroundFixture.swift'),'-o',executable]);run('/usr/bin/codesign',['--force','--sign','-',app]);
-    const args=[role,directory,...(resizable?['--resizable']:[]),...(regular?['--regular-background']:[]),...(launchServices?['--launch-services-background']:[]),...(documentInput&&role==='target'?['--document-input']:[]),...(selectionInput&&role==='target'?['--selection-input']:[]),...(background?['--background',String(role==='cover'?apps.target?.windowId??0:0)]:[])];
+    const args=[role,directory,...(allSpaces?['--all-spaces']:[]),...(resizable?['--resizable']:[]),...(regular?['--regular-background']:[]),...(launchServices?['--launch-services-background']:[]),...(documentInput&&role==='target'?['--document-input']:[]),...(selectionInput&&role==='target'?['--selection-input']:[]),...(background?['--background',String(role==='cover'?apps.target?.windowId??0:0)]:[])];
     let child;
     if(launchServices){run('/usr/bin/open',['-g','-n',app,'--args',...args])}
     else {child=spawn(executable,args,{stdio:['ignore','ignore','pipe']});children.push(child);child.stderr.on('data',d=>process.stderr.write(d))}

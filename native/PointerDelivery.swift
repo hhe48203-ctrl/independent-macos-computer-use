@@ -2,8 +2,8 @@ import AppKit
 import ApplicationServices
 
 // Independent routing alternative. WindowServer sees a Command background
-// click; the per-process tap removes that temporary flag before AppKit receives
-// our event. Never modify hardware events or another sender's events. No global
+// click; the per-process tap restores the intended modifier flags before AppKit
+// receives our event (retaining Command when the caller explicitly requested it). Never modify hardware events or another sender's events. No global
 // modifier down/up events, activation notifications or focus restoration.
 @MainActor final class BackgroundPointerDelivery {
     static private var sequence:Int64=0

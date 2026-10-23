@@ -67,3 +67,16 @@ test('explicit reconnect verifies identity, never selects an ambiguous window an
   await app.click([10,10]);assert.equal(clicks,1);
   await assert.rejects(old.click([10,10]),{code:'WINDOW_GONE'});
 });
+
+test('calibrated vertical pages use window height while legacy and horizontal retain v1 distance',async()=>{
+ const scrolls=[];const window={pid:12,windowId:20,app:'Test',frame:{width:900,height:700}};
+ const cua=createCua({emit:()=>{},request:async(method,args)=>{
+  if(method==='apps')return {apps:[]};if(method==='windows')return {windows:[window]};
+  if(method==='snapshot')return {snapshotId:'aaaaaa00-aaaa-4aaa-8aaa-aaaaaaaaaaaa',window,nodes:[]};
+  if(method==='scroll')scrolls.push(args);return {ok:true};
+ }});const app=await cua.getApp({pid:12,windowId:20});
+ assert.equal((await app.scroll([100,100],'down',0.6)).scrollDistance.deltaY,-420);
+ await app.scroll([100,100],'up',0.3);await app.scroll([100,100],'down',0.6,{distanceMode:'legacy'});await app.scroll([100,100],'right',0.6);
+ assert.deepEqual(scrolls.map(s=>[s.deltaX,s.deltaY]),[[0,-420],[0,210],[0,-336],[-432,0]]);
+ await assert.rejects(app.scroll([100,100],'down',1,{distanceMode:'guess'}),{code:'INVALID_ARGUMENT'});
+});

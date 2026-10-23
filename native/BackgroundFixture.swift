@@ -85,6 +85,7 @@ final class BackgroundFixture: NSObject, NSApplicationDelegate, NSTextFieldDeleg
         var style:NSWindow.StyleMask=[.titled,.closable]
         if CommandLine.arguments.contains("--resizable") {style.insert(.resizable)}
         window = NSWindow(contentRect: rect, styleMask: style, backing: .buffered, defer: false)
+        if CommandLine.arguments.contains("--all-spaces"){window.collectionBehavior=[.canJoinAllSpaces,.stationary]}
         window.title = cover ? "Background Automation — Foreground Workspace" : "Background Automation — Target"
         window.isOpaque = true; window.backgroundColor = cover ? .windowBackgroundColor : .controlBackgroundColor
         window.isReleasedWhenClosed = false

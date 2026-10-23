@@ -36,7 +36,14 @@ try{
  await repl.client.callTool({name:'js_reset',arguments:{}});assert.equal((await pending).isError,true);
  await until(()=>events().slice(from).some(e=>e.type===11&&e.keyCode===53));
  const released=events().slice(from).filter(e=>[10,11].includes(e.type));assert.ok(released[1].t-released[0].t<2);
+ await repl.evaluate(`(async()=>{globalThis.app=await cua.getApp({pid:${target.pid},windowId:${target.windowId}},{coordinateMode:'original'});return true})()`);
+ const mouseFrom=events().length,padBefore=fixture.read('target').clicks;
+ const mousePending=repl.client.callTool({name:'js',arguments:{code:"await app.click([200,500],{durationMs:5000}); undefined"}});
+ await until(()=>fixture.read('target').clicks>padBefore);
+ await repl.client.callTool({name:'js_reset',arguments:{}});assert.equal((await mousePending).isError,true);
+ await until(()=>events().slice(mouseFrom).some(e=>e.type===2&&e.x===100));
+ assert.equal(fixture.read('target').releases,fixture.read('target').clicks);
  assert.equal(proof().fullyCovered,true);assert.notEqual(proof().frontPid,target.pid);
- report={...report,status:'passed',target:{pid:target.pid,windowId:target.windowId},mapping,shifted,command,held,mouseHoldMs:(mouse[1].t-mouse[0].t)*1000,keyHoldMs:(keys[1].t-keys[0].t)*1000,cancelReleaseMs:(released[1].t-released[0].t)*1000,selectedRows:fixture.read('target').selectedRows,proof:proof()};
+ report={...report,status:'passed',target:{pid:target.pid,windowId:target.windowId},mapping,shifted,command,held,mouseHoldMs:(mouse[1].t-mouse[0].t)*1000,keyHoldMs:(keys[1].t-keys[0].t)*1000,cancelReleaseMs:(released[1].t-released[0].t)*1000,cancelledMouseReleased:true,selectedRows:fixture.read('target').selectedRows,proof:proof()};
 }catch(e){report={...report,status:'failed',error:e.message,stack:e.stack};process.exitCode=1}
 finally{writeFileSync(directory+'/report.json',JSON.stringify(report,null,2));writeFileSync(directory+'/calls.json',JSON.stringify(repl.calls,null,2));await repl.client.close();fixture.close();console.log('REPORT',directory+'/report.json',report.status,report.error??'')}
