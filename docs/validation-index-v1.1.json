@@ -1,0 +1,46 @@
+{
+  "version": "1.1.0",
+  "historicalV1Index": "docs/validation-index.json",
+  "interface": [
+    "js",
+    "js_reset"
+  ],
+  "checks": {
+    "regression": {
+      "passed": 39,
+      "skipped": 0
+    },
+    "coordinatesAndInputOptions": "artifacts/release-verification-v1.1/input-options.json",
+    "explicitReconnect": "artifacts/release-verification-v1.1/reconnect.json",
+    "scrollMatrix": "artifacts/release-verification-v1.1/scroll.json",
+    "desktop": "artifacts/release-verification-v1.1/desktop.json",
+    "cursor": "artifacts/release-verification-v1.1/cursor.json",
+    "document": "artifacts/release-verification-v1.1/document.json",
+    "packagedMcp": "artifacts/release-verification-v1.1/packaged-repl.json",
+    "sourcePackage": "artifacts/release-verification-v1.1/source-package.json",
+    "releaseGate": "artifacts/release-verification-v1.1/release-gate.json"
+  },
+  "newHumanAcceptance": false,
+  "evidenceSources": [
+    "artifacts/release-verification-v1.1/scroll.json",
+    "artifacts/release-verification-v1.1/original-webkit.json",
+    "artifacts/release-verification-v1.1/original-appkit-partial.json",
+    "artifacts/release-verification-v1.1/original-appkit-raised.json",
+    "artifacts/release-verification-v1.1/old-distance-partial.json",
+    "artifacts/release-verification-v1.1/input-options.json",
+    "artifacts/release-verification-v1.1/reconnect.json",
+    "artifacts/release-verification-v1.1/desktop.json",
+    "artifacts/release-verification-v1.1/cursor.json",
+    "artifacts/release-verification-v1.1/document.json",
+    "artifacts/release-verification-v1.1/axis-probe.json",
+    "artifacts/release-verification-v1.1/packaged-repl.json",
+    "artifacts/release-verification-v1.1/source-package.json",
+    "artifacts/release-verification-v1.1/release-gate.json"
+  ],
+  "limits": [
+    "Owned AppKit and WebKit applications on macOS26.6.2 arm64; no new third-party app, human IME/long-hold or physical multidisplay acceptance",
+    "Original horizontal no-effect, original AppKit raising and incomplete/geometry failures remain differences or failures",
+    "Default strict bindings and adaptive coordinates remain; original pixel coordinates and reconnect are explicit",
+    "The v1.0.0 historical tag and acceptance record are retained"
+  ]
+}

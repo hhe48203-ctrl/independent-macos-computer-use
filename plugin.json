@@ -1,7 +1,7 @@
 {
   "$schema": "https://agent-plugins.org/schemas/1.0.0/plugin.schema.json",
   "name": "independent-macos-computer-use",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "Independent macOS computer use through persistent JavaScript, cua app objects and a smooth nonactivating agent cursor.",
   "license": "MIT",
   "extensions": {

@@ -1,0 +1,1014 @@
+{
+  "version": "1.1.0",
+  "originalNativeSHA256": "ef4f4dc20e64ee29027bf178f553c0c39b9cfa517a4cd39734510259f23c058a",
+  "checks": {
+    "inputOptions": {
+      "path": "artifacts/input-options-1792723252973/report.json",
+      "sha256": "ed8546c4dd7e73eaf425f57621dcac5b0a8aba8d5b7c3882f882e63e4a849cbd",
+      "status": "passed",
+      "mouseHoldMs": 238.00897598266602,
+      "keyHoldMs": 268.1840658187866,
+      "cancelReleaseMs": 206.27295970916748,
+      "cancelledMouseReleased": true
+    },
+    "reconnect": {
+      "path": "artifacts/reconnect-1792723242999/report.json",
+      "sha256": "19e52f0cec4c07ff65b2d119bd9e70f6adb14f5f3ebeeb8915212ef81203765a",
+      "status": "passed"
+    },
+    "independentScroll": {
+      "path": "artifacts/scroll-independent-1792723089970/report.json",
+      "sha256": "0d0053909629321d7bcd1e4797e639832a83b4bddb3dd72c6d1752d4f6d610b5",
+      "status": "passed",
+      "measurements": [
+        {
+          "flavor": "appkit",
+          "size": [
+            420,
+            360
+          ],
+          "direction": "down",
+          "pages": 0.6,
+          "count": 1,
+          "isolated": true,
+          "toolError": null,
+          "delta": {
+            "x": 0,
+            "y": 216
+          }
+        },
+        {
+          "flavor": "appkit",
+          "size": [
+            420,
+            360
+          ],
+          "direction": "down",
+          "pages": 0.6,
+          "count": 3,
+          "isolated": true,
+          "toolError": null,
+          "delta": {
+            "x": 0,
+            "y": 648
+          }
+        },
+        {
+          "flavor": "appkit",
+          "size": [
+            420,
+            360
+          ],
+          "direction": "up",
+          "pages": 0.3,
+          "count": 1,
+          "isolated": true,
+          "toolError": null,
+          "delta": {
+            "x": 0,
+            "y": -108
+          }
+        },
+        {
+          "flavor": "appkit",
+          "size": [
+            420,
+            360
+          ],
+          "direction": "right",
+          "pages": 0.6,
+          "count": 1,
+          "isolated": true,
+          "toolError": null,
+          "delta": {
+            "x": 202,
+            "y": 0
+          }
+        },
+        {
+          "flavor": "appkit",
+          "size": [
+            420,
+            360
+          ],
+          "direction": "left",
+          "pages": 0.3,
+          "count": 1,
+          "isolated": true,
+          "toolError": null,
+          "delta": {
+            "x": -101,
+            "y": 0
+          }
+        },
+        {
+          "flavor": "appkit",
+          "size": [
+            900,
+            700
+          ],
+          "direction": "down",
+          "pages": 0.6,
+          "count": 1,
+          "isolated": true,
+          "toolError": null,
+          "delta": {
+            "x": 0,
+            "y": 420
+          }
+        },
+        {
+          "flavor": "appkit",
+          "size": [
+            900,
+            700
+          ],
+          "direction": "down",
+          "pages": 0.6,
+          "count": 3,
+          "isolated": true,
+          "toolError": null,
+          "delta": {
+            "x": 0,
+            "y": 1260
+          }
+        },
+        {
+          "flavor": "appkit",
+          "size": [
+            900,
+            700
+          ],
+          "direction": "up",
+          "pages": 0.3,
+          "count": 1,
+          "isolated": true,
+          "toolError": null,
+          "delta": {
+            "x": 0,
+            "y": -210
+          }
+        },
+        {
+          "flavor": "appkit",
+          "size": [
+            900,
+            700
+          ],
+          "direction": "right",
+          "pages": 0.6,
+          "count": 1,
+          "isolated": true,
+          "toolError": null,
+          "delta": {
+            "x": 432,
+            "y": 0
+          }
+        },
+        {
+          "flavor": "appkit",
+          "size": [
+            900,
+            700
+          ],
+          "direction": "left",
+          "pages": 0.3,
+          "count": 1,
+          "isolated": true,
+          "toolError": null,
+          "delta": {
+            "x": -216,
+            "y": 0
+          }
+        },
+        {
+          "flavor": "webkit",
+          "size": [
+            420,
+            360
+          ],
+          "direction": "down",
+          "pages": 0.6,
+          "count": 1,
+          "isolated": true,
+          "toolError": null,
+          "delta": {
+            "x": 0,
+            "y": 216
+          }
+        },
+        {
+          "flavor": "webkit",
+          "size": [
+            420,
+            360
+          ],
+          "direction": "down",
+          "pages": 0.6,
+          "count": 3,
+          "isolated": true,
+          "toolError": null,
+          "delta": {
+            "x": 0,
+            "y": 648
+          }
+        },
+        {
+          "flavor": "webkit",
+          "size": [
+            420,
+            360
+          ],
+          "direction": "up",
+          "pages": 0.3,
+          "count": 1,
+          "isolated": true,
+          "toolError": null,
+          "delta": {
+            "x": 0,
+            "y": -108
+          }
+        },
+        {
+          "flavor": "webkit",
+          "size": [
+            420,
+            360
+          ],
+          "direction": "right",
+          "pages": 0.6,
+          "count": 1,
+          "isolated": true,
+          "toolError": null,
+          "delta": {
+            "x": 202,
+            "y": 0
+          }
+        },
+        {
+          "flavor": "webkit",
+          "size": [
+            420,
+            360
+          ],
+          "direction": "left",
+          "pages": 0.3,
+          "count": 1,
+          "isolated": true,
+          "toolError": null,
+          "delta": {
+            "x": -101,
+            "y": 0
+          }
+        },
+        {
+          "flavor": "webkit",
+          "size": [
+            900,
+            700
+          ],
+          "direction": "down",
+          "pages": 0.6,
+          "count": 1,
+          "isolated": true,
+          "toolError": null,
+          "delta": {
+            "x": 0,
+            "y": 420
+          }
+        },
+        {
+          "flavor": "webkit",
+          "size": [
+            900,
+            700
+          ],
+          "direction": "down",
+          "pages": 0.6,
+          "count": 3,
+          "isolated": true,
+          "toolError": null,
+          "delta": {
+            "x": 0,
+            "y": 1260
+          }
+        },
+        {
+          "flavor": "webkit",
+          "size": [
+            900,
+            700
+          ],
+          "direction": "up",
+          "pages": 0.3,
+          "count": 1,
+          "isolated": true,
+          "toolError": null,
+          "delta": {
+            "x": 0,
+            "y": -210
+          }
+        },
+        {
+          "flavor": "webkit",
+          "size": [
+            900,
+            700
+          ],
+          "direction": "right",
+          "pages": 0.6,
+          "count": 1,
+          "isolated": true,
+          "toolError": null,
+          "delta": {
+            "x": 432,
+            "y": 0
+          }
+        },
+        {
+          "flavor": "webkit",
+          "size": [
+            900,
+            700
+          ],
+          "direction": "left",
+          "pages": 0.3,
+          "count": 1,
+          "isolated": true,
+          "toolError": null,
+          "delta": {
+            "x": -216,
+            "y": 0
+          }
+        }
+      ]
+    },
+    "originalWebKit": {
+      "path": "artifacts/scroll-original-1792722837422/report.json",
+      "sha256": "cbf9466b3dd615f98616506de4eed28d817611d497a04ff3227d17119ef5b367",
+      "status": "passed",
+      "measurements": [
+        {
+          "flavor": "webkit",
+          "size": [
+            420,
+            360
+          ],
+          "direction": "down",
+          "pages": 0.6,
+          "count": 1,
+          "isolated": true,
+          "toolError": null,
+          "delta": {
+            "x": 0,
+            "y": 216
+          }
+        },
+        {
+          "flavor": "webkit",
+          "size": [
+            420,
+            360
+          ],
+          "direction": "down",
+          "pages": 0.6,
+          "count": 3,
+          "isolated": true,
+          "toolError": null,
+          "delta": {
+            "x": 0,
+            "y": 648
+          }
+        },
+        {
+          "flavor": "webkit",
+          "size": [
+            420,
+            360
+          ],
+          "direction": "up",
+          "pages": 0.3,
+          "count": 1,
+          "isolated": true,
+          "toolError": null,
+          "delta": {
+            "x": 0,
+            "y": -108
+          }
+        },
+        {
+          "flavor": "webkit",
+          "size": [
+            420,
+            360
+          ],
+          "direction": "right",
+          "pages": 0.6,
+          "count": 1,
+          "isolated": true,
+          "toolError": null,
+          "delta": {
+            "x": 0,
+            "y": 0
+          }
+        },
+        {
+          "flavor": "webkit",
+          "size": [
+            420,
+            360
+          ],
+          "direction": "left",
+          "pages": 0.3,
+          "count": 1,
+          "isolated": true,
+          "toolError": null,
+          "delta": {
+            "x": 0,
+            "y": 0
+          }
+        },
+        {
+          "flavor": "webkit",
+          "size": [
+            900,
+            700
+          ],
+          "direction": "down",
+          "pages": 0.6,
+          "count": 1,
+          "isolated": true,
+          "toolError": null,
+          "delta": {
+            "x": 0,
+            "y": 420
+          }
+        },
+        {
+          "flavor": "webkit",
+          "size": [
+            900,
+            700
+          ],
+          "direction": "down",
+          "pages": 0.6,
+          "count": 3,
+          "isolated": true,
+          "toolError": null,
+          "delta": {
+            "x": 0,
+            "y": 1260
+          }
+        },
+        {
+          "flavor": "webkit",
+          "size": [
+            900,
+            700
+          ],
+          "direction": "up",
+          "pages": 0.3,
+          "count": 1,
+          "isolated": true,
+          "toolError": null,
+          "delta": {
+            "x": 0,
+            "y": -210
+          }
+        },
+        {
+          "flavor": "webkit",
+          "size": [
+            900,
+            700
+          ],
+          "direction": "right",
+          "pages": 0.6,
+          "count": 1,
+          "isolated": true,
+          "toolError": null,
+          "delta": {
+            "x": 0,
+            "y": 0
+          }
+        },
+        {
+          "flavor": "webkit",
+          "size": [
+            900,
+            700
+          ],
+          "direction": "left",
+          "pages": 0.3,
+          "count": 1,
+          "isolated": true,
+          "toolError": null,
+          "delta": {
+            "x": 0,
+            "y": 0
+          }
+        }
+      ]
+    },
+    "originalAppKitPartial": {
+      "path": "artifacts/scroll-original-1792722610067/report.json",
+      "sha256": "abc7c9dbda6b046c15dad5d7a88f5322249d2b486522aac875ebf2e7b830dfbd",
+      "status": "failed",
+      "error": "Expected values to be strictly equal:\n\nfalse !== true\n",
+      "measurements": [
+        {
+          "flavor": "appkit",
+          "size": [
+            420,
+            360
+          ],
+          "direction": "down",
+          "pages": 0.6,
+          "count": 1,
+          "isolated": true,
+          "delta": {
+            "x": 0,
+            "y": 216
+          }
+        },
+        {
+          "flavor": "appkit",
+          "size": [
+            420,
+            360
+          ],
+          "direction": "down",
+          "pages": 0.6,
+          "count": 3,
+          "isolated": true,
+          "delta": {
+            "x": 0,
+            "y": 648
+          }
+        },
+        {
+          "flavor": "appkit",
+          "size": [
+            420,
+            360
+          ],
+          "direction": "up",
+          "pages": 0.3,
+          "count": 1,
+          "isolated": true,
+          "delta": {
+            "x": 0,
+            "y": -108
+          }
+        },
+        {
+          "flavor": "appkit",
+          "size": [
+            420,
+            360
+          ],
+          "direction": "right",
+          "pages": 0.6,
+          "count": 1,
+          "isolated": true,
+          "delta": {
+            "x": 0,
+            "y": 0
+          }
+        },
+        {
+          "flavor": "appkit",
+          "size": [
+            420,
+            360
+          ],
+          "direction": "left",
+          "pages": 0.3,
+          "count": 1,
+          "isolated": true,
+          "delta": {
+            "x": 0,
+            "y": 0
+          }
+        },
+        {
+          "flavor": "appkit",
+          "size": [
+            900,
+            700
+          ],
+          "direction": "down",
+          "pages": 0.6,
+          "count": 1,
+          "isolated": true,
+          "delta": {
+            "x": 0,
+            "y": 420
+          }
+        },
+        {
+          "flavor": "appkit",
+          "size": [
+            900,
+            700
+          ],
+          "direction": "down",
+          "pages": 0.6,
+          "count": 3,
+          "isolated": true,
+          "delta": {
+            "x": 0,
+            "y": 1260
+          }
+        },
+        {
+          "flavor": "appkit",
+          "size": [
+            900,
+            700
+          ],
+          "direction": "up",
+          "pages": 0.3,
+          "count": 1,
+          "isolated": true,
+          "delta": {
+            "x": 0,
+            "y": -210
+          }
+        },
+        {
+          "flavor": "appkit",
+          "size": [
+            900,
+            700
+          ],
+          "direction": "right",
+          "pages": 0.6,
+          "count": 1,
+          "isolated": true,
+          "delta": {
+            "x": 0,
+            "y": 0
+          }
+        },
+        {
+          "flavor": "appkit",
+          "size": [
+            900,
+            700
+          ],
+          "direction": "left",
+          "pages": 0.3,
+          "count": 1,
+          "isolated": false,
+          "delta": {
+            "x": 0,
+            "y": 0
+          }
+        }
+      ]
+    },
+    "originalAppKitRaised": {
+      "path": "artifacts/scroll-original-1792723275525/report.json",
+      "sha256": "1f9f107f9832fcc51e40fc9219e899dfb1dec592873cb7b65db436b6a751939c",
+      "status": "failed",
+      "error": "All apps, sizes, directions and repeat groups required\n\n3 !== 10\n",
+      "measurements": [
+        {
+          "flavor": "appkit",
+          "size": [
+            420,
+            360
+          ],
+          "direction": "down",
+          "pages": 0.6,
+          "count": 1,
+          "isolated": true,
+          "toolError": null,
+          "delta": {
+            "x": 0,
+            "y": 216
+          }
+        },
+        {
+          "flavor": "appkit",
+          "size": [
+            420,
+            360
+          ],
+          "direction": "down",
+          "pages": 0.6,
+          "count": 3,
+          "isolated": true,
+          "toolError": null,
+          "delta": {
+            "x": 0,
+            "y": 648
+          }
+        },
+        {
+          "flavor": "appkit",
+          "size": [
+            420,
+            360
+          ],
+          "direction": "up",
+          "pages": 0.3,
+          "count": 1,
+          "isolated": false,
+          "toolError": null,
+          "delta": {
+            "x": 0,
+            "y": -108
+          }
+        }
+      ]
+    },
+    "oldDistancePartial": {
+      "path": "artifacts/scroll-independent-1792723009731/report.json",
+      "sha256": "93500585aa455527089c42d7b7c8dc20bd7fd617d96e5413cfb154c5070f8816",
+      "status": "failed",
+      "error": "{\"error\":{\"code\":\"WINDOW_MOVED\",\"message\":\"Target moved, resized or disappeared during cursor motion; observe before acting\",\"stack\":\"Error: Target moved, resized or disappeared during cursor motion; observe before acting\\n    at MessagePort.<anonymous> (file:///Users/aa/Desktop/computer_use_mcp/src/repl-worker.mjs:40:147)\\n    at [nodejs.internal.kHybridDispatch] (node:internal/event_target:843:20)\"}}",
+      "measurements": [
+        {
+          "flavor": "appkit",
+          "size": [
+            420,
+            360
+          ],
+          "direction": "down",
+          "pages": 0.6,
+          "count": 1,
+          "isolated": true,
+          "toolError": null,
+          "delta": {
+            "x": 0,
+            "y": 173
+          }
+        },
+        {
+          "flavor": "appkit",
+          "size": [
+            420,
+            360
+          ],
+          "direction": "down",
+          "pages": 0.6,
+          "count": 3,
+          "isolated": true,
+          "toolError": null,
+          "delta": {
+            "x": 0,
+            "y": 519
+          }
+        },
+        {
+          "flavor": "appkit",
+          "size": [
+            420,
+            360
+          ],
+          "direction": "up",
+          "pages": 0.3,
+          "count": 1,
+          "isolated": true,
+          "toolError": null,
+          "delta": {
+            "x": 0,
+            "y": -86
+          }
+        },
+        {
+          "flavor": "appkit",
+          "size": [
+            420,
+            360
+          ],
+          "direction": "right",
+          "pages": 0.6,
+          "count": 1,
+          "isolated": true,
+          "toolError": null,
+          "delta": {
+            "x": 202,
+            "y": 0
+          }
+        },
+        {
+          "flavor": "appkit",
+          "size": [
+            420,
+            360
+          ],
+          "direction": "left",
+          "pages": 0.3,
+          "count": 1,
+          "isolated": true,
+          "toolError": null,
+          "delta": {
+            "x": -101,
+            "y": 0
+          }
+        },
+        {
+          "flavor": "appkit",
+          "size": [
+            900,
+            700
+          ],
+          "direction": "down",
+          "pages": 0.6,
+          "count": 1,
+          "isolated": true,
+          "toolError": null,
+          "delta": {
+            "x": 0,
+            "y": 336
+          }
+        },
+        {
+          "flavor": "appkit",
+          "size": [
+            900,
+            700
+          ],
+          "direction": "down",
+          "pages": 0.6,
+          "count": 3,
+          "isolated": true,
+          "toolError": null,
+          "delta": {
+            "x": 0,
+            "y": 1008
+          }
+        },
+        {
+          "flavor": "appkit",
+          "size": [
+            900,
+            700
+          ],
+          "direction": "up",
+          "pages": 0.3,
+          "count": 1,
+          "isolated": true,
+          "toolError": null,
+          "delta": {
+            "x": 0,
+            "y": -168
+          }
+        },
+        {
+          "flavor": "appkit",
+          "size": [
+            900,
+            700
+          ],
+          "direction": "right",
+          "pages": 0.6,
+          "count": 1,
+          "isolated": true,
+          "toolError": null,
+          "delta": {
+            "x": 432,
+            "y": 0
+          }
+        },
+        {
+          "flavor": "appkit",
+          "size": [
+            900,
+            700
+          ],
+          "direction": "left",
+          "pages": 0.3,
+          "count": 1,
+          "isolated": true,
+          "toolError": null,
+          "delta": {
+            "x": -216,
+            "y": 0
+          }
+        },
+        {
+          "flavor": "webkit",
+          "size": [
+            420,
+            360
+          ],
+          "direction": "down",
+          "pages": 0.6,
+          "count": 1,
+          "isolated": true,
+          "toolError": null,
+          "delta": {
+            "x": 0,
+            "y": 173
+          }
+        },
+        {
+          "flavor": "webkit",
+          "size": [
+            420,
+            360
+          ],
+          "direction": "down",
+          "pages": 0.6,
+          "count": 3,
+          "isolated": true,
+          "toolError": null,
+          "delta": {
+            "x": 0,
+            "y": 519
+          }
+        },
+        {
+          "flavor": "webkit",
+          "size": [
+            420,
+            360
+          ],
+          "direction": "up",
+          "pages": 0.3,
+          "count": 1,
+          "isolated": true,
+          "toolError": null,
+          "delta": {
+            "x": 0,
+            "y": -86
+          }
+        },
+        {
+          "flavor": "webkit",
+          "size": [
+            420,
+            360
+          ],
+          "direction": "right",
+          "pages": 0.6,
+          "count": 1,
+          "isolated": true,
+          "toolError": null,
+          "delta": {
+            "x": 202,
+            "y": 0
+          }
+        },
+        {
+          "flavor": "webkit",
+          "size": [
+            420,
+            360
+          ],
+          "direction": "left",
+          "pages": 0.3,
+          "count": 1,
+          "isolated": true,
+          "toolError": null,
+          "delta": {
+            "x": -101,
+            "y": 0
+          }
+        },
+        {
+          "flavor": "webkit",
+          "size": [
+            900,
+            700
+          ],
+          "direction": "down",
+          "pages": 0.6,
+          "count": 1,
+          "isolated": true,
+          "toolError": null,
+          "delta": {
+            "x": 0,
+            "y": 336
+          }
+        }
+      ]
+    }
+  },
+  "newHumanAcceptance": false,
+  "limits": [
+    "Owned AppKit and WebKit fixtures only; no new third-party app or physical multidisplay acceptance",
+    "Original horizontal no effect is retained as a difference, not reimplemented",
+    "Original AppKit window reordering and incomplete runs are failures, not isolation passes"
+  ],
+  "scrollAxisProbe": {
+    "path": "artifacts/scroll-axis-probe.json",
+    "postedEvents": 0,
+    "rows": [
+      {
+        "wheelCount": 1,
+        "axis1": 0,
+        "axis2": 0
+      },
+      {
+        "wheelCount": 2,
+        "axis1": 0,
+        "axis2": -252
+      }
+    ]
+  }
+}

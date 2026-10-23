@@ -1,6 +1,6 @@
 {
   "name": "independent-macos-computer-use",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "Independent macOS desktop perception and control over MCP stdio",
   "private": true,
   "type": "module",
@@ -24,7 +24,10 @@
     "test:packaged-background": "node scripts/packaged-repl-test.mjs",
     "test:cursor": "node scripts/repl-cursor-lifecycle-test.mjs",
     "test:pi:document": "node scripts/pi-repl-document-test.mjs",
-    "test:document": "node scripts/repl-document-test.mjs"
+    "test:document": "node scripts/repl-document-test.mjs",
+    "test:input-options": "node scripts/repl-input-options-test.mjs",
+    "test:reconnect": "node scripts/repl-reconnect-test.mjs",
+    "test:scroll": "node scripts/scroll-calibration-test.mjs --independent"
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "1.32.1",

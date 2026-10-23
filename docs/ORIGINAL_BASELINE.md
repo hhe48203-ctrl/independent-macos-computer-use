@@ -1,5 +1,7 @@
 # 原版对照基线：2026-10-22
 
+本页保留 v1.0 历史基线。后续 v1.1 坐标兼容、修饰键/时长、滚动校准与显式重连见 [兼容改进验收](COMPATIBILITY_V1_1.md)。
+
 本次更新的是本机安装物的身份、接口核对与行为对照。生产运行时保持 v1.0.0，不改原版应用，不连接其私有 socket，不导入其专有模块，也不重置系统权限。原版动作只通过当前会话正常提供的 `cua_repl` 发出，观察器只读取自建窗口和输入/窗口元数据。
 
 机器清单见 [original-baseline.json](original-baseline.json)，结果、函数身份与 REA Evidence ID 见 [original-comparison.json](original-comparison.json)。旧 [evidence-manifest.json](evidence-manifest.json) 保留为历史记录，不覆盖。

@@ -2,7 +2,7 @@
 
 本机运行的独立 Computer Use MCP。Agent 只使用 `js`、`js_reset` 两个入口，在持久 JavaScript REPL 内调用 `cua` 和应用对象。Swift helper 提供 Accessibility、ScreenCaptureKit、Vision OCR、后台输入，以及可见、穿透点击、不抢焦点的独立光标。
 
-v1.0 使用持久 REPL 和独立光标接口。运行不需要 Codex、`@oai/sky`、原版服务、OpenAI API key 或 REA。研究使用了 [REA](https://github.com/morluto/rea)；交付物不含原版专有模块、二进制或图形资源，不修改原版应用或系统权限数据库。
+v1.1 增加原版坐标兼容模式、修饰键点击/定时按键、垂直滚动校准和显式重连，保持持久 REPL 与独立光标接口。运行不需要 Codex、`@oai/sky`、原版服务、OpenAI API key 或 REA。研究使用了 [REA](https://github.com/morluto/rea)；交付物不含原版专有模块、二进制或图形资源，不修改原版应用或系统权限数据库。
 
 ## 构建和启动
 
@@ -34,7 +34,7 @@ await app.getAXStateAndScreenshot();
 // await app.typeText('你好'); await app.pressKey('CMD+A')
 ```
 
-观察会自动显示 AX 文本/差分及 MCP 图像。`emit:false` 只返回内容。完整方法、截图坐标规则和差异见 [JS API](docs/JS_API.md)。每个桌面操作都应 await；调用结束后的异步回调不能继续操作桌面。超时、取消或重置会清除绑定并停止原生输入，已经发生的副作用不会回滚。REPL 是可信本地 Node.js，不是安全沙箱。
+观察会自动显示 AX 文本/差分及 MCP 图像。`emit:false` 只返回内容。移植原版脚本可用 `cua.getApp(reference,{coordinateMode:"original"})`，AX-only 后仍保留截图像素坐标；每次观察明确报告单位、缩放和范围。`app.reconnect()` 预览候选，显式选择 PID/窗口后返回新绑定。完整方法、截图坐标规则和差异见 [JS API](docs/JS_API.md)。每个桌面操作都应 await；调用结束后的异步回调不能继续操作桌面。超时、取消或重置会清除绑定并停止原生输入，已经发生的副作用不会回滚。REPL 是可信本地 Node.js，不是安全沙箱。
 
 光标按参考样式独立绘制为浅色描边、半透明箭头及柔和光晕，连续缓入缓出移动，到位后才投递输入。拖动位置随真实事件包更新；不会移动系统鼠标。它不可成为 key/main，穿透点击，随窗口移动；大小变化、目标关闭、重置、断开及空闲超时会隐藏。文本操作指向元素中心，并不声称测量到插入点。
 
@@ -62,7 +62,7 @@ setup 仅写本项目 `.pi/mcp.json`，不改全局配置或凭证。当前 macO
 
 可设 CU_ALLOWED_BUNDLE_IDS 限定应用，空值拒绝所有目标；此模式禁用显示器截图。CU_AGENT_CURSOR=0 关闭可见覆盖层。普通截图排除光标，显式 `cua.getScreenshot({region,includeAgentCursor:true})` 可作视觉验证。
 
-当前没有浏览器 API、富文本粘贴、修饰键点击或按住时长；不支持的选项明确报错。纯文本 paste 使用 AX 插入，无需剪贴板。只有一块物理 Retina 屏幕完成实测，多屏坐标公式测试不等价于真实多屏验收。不包含锁屏、隐藏桌面、TCC 绕过或凭证提取。
+当前没有浏览器 API和富文本粘贴；不支持的选项明确报错。纯文本 paste 使用 AX 插入，无需剪贴板。只有一块物理 Retina 屏幕完成实测，多屏坐标公式测试不等价于真实多屏验收。不包含锁屏、隐藏桌面、TCC 绕过或凭证提取。
 
 ## 验证和打包
 
@@ -70,6 +70,9 @@ setup 仅写本项目 `.pi/mcp.json`，不改全局配置或凭证。当前 macO
 npm test
 npm run test:desktop
 npm run test:cursor
+npm run test:input-options
+npm run test:reconnect
+npm run test:scroll
 node scripts/repl-document-test.mjs
 npm run test:pi
 npm run test:pi:document
@@ -78,8 +81,8 @@ npm run package
 
 桌面测试只操作临时自建 AppKit 窗口。原生事件测试显式启用本机已验证的局部焦点实验路径。真人并用测试必须先协调开始时间，自动脚本不能替代真人输入完整性。
 
-`artifacts/` 保留本机测试结果和失败记录，默认不进入 Git。`dist/` 生成预编译插件 ZIP、源码包和 SHA256；打包须验证工作线程及 helper 在仓库外运行。新版已通过真人输入法/大小写切换对照；首次失败与后续修正分开保留。仓库外打包验证见 docs/VALIDATION.md。旧 v0.3 结果不作为新版验收。
+`artifacts/` 保留本机测试结果和失败记录，默认不进入 Git。`dist/` 生成预编译插件 ZIP、源码包和 SHA256；打包须验证工作线程及 helper 在仓库外运行。v1.0 已通过真人输入法/大小写切换对照；v1.1新增功能的验收范围见下文，未新增真人长按并用验收；首次失败与后续修正分开保留。仓库外打包验证见 docs/VALIDATION.md。旧 v0.3 结果不作为新版验收。
 
 架构与研究：[REPL/光标证据](docs/REPL_CURSOR_RESEARCH.md)、[原生后台机制](docs/FOCUS_FIDELITY.md)、[原始逆向记录](docs/REVERSE_ENGINEERING.md)。后两者包含 v0.3 历史接口名称；当前公开接口以 JS API 为准。
 
-原版对照已于2026-10-22更新至App26.1016.61520、sky0.7.12。接口差异、原版9/10与独立版10/10行为结果、Unicode函数重新逆向及复现命令见 [当前原版基线](docs/ORIGINAL_BASELINE.md)。本次不改变v1运行时或移动既有标签。
+原版对照已于2026-10-22更新至App26.1016.61520、sky0.7.12。接口差异、原版9/10与独立版10/10行为结果、Unicode函数重新逆向及复现命令见 [当前原版基线](docs/ORIGINAL_BASELINE.md)。该页保留v1.0历史对照。v1.1实现、滚动多窗口/多应用数据、原版升层失败与新接口示例见 [兼容改进验收](docs/COMPATIBILITY_V1_1.md)。既有v1.0.0标签保留。
