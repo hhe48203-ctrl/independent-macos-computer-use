@@ -121,9 +121,8 @@ export function createCua({request, emit}) {
     }
     async click(target,opts={}) {
       options(opts,['mouseButton','clickCount','strategy','key','durationMs']);
-      if(opts.key||opts.durationMs) throw error('UNSUPPORTED_OPTION','Modifier clicks and hold duration are not implemented');
       const at=Array.isArray(target)?{...this.#target,...await this.#point(target)}:this.#ref(target);
-      return this.#action('click',{...at,button:opts.mouseButton??'left',count:opts.clickCount??1,strategy:opts.strategy??'auto'});
+      return this.#action('click',{...at,button:opts.mouseButton??'left',count:opts.clickCount??1,strategy:opts.strategy??'auto',...(opts.key!==undefined?{modifiers:opts.key}:{}),...(opts.durationMs!==undefined?{durationMs:opts.durationMs}:{})});
     }
     async drag(from,to,opts={}) {
       options(opts,['duration']);const a=await this.#point(from),b=await this.#point(to);
@@ -138,7 +137,7 @@ export function createCua({request, emit}) {
       return this.#action('scroll',{...this.#target,...at,deltaX:vertical?0:delta,deltaY:vertical?delta:0});
     }
     async typeText(text,opts={}) {options(opts,['strategy']);return this.#action('type_text',{...this.#target,text,strategy:opts.strategy??'auto'});}
-    async pressKey(key,opts={}) {options(opts,['strategy','durationMs']);if(opts.durationMs)throw error('UNSUPPORTED_OPTION','Key hold duration is not implemented');return this.#action('key',{...this.#target,key,strategy:opts.strategy??'auto'});}
+    async pressKey(key,opts={}) {options(opts,['strategy','durationMs']);return this.#action('key',{...this.#target,key,strategy:opts.strategy??'auto',...(opts.durationMs!==undefined?{durationMs:opts.durationMs}:{})});}
     async paste(text,opts={}) {options(opts,['format']);if(opts.format&&opts.format!=='text')throw error('UNSUPPORTED_FORMAT','Only plain text paste via AX insertion is implemented');return this.typeText(text);}
     async selectText(index,text,opts={}) {options(opts,['prefix','suffix','selectionType']);return this.#action('select_text',{...this.#ref(index),text,prefix:opts.prefix,suffix:opts.suffix,selection:opts.selectionType??'text'});}
     async setValue(index,value) {return this.#action('ax_action',{...this.#ref(index),action:'setValue',value});}

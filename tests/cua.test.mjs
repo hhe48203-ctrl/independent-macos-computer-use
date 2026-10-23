@@ -22,7 +22,7 @@ test('app binding, AX diffs and screenshot coordinate mappings fail closed on am
   await app.getScreenshot({emit:false});width=500;
   await assert.rejects(app.click([100,80]),{code:'STALE_GEOMETRY'});
   await assert.rejects(app.click(99),{code:'INVALID_ELEMENT'});
-  await assert.rejects(app.pressKey('A',{durationMs:10}),{code:'UNSUPPORTED_OPTION'});
+  await app.pressKey('A',{durationMs:10});assert.equal(calls.find(c=>c.method==='key').args.durationMs,10);
   await assert.rejects(app.paste('x',{format:'html'}),{code:'UNSUPPORTED_FORMAT'});
   await assert.rejects(cua.getApp('missing'),{code:'APP_NOT_FOUND'});
 });

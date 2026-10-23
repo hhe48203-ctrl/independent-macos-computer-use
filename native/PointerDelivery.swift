@@ -17,6 +17,8 @@ import ApplicationServices
     var posted=0
     var received=0
     var rewritten=0
+    var retained=0
+    var intendedFlags:[CGEventFlags]=[]
     var disabled=false
     init(pid:pid_t,windowID:CGWindowID) throws {
         self.pid=pid;self.windowID=windowID
@@ -39,7 +41,11 @@ import ApplicationServices
                    event.getIntegerValueField(.eventSourceUserData)==delivery.tag,
                    event.getIntegerValueField(.eventTargetUnixProcessID)==Int64(delivery.pid),
                    event.getIntegerValueField(CGEventField(rawValue:51)!)==Int64(delivery.windowID) {
-                    if event.flags.contains(.maskCommand) {event.flags.remove(.maskCommand);delivery.rewritten += 1}
+                    if delivery.received<delivery.intendedFlags.count,event.flags.contains(.maskCommand) {
+                        let intended=delivery.intendedFlags[delivery.received]
+                        event.flags=intended
+                        if intended.contains(.maskCommand){delivery.retained += 1}else{delivery.rewritten += 1}
+                    }
                     delivery.received += 1
                 }
                 return Unmanaged.passUnretained(event)
@@ -52,6 +58,7 @@ import ApplicationServices
     func prepare(_ event:CGEvent) throws {
         guard let tap,!disabled,CGEvent.tapIsEnabled(tap:tap) else {throw BridgeError("BACKGROUND_POINTER_TAP_DISABLED","Pointer delivery tap is disabled; no further pointer event was posted.")}
         event.setIntegerValueField(.eventSourceUserData,value:tag)
+        intendedFlags.append(event.flags)
         event.flags.insert(.maskCommand)
         guard event.getIntegerValueField(.eventSourceUserData)==tag else {throw BridgeError("BACKGROUND_POINTER_TAG_FAILED","The pointer event did not retain its operation tag. No event was posted.")}
         posted += 1
@@ -63,12 +70,12 @@ import ApplicationServices
             guard ProcessInfo.processInfo.systemUptime<deadline else{throw BridgeError("BACKGROUND_POINTER_DELIVERY_TIMEOUT","Could not confirm every pointer event passed the target delivery tap. Input may be partial; no action was retried.")}
             try await Task.sleep(nanoseconds:2_000_000)
         }
-        guard rewritten==posted else{throw BridgeError("BACKGROUND_POINTER_DELIVERY_MISMATCH","Not every routing flag was observed and removed. Isolation could not be confirmed; observe before retrying.")}
+        guard rewritten+retained==posted else{throw BridgeError("BACKGROUND_POINTER_DELIVERY_MISMATCH","Not every routing flag was verified against its intended modifiers. Isolation could not be confirmed; observe before retrying.")}
     }
     var json:[String:Any] {[
-        "method":"Command routing flag removed at source-filtered target process tap",
+        "method":"Command routing flag reconciled with requested modifiers at source-filtered target process tap",
         "sourcePID":sourcePID,"targetPID":pid,"windowID":windowID,"operationTag":tag,
-        "postedEvents":posted,"observedEvents":received,"rewrittenEvents":rewritten,
+        "postedEvents":posted,"observedEvents":received,"rewrittenEvents":rewritten,"commandRetainedEvents":retained,
         "globalModifierEvents":0,"activationNotificationsCreatedByPointerRouter":0]}
     func stop(){
         if let source{CFRunLoopRemoveSource(CFRunLoopGetMain(),source,.commonModes)}

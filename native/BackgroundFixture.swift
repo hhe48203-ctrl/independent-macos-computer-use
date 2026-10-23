@@ -5,7 +5,7 @@ import ApplicationServices
 // A logger must not change whether the observed input reaches its responder.
 // NSEvent getters have type-specific preconditions (Objective-C exceptions).
 func fixtureEventRecord(_ event:NSEvent,elapsed:TimeInterval)->[String:Any] {
-    var row:[String:Any]=["t":elapsed,"type":event.type.rawValue,"window":event.windowNumber,"flags":event.modifierFlags.rawValue,"x":event.locationInWindow.x,"y":event.locationInWindow.y]
+    var row:[String:Any]=["t":elapsed,"eventTimestamp":event.timestamp,"type":event.type.rawValue,"window":event.windowNumber,"flags":event.modifierFlags.rawValue,"x":event.locationInWindow.x,"y":event.locationInWindow.y]
     if event.type == .keyDown || event.type == .keyUp {
         row["characters"]=event.characters ?? "";row["keyCode"]=event.keyCode
     }else if [1,2,3,4,5,6,7,8,9,13,14,15,21,22,25,26,27].contains(event.type.rawValue) {
@@ -23,7 +23,7 @@ final class FixtureApplication:NSApplication {
     }
     override func nextEvent(matching mask:NSEvent.EventTypeMask,until expiration:Date?,inMode mode:RunLoop.Mode,dequeue flag:Bool)->NSEvent? {
         let event=super.nextEvent(matching:mask,until:expiration,inMode:mode,dequeue:flag)
-        if let event,[10,11,21].contains(event.type.rawValue),flag {
+        if let event,[1,2,3,4,5,6,7,10,11,21,22,25,26,27].contains(event.type.rawValue),flag {
             (delegate as? BackgroundFixture)?.recordQueueEvent(event)
         }
         return event
@@ -52,7 +52,7 @@ final class EventPad: NSView {
     override func mouseDragged(with event: NSEvent) { drags += 1; changed?(); needsDisplay = true }
     override func scrollWheel(with event: NSEvent) { scrolls += 1; changed?(); needsDisplay = true }
 }
-final class BackgroundFixture: NSObject, NSApplicationDelegate, NSTextFieldDelegate {
+final class BackgroundFixture: NSObject, NSApplicationDelegate, NSTextFieldDelegate, NSTableViewDataSource, NSTableViewDelegate {
     let role = CommandLine.arguments[1]
     let directory = URL(fileURLWithPath: CommandLine.arguments[2])
     var window: NSWindow!; var text = NSTextField(string: "")
@@ -61,6 +61,10 @@ final class BackgroundFixture: NSObject, NSApplicationDelegate, NSTextFieldDeleg
     var timer: Timer?; var started = Date(); var samples: [[String: Any]] = []; var events: [[String: Any]] = []
     var monitor: Any?
     var documentInput:NSTextView?
+    var selectionTable:NSTableView?
+    func numberOfRows(in tableView:NSTableView)->Int {20}
+    func tableView(_ tableView:NSTableView,objectValueFor tableColumn:NSTableColumn?,row:Int)->Any? {"Selection row \(row)"}
+    func tableViewSelectionDidChange(_ notification:Notification){save()}
     var notifications: [NSObjectProtocol] = []
     var activations: [[String:Any]] = []
     func recordQueueEvent(_ event:NSEvent,phase:String="application-queue") {
@@ -102,15 +106,21 @@ final class BackgroundFixture: NSObject, NSApplicationDelegate, NSTextFieldDeleg
         document.isEditable = documentMode
         if documentMode {document.setSelectedRange(NSRange(location:0,length:0))}
         if documentMode {documentInput=document}
+        if role == "target",CommandLine.arguments.contains("--selection-input") {
+            let table=NSTableView(frame:document.frame);table.headerView=nil;table.rowHeight=20
+            table.allowsMultipleSelection=true;table.dataSource=self;table.delegate=self
+            let column=NSTableColumn(identifier:NSUserInterfaceItemIdentifier("value"));column.width=540;table.addTableColumn(column)
+            table.setAccessibilityIdentifier("selection-table");selectionTable=table
+        }
         document.font = .systemFont(ofSize: 16); document.setAccessibilityIdentifier("scroll-document")
-        scroll.documentView = document; content.addSubview(scroll)
+        scroll.documentView = selectionTable ?? document; content.addSubview(scroll)
         monitor = NSEvent.addLocalMonitorForEvents(matching: [.leftMouseDown,.leftMouseUp,.leftMouseDragged,.mouseMoved,.scrollWheel,.keyDown,.keyUp,.appKitDefined,.applicationDefined]) { [weak self] event in
             guard let self else { return event }
             // This monitor runs inside our disposable fixture, never another app.
             self.events.append(fixtureEventRecord(event,elapsed:Date().timeIntervalSince(self.started)))
             return event
         }
-        if let documentInput {window.makeFirstResponder(documentInput)}else{window.makeFirstResponder(text)}
+        if let selectionTable {window.makeFirstResponder(selectionTable)}else if let documentInput {window.makeFirstResponder(documentInput)}else{window.makeFirstResponder(text)}
         if CommandLine.arguments.contains("--background") {
             window.orderBack(nil)
             if cover, let id=Int(CommandLine.arguments.last ?? "") { window.order(.above,relativeTo:id) }
@@ -137,7 +147,9 @@ final class BackgroundFixture: NSObject, NSApplicationDelegate, NSTextFieldDeleg
     func controlTextDidChange(_ obj: Notification) { save() }
     func save() {
         let state: [String: Any] = ["pid": ProcessInfo.processInfo.processIdentifier, "windowId": window.windowNumber, "role": role, "input": text.stringValue, "result": result.stringValue, "count": count, "clicks": pad.clicks, "scrolls": pad.scrolls, "drags": pad.drags, "releases":pad.releases, "active": NSApp.isActive, "key": window.isKeyWindow, "epoch":started.timeIntervalSince1970,
-            "firstResponderClass":window.firstResponder.map{String(describing:type(of:$0))} ?? "none","textEditorPresent":text.currentEditor() != nil,"applicationClass":String(describing:type(of:NSApp!)),"documentInput":documentInput?.string as Any? ?? NSNull(),"nativeWindowFrame":["x":window.frame.minX,"y":window.frame.minY,"width":window.frame.width,"height":window.frame.height]]
+            "firstResponderClass":window.firstResponder.map{String(describing:type(of:$0))} ?? "none","textEditorPresent":text.currentEditor() != nil,"applicationClass":String(describing:type(of:NSApp!)),"documentInput":documentInput?.string as Any? ?? NSNull(),"selectedRows":selectionTable.map{Array($0.selectedRowIndexes)} as Any? ?? NSNull(),
+            "selectionRowPoints":selectionTable.map{table in (0..<4).map{row -> [Double] in let p=table.convert(NSPoint(x:40,y:table.rect(ofRow:row).midY),to:nil);return [p.x,window.frame.height-p.y]}} as Any? ?? NSNull(),
+            "nativeWindowFrame":[ "x":window.frame.minX,"y":window.frame.minY,"width":window.frame.width,"height":window.frame.height]]
         func write(_ value: Any, _ name: String) { if let data = try? JSONSerialization.data(withJSONObject: value) { try? data.write(to: directory.appendingPathComponent(name), options: .atomic) } }
         write(state, "\(role)-state.json"); write(samples, "\(role)-samples.json"); write(events, "\(role)-events.json")
         write(activations,"\(role)-activations.json")

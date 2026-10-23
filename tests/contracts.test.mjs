@@ -69,3 +69,16 @@ test('new app launch requires an explicit visible-window choice',()=>{
  assert.equal(launch.parse({bundleId:'com.apple.TextEdit',allowVisibleWindows:true}).allowVisibleWindows,true);
  assert.equal(launch.safeParse({bundleId:'com.apple.TextEdit',allowVisibleWindows:'true'}).success,false);
 });
+
+test('modifier clicks and bounded key holds cannot silently become AX or foreground actions',()=>{
+ const click={pid:1,windowId:2,x:10,y:20},key={pid:1,windowId:2,key:'CMD+A'};
+ for(const modifiers of ['super','CMD+Shift','ctrl+alt','option+shift'])assert.equal(schema('cu_click').safeParse({...click,modifiers,durationMs:250}).success,true);
+ for(const modifiers of ['', 'a','cmd+','cmd+a','capslock'])assert.equal(schema('cu_click').safeParse({...click,modifiers}).success,false);
+ for(const name of ['cu_click','cu_key']){
+  const args=name==='cu_click'?click:key;
+  for(const durationMs of [0,0.5,200,5000])assert.equal(schema(name).safeParse({...args,durationMs}).success,true);
+  for(const durationMs of [-1,Infinity,NaN,5001,'200'])assert.equal(schema(name).safeParse({...args,durationMs}).success,false);
+  assert.equal(schema(name).safeParse({...args,durationMs:200,mode:'foreground'}).success,false);
+ }
+ assert.equal(schema('cu_click').safeParse({...click,modifiers:'shift',strategy:'ax'}).success,false);
+});

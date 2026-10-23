@@ -50,6 +50,7 @@ struct Snapshot {
     var snapshots: [String: Snapshot] = [:]
     var heldMouse: (CGMouseButton, CGPoint)?
     var heldBackgroundMouse: HeldBackgroundMouse?
+    var heldBackgroundKey:(pid:pid_t,up:CGEvent)?
     var backgroundMouseSequence=0
     var activeAppKitSession:ScopedAppKitFocus?
     let agentCursor=AgentCursor()
@@ -309,6 +310,7 @@ struct Snapshot {
     }
     func releaseInput() {
         defer {activeAppKitSession?.finish();activeAppKitSession=nil;agentCursor.hide()}
+        releaseBackgroundKey()
         if let held = heldBackgroundMouse {
             let kind: CGEventType = held.button == .left ? .leftMouseUp : held.button == .right ? .rightMouseUp : .otherMouseUp
             try? backgroundMouse(kind,held.point,held.button,1,held.pid,held.windowID,held.frame)
