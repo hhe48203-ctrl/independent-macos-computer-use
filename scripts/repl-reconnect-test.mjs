@@ -6,7 +6,8 @@ import {startBackgroundFixture} from './background-fixture.mjs';
 import {connectRepl,parseAX} from './repl-client.mjs';
 const root=fileURLToPath(new URL('../',import.meta.url)),directory=root+`artifacts/reconnect-${Date.now()}`;mkdirSync(directory,{recursive:true});
 const fixture=await startBackgroundFixture(directory,{background:true,allSpaces:true}),old=fixture.apps.target;
-const repl=await connectRepl({...process.env,CU_ENABLE_FOREGROUND:'0',CU_ALLOWED_BUNDLE_IDS:'io.local.computeruse.background-target'});
+const server=process.env.CU_TEST_SERVER??root+'src/server.mjs',cwd=process.env.CU_TEST_CWD??root;
+const repl=await connectRepl({...process.env,CU_ENABLE_FOREGROUND:'0',CU_ALLOWED_BUNDLE_IDS:'io.local.computeruse.background-target'},server,cwd);
 let next,report={status:'running',directory};
 try{
  const initial=await repl.evaluate(`(async()=>{globalThis.oldApp=await cua.getApp({pid:${old.pid},windowId:${old.windowId}},{coordinateMode:'original',maxDimension:640});return oldApp.getCoordinateInfo({emit:false})})()`);
