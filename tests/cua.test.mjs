@@ -26,3 +26,44 @@ test('app binding, AX diffs and screenshot coordinate mappings fail closed on am
   await assert.rejects(app.paste('x',{format:'html'}),{code:'UNSUPPORTED_FORMAT'});
   await assert.rejects(cua.getApp('missing'),{code:'APP_NOT_FOUND'});
 });
+
+test('original mode preserves measured pixels through AX readbacks, refreshes after resize and fails without scale',async()=>{
+  const calls=[],outputs=[];let width=400,failCapture=false;
+  const w=()=>({pid:12,windowId:20,bundleId:'io.test',path:'/Example.app',frame:{x:0,y:0,width,height:300}});
+  const cua=createCua({emit:v=>outputs.push(v),request:async(method,args)=>{
+    calls.push({method,args});if(method==='apps')return {apps:[]};if(method==='windows')return {windows:[w()]};
+    if(method==='snapshot')return {snapshotId:'aaaaaa00-aaaa-4aaa-8aaa-aaaaaaaaaaaa',window:w(),nodes:[],...(args.screenshot?(failCapture?{screenshotError:'No recording grant'}:{screenshot:{scaleX:2,scaleY:2,data:'',mimeType:'image/png'}}):{})};
+    return {ok:true};
+  }});
+  const app=await cua.getApp('io.test',{coordinateMode:'original'});
+  assert.equal(outputs.some(v=>v.type==='image'),false,'initial hidden capture must not emit an image');
+  assert.deepEqual(await app.getCoordinateInfo({emit:false}),{mode:'original',unit:'screenshot pixels',origin:'window top-left',scaleX:2,scaleY:2,range:{minX:0,minY:0,maxXExclusive:800,maxYExclusive:600},axFrameUnit:'logical points'});
+  await app.getAXState({emit:false});await app.click([100,80]);await app.click([100,80]);
+  assert.ok(calls.filter(c=>c.method==='click').every(c=>c.args.x===50&&c.args.y===40));
+  assert.equal(calls.filter(c=>c.method==='snapshot'&&c.args.screenshot).length,1);
+  width=500;await assert.rejects(app.click([100,80]),{code:'STALE_GEOMETRY'});
+  await app.getAXState({emit:false});assert.equal((await app.getCoordinateInfo({emit:false})).range.maxXExclusive,1000);
+  await assert.rejects(app.move([1000,0]),{code:'INVALID_COORDINATE'});
+  width=600;failCapture=true;await assert.rejects(app.getAXState(),{code:'COORDINATES_UNAVAILABLE'});
+  await assert.rejects(app.move([10,10]),{code:'COORDINATES_UNAVAILABLE'});
+  await assert.rejects(cua.getApp('io.test',{coordinateMode:'guess'}),{code:'INVALID_ARGUMENT'});
+});
+
+test('explicit reconnect verifies identity, never selects an ambiguous window and leaves old binding strict',async()=>{
+  let windows=[{pid:12,windowId:20,bundleId:'io.test',path:'/Example.app',frame:{width:400,height:300}}];let clicks=0;
+  const cua=createCua({emit:()=>{},request:async(method,args)=>{
+    if(method==='apps')return {apps:[]};if(method==='windows')return {windows:windows.filter(w=>args.pid===undefined||args.pid===w.pid)};
+    if(method==='snapshot')return {snapshotId:'aaaaaa00-aaaa-4aaa-8aaa-aaaaaaaaaaaa',window:windows.find(w=>w.pid===args.pid&&w.windowId===args.windowId),nodes:[]};
+    if(method==='click')clicks++;return {ok:true};
+  }});
+  const old=await cua.getApp('io.test');
+  windows=[{...windows[0],pid:13,windowId:21},{...windows[0],pid:13,windowId:22},{...windows[0],pid:14,windowId:23,path:'/Impostor.app'}];
+  await assert.rejects(old.click([10,10]),{code:'WINDOW_GONE'});
+  const preview=await old.reconnect();assert.deepEqual(preview.candidates.map(w=>w.windowId),[21,22]);
+  await assert.rejects(old.reconnect({pid:14,windowId:23}),{code:'RECONNECT_TARGET_MISMATCH'});
+  await assert.rejects(old.reconnect({pid:13}),{code:'INVALID_ARGUMENT'});
+  assert.equal(clicks,0);
+  const app=await old.reconnect({pid:13,windowId:22});assert.equal(app.pid,13);assert.equal(app.windowId,22);
+  await app.click([10,10]);assert.equal(clicks,1);
+  await assert.rejects(old.click([10,10]),{code:'WINDOW_GONE'});
+});

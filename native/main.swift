@@ -89,7 +89,7 @@ struct Snapshot {
                   let r = CGRect(dictionaryRepresentation: bounds as CFDictionary),
                   number(row, kCGWindowLayer as String) == 0, r.width > 1, r.height > 1,
                   let a = try? app(pid_t(pid)) else { return nil }
-            return ["windowId": id, "pid": pid, "bundleId": a.bundleIdentifier ?? "", "app": a.localizedName ?? "", "title": row[kCGWindowName as String] as? String ?? "", "frame": rectJSON(r), "onScreen": row[kCGWindowIsOnscreen as String] as? Bool ?? false]
+            return ["windowId": id, "pid": pid, "bundleId": a.bundleIdentifier ?? "", "app": a.localizedName ?? "", "path":a.bundleURL?.path ?? "", "title": row[kCGWindowName as String] as? String ?? "", "frame": rectJSON(r), "onScreen": row[kCGWindowIsOnscreen as String] as? Bool ?? false]
         }
     }
     func target(_ p: Object) throws -> (NSRunningApplication, Object, CGRect) {

@@ -19,12 +19,40 @@ export function createCua({request, emit}) {
   async function inventory() {
     const {windows}=await native('windows');
     const {apps}=await native('apps');
-    for(const w of windows) if(!apps.some(a=>a.pid===w.pid)) apps.push({pid:w.pid,bundleId:w.bundleId,name:w.app});
+    for(const w of windows) if(!apps.some(a=>a.pid===w.pid)) apps.push({pid:w.pid,bundleId:w.bundleId,name:w.app,path:w.path});
     return {apps:apps.map(a=>({...a,id:a.bundleId??String(a.pid),windows:windows.filter(w=>w.pid===a.pid)})),windows};
   }
   class App {
-    #target; #snapshot; #lines; #scale={x:1,y:1}; #dimensions;
-    constructor(target) {this.#target=Object.freeze({pid:target.pid,windowId:target.windowId});this.pid=target.pid;this.windowId=target.windowId;Object.freeze(this);}
+    #target; #identity; #snapshot; #lines; #scale={x:1,y:1}; #dimensions; #coordinateMode; #maxDimension; #unit='logical points';
+    constructor(target, identity, opts={}) {
+      this.#target=Object.freeze({pid:target.pid,windowId:target.windowId});this.#identity=identity;
+      this.#coordinateMode=opts.coordinateMode??'adaptive';this.#maxDimension=opts.maxDimension??1600;
+      this.pid=target.pid;this.windowId=target.windowId;this.coordinateMode=this.#coordinateMode;Object.freeze(this);
+    }
+    #coordinates() {
+      const f=this.#dimensions;if(!f)throw error('COORDINATES_UNAVAILABLE','Observe the window before using coordinates');
+      return {mode:this.#coordinateMode,unit:this.#unit,origin:'window top-left',scaleX:this.#scale.x,scaleY:this.#scale.y,
+        range:{minX:0,minY:0,maxXExclusive:f.width*this.#scale.x,maxYExclusive:f.height*this.#scale.y},axFrameUnit:'logical points'};
+    }
+    async getCoordinateInfo(opts={}) {
+      options(opts,['emit']);const w=await this.#live();
+      if(!this.#dimensions||w.frame.width!==this.#dimensions.width||w.frame.height!==this.#dimensions.height)throw error('STALE_GEOMETRY','Observe the resized window first');
+      return display(this.#coordinates(),opts);
+    }
+    async reconnect(selection) {
+      const {bundleId,path}=this.#identity;
+      if(!bundleId||!path)throw error('RECONNECT_IDENTITY_UNAVAILABLE','The original app has no verified bundle ID and bundle path; select a fresh app explicitly');
+      const {windows,apps}=await inventory();
+      const pids=apps.filter(a=>a.bundleId===bundleId&&a.path===path).map(a=>a.pid);
+      const candidates=windows.filter(w=>pids.includes(w.pid));
+      if(selection===undefined)return display({identity:this.#identity,candidates,requiresConfirmation:true});
+      options(selection,['pid','windowId']);
+      if(!Number.isInteger(selection.pid)||!Number.isInteger(selection.windowId))throw error('INVALID_ARGUMENT','Reconnect requires explicit {pid,windowId} from the candidate list');
+      const w=candidates.find(w=>w.pid===selection.pid&&w.windowId===selection.windowId);
+      if(!w)throw error('RECONNECT_TARGET_MISMATCH','Selected window is absent or belongs to a different bundle/path. No binding changed.');
+      const app=new App(w,this.#identity,{coordinateMode:this.#coordinateMode,maxDimension:this.#maxDimension});
+      await app.getAXState({disableDiffing:true});return app;
+    }
     async #live() {
       const {windows}=await native('windows',{pid:this.pid});
       const w=windows.find(w=>w.windowId===this.windowId);
@@ -40,6 +68,7 @@ export function createCua({request, emit}) {
     async #point(point) {
       if(!Array.isArray(point)||point.length!==2||!point.every(v=>typeof v==='number'&&Number.isFinite(v)&&v>=0)) throw error('INVALID_COORDINATE','Expected [x,y] with finite nonnegative coordinates');
       const w=await this.#live();
+      if(!this.#dimensions)throw error('COORDINATES_UNAVAILABLE','Observe the window before using coordinates');
       if(this.#dimensions&&(w.frame.width!==this.#dimensions.width||w.frame.height!==this.#dimensions.height)) throw error('STALE_GEOMETRY','Window resized since observation; get a fresh screenshot or AX state');
       const [x,y]=[point[0]/this.#scale.x,point[1]/this.#scale.y];
       if(x>=w.frame.width||y>=w.frame.height) throw error('INVALID_COORDINATE','Point lies outside the bound window');
@@ -47,11 +76,22 @@ export function createCua({request, emit}) {
     }
     async #observe(screenshot, opts={}) {
       options(opts,['emit','disableDiffing','maxDimension']);
-      const snap=await native('snapshot',{...this.#target,screenshot,maxDimension:opts.maxDimension??1600});
+      const w=await this.#live();
+      const establish=this.#coordinateMode==='original'&&(opts.maxDimension!==undefined&&opts.maxDimension!==this.#maxDimension||!this.#dimensions||w.frame.width!==this.#dimensions.width||w.frame.height!==this.#dimensions.height);
+      const snap=await native('snapshot',{...this.#target,screenshot:screenshot||establish,maxDimension:opts.maxDimension??this.#maxDimension});
+      if(establish&&!snap.screenshot) {
+        this.#snapshot=undefined;this.#dimensions=undefined;this.#lines=undefined;
+        throw error('COORDINATES_UNAVAILABLE',snap.screenshotError??'Screenshot scale unavailable; no coordinate fallback was applied');
+      }
+      if(this.#coordinateMode==='original'&&!snap.screenshot&&this.#dimensions&&(snap.window.frame.width!==this.#dimensions.width||snap.window.frame.height!==this.#dimensions.height)) {
+        this.#snapshot=undefined;this.#dimensions=undefined;throw error('STALE_GEOMETRY','Window resized during observation; observe again to establish pixel scale');
+      }
       this.#snapshot=snap; this.#dimensions=snap.window.frame;
-      this.#scale=snap.screenshot?{x:snap.screenshot.scaleX,y:snap.screenshot.scaleY}:{x:1,y:1};
+      if(snap.screenshot){this.#unit='screenshot pixels';this.#scale={x:snap.screenshot.scaleX,y:snap.screenshot.scaleY};this.#maxDimension=opts.maxDimension??this.#maxDimension;}
+      else if(this.#coordinateMode==='adaptive'){this.#scale={x:1,y:1};this.#unit='logical points';}
+      const coordinates=this.#coordinates();
       const lines=snap.nodes.map(n=>{const {id,depth,parent,...rest}=n;return `${'  '.repeat(depth)}[${id.slice(1)}] ${JSON.stringify(rest)}`;});
-      const header=`Window ${this.windowId} pid ${this.pid} ${JSON.stringify(snap.window.title??'')} (${snap.window.frame.width}x${snap.window.frame.height} logical points)${snap.truncated?' [TRUNCATED]':''}`;
+      const header=`Window ${this.windowId} pid ${this.pid} ${JSON.stringify(snap.window.title??'')} (${snap.window.frame.width}x${snap.window.frame.height} logical points)${snap.truncated?' [TRUNCATED]':''}\nCoordinates ${JSON.stringify(coordinates)}`;
       let state;
       if(this.#lines&&!opts.disableDiffing) {
         const changes=[];
@@ -60,19 +100,19 @@ export function createCua({request, emit}) {
       } else state=header+'\nAX tree:\n'+lines.join('\n');
       this.#lines=lines;display(state,opts);
       if(snap.screenshotError) display({screenshotError:snap.screenshotError},opts);
-      if(snap.screenshot&&opts.emit!==false) emit({type:'image',data:snap.screenshot.data,mimeType:snap.screenshot.mimeType});
-      return {state,...(snap.screenshot?{screenshot:Buffer.from(snap.screenshot.data,'base64')}:{})};
+      if(screenshot&&snap.screenshot&&opts.emit!==false) emit({type:'image',data:snap.screenshot.data,mimeType:snap.screenshot.mimeType});
+      return {state,coordinates,...(screenshot&&snap.screenshot?{screenshot:Buffer.from(snap.screenshot.data,'base64')}:{})};
     }
     async getAXState(opts) {return (await this.#observe(false,opts)).state;}
     async getAXStateAndScreenshot(opts) {return this.#observe(true,opts);}
     async getScreenshot(opts={}) {
       options(opts,['emit','maxDimension']);
-      const {screenshot:s}=await native('screenshot',{...this.#target,maxDimension:opts.maxDimension??1600});
-      this.#scale={x:s.scaleX,y:s.scaleY};this.#dimensions=s.frame;
-      if(opts.emit!==false){display({windowId:this.windowId,width:s.width,height:s.height,scaleX:s.scaleX,scaleY:s.scaleY,coordinates:'screenshot pixels',agentCursorIncluded:false},opts);emit({type:'image',data:s.data,mimeType:s.mimeType});}
+      const {screenshot:s}=await native('screenshot',{...this.#target,maxDimension:opts.maxDimension??this.#maxDimension});
+      this.#unit='screenshot pixels';this.#scale={x:s.scaleX,y:s.scaleY};this.#dimensions=s.frame;this.#maxDimension=opts.maxDimension??this.#maxDimension;
+      if(opts.emit!==false){display({windowId:this.windowId,width:s.width,height:s.height,scaleX:s.scaleX,scaleY:s.scaleY,coordinates:this.#coordinates(),agentCursorIncluded:false},opts);emit({type:'image',data:s.data,mimeType:s.mimeType});}
       return Buffer.from(s.data,'base64');
     }
-    async ocr(opts={}) {options(opts,['emit','maxDimension']);const result=await native('ocr',{...this.#target,maxDimension:opts.maxDimension??1600});return display(result,opts);}
+    async ocr(opts={}) {options(opts,['emit','maxDimension']);const result=await native('ocr',{...this.#target,maxDimension:opts.maxDimension??1600});return display({...result,rectUnit:'logical points',arrayCoordinates:await this.getCoordinateInfo({emit:false})},opts);}
     async #action(method,args) {
       await this.#live();
       const result=await native(method,args);
@@ -122,7 +162,10 @@ export function createCua({request, emit}) {
     },
     async requestPermissions(opts) {return display(await native('request_permissions',opts));},
     async launchApp(bundleId,opts={}) {options(opts,['allowVisibleWindows']);return display(await native('launch',{bundleId,allowVisibleWindows:opts.allowVisibleWindows??false}));},
-    async getApp(reference) {
+    async getApp(reference,opts={}) {
+      options(opts,['coordinateMode','maxDimension']);
+      if(opts.coordinateMode!==undefined&&!['adaptive','original'].includes(opts.coordinateMode))throw error('INVALID_ARGUMENT','coordinateMode must be adaptive or original');
+      if(opts.maxDimension!==undefined&&(!Number.isInteger(opts.maxDimension)||opts.maxDimension<320||opts.maxDimension>4096))throw error('INVALID_ARGUMENT','maxDimension must be an integer from 320 to 4096');
       const {windows,apps}=await inventory();let matches;
       if(typeof reference==='string') {
         const needle=reference.toLowerCase();const pids=apps.filter(a=>[a.id,a.bundleId,a.name,a.displayName,a.path].some(v=>v?.toLowerCase()===needle)).map(a=>a.pid);
@@ -130,7 +173,7 @@ export function createCua({request, emit}) {
       } else if(reference&&Number.isInteger(reference.windowId)&&Object.keys(reference).every(k=>['windowId','pid'].includes(k)))matches=windows.filter(w=>w.windowId===reference.windowId&&(reference.pid===undefined||w.pid===reference.pid));
       else throw error('INVALID_ARGUMENT','Use an exact app name/bundle/path or {windowId,pid?}');
       if(matches.length!==1)throw error(matches.length?'AMBIGUOUS_APP':'APP_NOT_FOUND',`Expected one window, found ${matches.length}; inspect cua.listWindows() and select {windowId,pid}. No app was launched.`);
-      doc(appDocumentation);const app=new App(matches[0]);await app.getAXState({disableDiffing:true});return app;
+      doc(appDocumentation);const w=matches[0],a=apps.find(a=>a.pid===w.pid);const app=new App(w,Object.freeze({bundleId:a?.bundleId??w.bundleId,path:a?.path??w.path}),opts);await app.getAXState({disableDiffing:true});return app;
     },
     async cursorState(){return display(await native('cursor_state'));},
     async hideCursor(){return native('cursor_hide');}
