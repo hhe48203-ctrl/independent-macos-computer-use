@@ -52,3 +52,14 @@ English is the default language for this repository's documentation. Chinese tra
 `docs/zh-CN/` contains the Chinese translations of every page above. It is a translation, not a second source of truth: when a page changes, update the English page first and bring the translation along. Documents that are only English (`WORKLOG.md`, `ARCHITECTURE.md`) have no Chinese counterpart by design.
 
 `npm run check:docs` (also part of `npm test`) verifies that every relative link resolves, that each English page has a Chinese counterpart, and that each pair links to the other, so a moved or renamed page cannot silently break the set.
+
+## Bilingual review copies
+
+Two pages carry technical conclusions where a mistranslation would change the meaning of the evidence, so they also have a sentence-level side-by-side copy:
+
+| Review copy | Source |
+| --- | --- |
+| [zh-CN/review/REVERSE_ENGINEERING.bilingual.md](zh-CN/review/REVERSE_ENGINEERING.bilingual.md) | [REVERSE_ENGINEERING.md](REVERSE_ENGINEERING.md) |
+| [zh-CN/review/FOCUS_FIDELITY.bilingual.md](zh-CN/review/FOCUS_FIDELITY.bilingual.md) | [FOCUS_FIDELITY.md](FOCUS_FIDELITY.md) |
+
+Each block (heading, paragraph, list, code) is printed in English and then as the Chinese original; tables are paired row by row so numbers can be compared directly. Regenerate with `npm run docs:bilingual`, which does not require a PR: the test suite fails if the committed copy is stale or if the two languages drift out of block alignment, so a reviewer is never shown mismatched pairs.

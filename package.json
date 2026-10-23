@@ -28,7 +28,8 @@
     "test:input-options": "node scripts/repl-input-options-test.mjs",
     "test:reconnect": "node scripts/repl-reconnect-test.mjs",
     "test:scroll": "node scripts/scroll-calibration-test.mjs --independent",
-    "check:docs": "node scripts/check-docs.mjs"
+    "check:docs": "node scripts/check-docs.mjs",
+    "docs:bilingual": "node scripts/build-bilingual.mjs"
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "1.32.1",

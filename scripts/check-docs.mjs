@@ -30,6 +30,8 @@ export function counterpart(page) {
 
 export function check() {
   const problems = [];
+  // Generated review copies repeat the sources' inline links verbatim, so they are
+  // skipped here; the sources themselves are checked above.
   const pages = [...englishPages(), ...readdirSync(zhDir).filter((n) => n.endsWith('.md')).map((n) => `docs/zh-CN/${n}`)];
   let links = 0;
   for (const page of pages) {
