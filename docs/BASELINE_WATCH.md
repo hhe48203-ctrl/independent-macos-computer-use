@@ -41,7 +41,7 @@ node scripts/watch-original.mjs --ack
 
 ## 调度
 
-**GitHub Actions**（默认，已启用）：`.github/workflows/original-baseline-watch.yml`，每天 06:17 UTC + 手动触发，用 `GITHUB_TOKEN` 以 `github-actions[bot]` 身份开 issue。上游 job 在 `ubuntu-latest` 上跑，不需要桌面环境。
+**GitHub Actions**（默认，已启用）：`.github/workflows/original-baseline-watch.yml`，每天 06:17 UTC + 手动触发，用 `GITHUB_TOKEN` 以 `github-actions[bot]` 身份开 issue。上游 job 在 `ubuntu-latest` 上跑，不需要桌面环境。workflow 把退出码 `1`（漂移）视为成功——漂移由 issue 承载，**红色只代表 bot 自身故障**（如 `gh` 失败或全部信号不可达，退出码 `2`）。
 
 **可选的自托管 macOS job**：`reference-baseline.mjs --local` 需要真实安装物，仓库变量 `CU_SELF_HOSTED_MACOS=1` 时启用 `[self-hosted, macOS]` 上的权威 job。
 

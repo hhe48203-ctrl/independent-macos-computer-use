@@ -33,7 +33,14 @@ jobs:
       - name: Compare public upstream signals with the recorded baseline
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: node scripts/watch-original.mjs --upstream --issue
+        run: |
+          set +e
+          node scripts/watch-original.mjs --upstream --issue
+          code=$?
+          # 1 means drift, which the tracking issue already carries; keep the run
+          # green so a red run unambiguously means the watcher itself is broken.
+          if [ "$code" -eq 1 ]; then echo "::notice::Baseline drift detected; tracking issue created or updated."; exit 0; fi
+          exit "$code"
 
   # Public metadata cannot prove that the *installed* baseline changed, so the
   # authoritative hash check stays on a self-hosted macOS runner when available.
@@ -46,4 +53,9 @@ jobs:
       - name: Compare installed app hashes with the recorded baseline
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: node scripts/watch-original.mjs --local --issue
+        run: |
+          set +e
+          node scripts/watch-original.mjs --local --issue
+          code=$?
+          if [ "$code" -eq 1 ]; then echo "::notice::Installed baseline drift detected; tracking issue created or updated."; exit 0; fi
+          exit "$code"

@@ -43,7 +43,7 @@ export function upstreamBody({changes,unreachable=[]}){
   '3. Re-run `npm test` and `node scripts/reference-behavior-test.mjs --independent`.',
   '4. Acknowledge with `node scripts/watch-original.mjs --ack`, then close this issue.','',
   '> An upstream release being published is **not** proof that the installed baseline changed. Only `reference-baseline.mjs --check` is authoritative for hashes.'
- ].filter(Boolean).join('\n');
+ ].join('\n');
 }
 export function localBody(summary,stderr=''){
  const packages=Object.entries(summary?.packages??{}).filter(([,p])=>p.versionChanged||p.inventoryChanged).map(([n,p])=>`| \`${n}\` | ${p.previous??'-'} | ${p.current??'-'} | inventory ${p.inventoryChanged?'changed':'same'} |`);
@@ -59,7 +59,7 @@ export function localBody(summary,stderr=''){
   '1. Re-run with `node scripts/reference-baseline.mjs --previous docs/original-baseline.json --output artifacts/next-reference.json`.',
   '2. Refresh the baseline documents and re-derive any behavior comparison before claiming equivalence.',
   '3. Close this issue only after the baseline is refreshed and acknowledged.'
- ].filter(Boolean).join('\n');
+ ].join('\n');
 }
 async function observeUpstream(){
  const observed={},unreachable=[];
