@@ -168,7 +168,7 @@ import ApplicationServices
             "tapAvailable":tap != nil,"tapEnabled":tap.map { CGEvent.tapIsEnabled(tap:$0) } ?? false,
             "eventFieldsAreUndocumented":true,"samples":samples,"notifications":notifications,"activations":activations,
             "processTapAvailable":processTap != nil,"processEvents":processEvents,"sampleCount":sampleCount,
-            "focusPollRequestedInterval":0.005,"windowPollRequestedInterval":0.05,"maxSampleGap":maxSampleGap,
+            "focusPollRequestedInterval":0.005,"windowPollRequestedInterval":ProcessInfo.processInfo.environment["CU_TRACE_WINDOW_OWNER_PID"] == nil ? 0.05 : 1.0/60,"maxSampleGap":maxSampleGap,
             "sampleStorage":"state changes and 50ms heartbeats; sampling gaps are measured"]
         if let humanText {report["humanTextObservation"]=humanText.json}
         if ProcessInfo.processInfo.environment["CU_HUMAN_TEST_KEY_METADATA"] == "1" {

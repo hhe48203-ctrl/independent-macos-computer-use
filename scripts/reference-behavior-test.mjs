@@ -8,6 +8,7 @@ import {startBackgroundFixture} from './background-fixture.mjs';
 import {startFocusTrace,recordedWindowOrder} from './focus-trace.mjs';
 import {Bridge} from '../src/bridge.mjs';
 import {connectRepl,parseAX} from './repl-client.mjs';
+import {referenceCompletion} from './reference-completion.mjs';
 const root=fileURLToPath(new URL('../',import.meta.url));
 const mode=process.argv.includes('--independent')?'independent':'original';
 const at=process.argv.indexOf('--cursor-owner'),cursorOwner=at<0?null:Number(process.argv[at+1]);
@@ -54,15 +55,20 @@ async function finish(){
  const order=recordedWindowOrder(observations,target.windowId,fixture.apps.cover.windowId),samples=observations.samples??[];
  const cursorSamples=samples.filter(s=>s.referenceWindows?.length).map(s=>({t:s.t,windows:s.referenceWindows}));
  const recipient=observations.processEvents??[];
- report={...report,status:steps.length===10&&steps.every(s=>s.status==='passed')?'passed':'completed-with-differences',afterProof:proof(),windowOrder:order,observation:{sampleCount:observations.sampleCount,maxSampleGap:observations.maxSampleGap,targetForegroundSamples:samples.filter(s=>s.foregroundPID===target.pid).length,targetKeyboardSamples:samples.filter(s=>s.keyboardPID===target.pid).length,recipientKeyDown:recipient.filter(e=>e.type===10).length,recipientMouseDown:recipient.filter(e=>e.type===1).length},referenceCursorSamples:cursorSamples,scope:'One disposable covered AppKit fixture. No foreground draft reads, no human concurrency test, no original private module/socket access. Failed operations are recorded without replay.'};
- if(order.violations.length||report.observation.targetForegroundSamples||report.observation.targetKeyboardSamples){report.status='failed-isolation';process.exitCode=1}
+ const lastObservedEpoch=observations.startedEpoch+Math.max(0,...samples.map(s=>s.t));
+ const unresolvedFocusSamples=samples.filter(s=>s.keyboardFocusResolved!==true).length;
+ const isolated=order.recordsCompared>0&&order.violations.length===0&&unresolvedFocusSamples===0&&samples.every(s=>s.foregroundPID!==target.pid&&s.keyboardPID!==target.pid);
+ const completion=referenceCompletion({mode,steps,observedFrom:observations.startedEpoch,observedUntil:lastObservedEpoch,isolated});
+ report={...report,status:completion.status,afterProof:proof(),windowOrder:order,observation:{sampleCount:observations.sampleCount,maxSampleGap:observations.maxSampleGap,targetForegroundSamples:samples.filter(s=>s.foregroundPID===target.pid).length,targetKeyboardSamples:samples.filter(s=>s.keyboardPID===target.pid).length,recipientKeyDown:recipient.filter(e=>e.type===10).length,recipientMouseDown:recipient.filter(e=>e.type===1).length},referenceCursorSamples:cursorSamples,scope:'One disposable covered AppKit fixture. No foreground draft reads, no human concurrency test, no original private module/socket access. Failed operations are recorded without replay.'};
+ report.observation.uncoveredSteps=completion.uncoveredSteps;report.observation.recipientTapAvailable=observations.processTapAvailable;report.observation.unresolvedFocusSamples=unresolvedFocusSamples;
+ process.exitCode=completion.exitCode;
  save();console.log('REPORT',directory+'/report.json',report.status);
 }
 try{
  before=await snapshot();assert.equal(proof().fullyCovered,true);
  trace=await startFocusTrace(directory,{seconds:180,targetPID:target.pid,env:{...process.env,...(cursorOwner?{CU_TRACE_WINDOW_OWNER_PID:String(cursorOwner)}:{})}});
  report={...report,status:'ready',before,initialProof:proof()};save();
- console.log('REFERENCE_READY',JSON.stringify({mode,directory,bundle:env.CU_ALLOWED_BUNDLE_IDS,appPath:root+'.build/Reference Document Target.app',target:{pid:target.pid,windowId:target.windowId},suffix,scrollFrame:before.nodes.find(n=>n.identifier==='scroll-area').frame}));
+ console.log('REFERENCE_READY',JSON.stringify({mode,directory,bundle:env.CU_ALLOWED_BUNDLE_IDS,appPath:root+`.build/${mode==='original'?'Reference Document Target':'Background Document Target'}.app`,target:{pid:target.pid,windowId:target.windowId},suffix,scrollFrame:before.nodes.find(n=>n.identifier==='scroll-area').frame}));
  if(mode==='original'){
   const lines=createInterface({input:process.stdin,crlfDelay:Infinity});let timedOut=false;
   const stop=()=>lines.close();process.once('SIGINT',stop);process.once('SIGTERM',stop);
