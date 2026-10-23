@@ -8,13 +8,14 @@ final class AgentCursorPanel: NSPanel {
     override func constrainFrameRect(_ frameRect: NSRect, to screen: NSScreen?) -> NSRect { frameRect }
 }
 
-// Two visually distinct styles. `arrow` keeps the original translucent outline
-// with a soft glow; `ring` is a compact amber reticle whose shape and color do
-// not read as a pointer, so it cannot be mistaken for the Codex cursor.
+// Two visually distinct styles. `ring` is the default: a compact amber reticle
+// whose shape and color do not read as a pointer, so it cannot be mistaken for
+// the Codex cursor. `arrow` retains the original translucent outline with a
+// soft glow and stays selectable for anyone who preferred it.
 enum AgentCursorStyle: String {
     case arrow, ring
     static var configured: AgentCursorStyle {
-        AgentCursorStyle(rawValue:(ProcessInfo.processInfo.environment["CU_AGENT_CURSOR_STYLE"] ?? "").lowercased()) ?? .arrow
+        AgentCursorStyle(rawValue:(ProcessInfo.processInfo.environment["CU_AGENT_CURSOR_STYLE"] ?? "").lowercased()) ?? .ring
     }
     var summary: String {
         switch self {
@@ -27,7 +28,7 @@ enum AgentCursorStyle: String {
 final class AgentCursorView: NSView {
     var pressed=false
     var activity="move"
-    var style:AgentCursorStyle = .arrow
+    var style:AgentCursorStyle = .ring
     override var isFlipped: Bool {true}
     override func draw(_ dirtyRect: NSRect) {
         NSColor.clear.setFill(); bounds.fill(using:.copy)
