@@ -9,7 +9,7 @@
 | Automated regressions | 25 passed, 0 skipped: real lexical bindings/TLA, error recovery, cancel/timeout/reset, stale-callback isolation, cross-VM images, MCP discovery, native policy and coordinate formulas |
 | New public interface | only `js`/`js_reset`; persistent app objects, AX diffs, rich PNG, screenshot coordinate mapping, with explicit errors for window ambiguity and resize invalidation |
 | Real documents | in a covered owned AppKit document, real Unicode (Chinese, emoji, NFD, ZWJ, newline), navigation keys, CMD+A, selection drag, scrolling and click all read back; SCK screenshots and Vision OCR pass |
-| Visible cursor | continuous intermediate frames and screen crops checked; light translucent arrow with soft glow. The final lifecycle test had 36 real drag packets, and window-follow, hide-on-resize, release-on-reset-during-drag and cleanup-on-target-exit passed with the system pointer unchanged |
+| Visible cursor | continuous intermediate frames and screen crops checked; light translucent arrow with soft glow, which was the only style at the time (the default is now the amber ring reticle, added later). The final lifecycle test had 36 real drag packets, and window-follow, hide-on-resize, release-on-reset-during-drag and cleanup-on-target-exit passed with the system pointer unchanged |
 | pi | only 9 js calls, 0 tool errors, reusing the app across calls, completing 7 real event operations and verifying document, selection, scrollbar and button results; a separate 5-call js test covers the basic Chinese input loop |
 | Human concurrent-use comparison | 10.001 s idle and 20.159 s background, 29 real background actions; the participant confirmed "both phases normal, no obvious difference" |
 
@@ -32,7 +32,7 @@ node scripts/source-package-test.mjs
 
 Packaged verification previously hit CG/AX window-coordinate disagreement, and on another attempt the target and cover windows shifted together during cursor motion; both failed explicitly and stopped without trying to follow the change or restore the layout. After creating new test windows, the same ZIP passed; the trigger is unconfirmed and the earlier results were not rewritten. A default desktop test also hit APP_GONE once with an undetermined cause, followed by a successful per-request diagnostic of the same native call path. Such errors require re-observation rather than automatic input retry. The records are stored with the final evidence as prior-attempt-failures.
 
-The human test needs a coordinated start time and is not repeated in automated release checks. Native real-event tests explicitly enable the machine-limited experimental app-local focus route, which is off by default. Default AX paths, visible arrangement, real events and human judgement cannot substitute for one another.
+The human test needs a coordinated start time and is not repeated in automated release checks. Native real-event tests explicitly enable the machine-limited experimental app-local focus route, which is off by default. Default AX paths, visible arrangement, real events and human judgment cannot substitute for one another.
 
 The current index is [validation-index.json](validation-index.json); research and architecture are in [REPL_CURSOR_RESEARCH.md](REPL_CURSOR_RESEARCH.md) and [JS_API.md](JS_API.md). The [v0.3 validation record](VALIDATION_V03.md) and its index are historical evidence, and the old 17-tool interface is retired.
 

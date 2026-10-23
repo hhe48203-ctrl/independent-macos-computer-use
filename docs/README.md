@@ -50,3 +50,5 @@ English is the default language for this repository's documentation. Chinese tra
 ## Languages
 
 `docs/zh-CN/` contains the Chinese translations of every page above. It is a translation, not a second source of truth: when a page changes, update the English page first and bring the translation along. Documents that are only English (`WORKLOG.md`, `ARCHITECTURE.md`) have no Chinese counterpart by design.
+
+`npm run check:docs` (also part of `npm test`) verifies that every relative link resolves, that each English page has a Chinese counterpart, and that each pair links to the other, so a moved or renamed page cannot silently break the set.

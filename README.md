@@ -38,7 +38,7 @@ await app.getAXStateAndScreenshot();
 
 Observations automatically display AX text/diffs and MCP images. `emit:false` only returns the content. When porting original scripts use `cua.getApp(reference,{coordinateMode:"original"})`, which keeps screenshot-pixel coordinates after AX-only observation; every observation reports its unit, scale and range explicitly. `app.reconnect()` previews candidates and returns a new binding after an explicit PID/window choice. Full methods, screenshot-coordinate rules and differences are in [JS API](docs/JS_API.md). Await every desktop operation; an asynchronous callback that fires after the call ends cannot keep acting on the desktop. A timeout, cancellation or reset clears bindings and stops native input, and side effects already delivered are not rolled back. The REPL is a trusted local Node.js process, not a security sandbox.
 
-The cursor is drawn independently from a reference style: a light outline, translucent arrow and soft glow, moving with continuous ease-in/ease-out and delivering input only after arrival. Drag positions follow real event packets; the system pointer never moves. It cannot become key/main, is click-through and follows window movement; size changes, target close, reset, disconnect and idle timeout hide it. Text operations point at an element centre and do not claim a measured insertion point. The default style is now an amber ring reticle so it cannot be mistaken for Codex's own pointer; `CU_AGENT_CURSOR_STYLE=arrow` restores the translucent arrow described above.
+The cursor is an independently drawn overlay with two styles; it is meant to be unmistakable next to Codex's own pointer. The default is an amber ring reticle with crosshair ticks and a white center dot, and `CU_AGENT_CURSOR_STYLE=arrow` restores the earlier light outline, translucent arrow and soft glow. Either style moves with continuous ease-in/ease-out and delivers input only after arrival. Drag positions follow real event packets; the system pointer never moves. The overlay cannot become key/main, is click-through and follows window movement; size changes, target close, reset, disconnect and idle timeout hide it. Text operations point at an element center and do not claim a measured insertion point.
 
 ## MCP clients and pi
 
@@ -62,7 +62,7 @@ setup only writes this project's `.pi/mcp.json` and never touches global configu
 
 Background operation does not activate apps, move the system pointer or fall back to the foreground by default. The target may be fully covered but must be on the current unlocked desktop and not minimized. AXPress and verified AX text are preferred by default. Real mouse/keyboard events are an optional path that depends on undocumented system behavior such as CGEventSetWindowLocation, so apps may ignore them or reorder themselves; isolation errors must stop and re-observe. The experimental app-local AppKit focus route is verified only on the specified local version and cannot promise arbitrary-app compatibility.
 
-`CU_ALLOWED_BUNDLE_IDS` restricts apps, and an empty value rejects every target; that mode disables display capture. `CU_AGENT_CURSOR=0` disables the visible overlay. The cursor defaults to the amber ring reticle (distinguishable from Codex's own pointer); `CU_AGENT_CURSOR_STYLE=arrow` restores the v1 light arrow. Ordinary screenshots exclude the cursor, and `cua.getScreenshot({region,includeAgentCursor:true})` is available for visual verification.
+`CU_ALLOWED_BUNDLE_IDS` restricts apps, and an empty value rejects every target; that mode disables display capture. `CU_AGENT_CURSOR=0` disables the visible overlay, and `CU_AGENT_CURSOR_STYLE` selects `ring` (default) or `arrow`. Ordinary screenshots exclude the cursor, and `cua.getScreenshot({region,includeAgentCursor:true})` is available for visual verification.
 
 There are currently no browser APIs and no rich-text paste; unsupported options fail explicitly. Plain-text paste uses AX insertion and needs no clipboard. Only one physical Retina display was measured, and multi-display coordinate-formula tests are not equivalent to real multi-display acceptance. Lock screen, hidden desktops, TCC bypass and credential extraction are not included.
 
@@ -76,6 +76,7 @@ npm run test:input-options
 npm run test:reconnect
 npm run test:scroll
 node scripts/repl-document-test.mjs
+npm run check:docs
 npm run test:pi
 npm run test:pi:document
 npm run package

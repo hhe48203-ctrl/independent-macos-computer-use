@@ -79,14 +79,14 @@ Rich-text paste and browser APIs are not implemented and fail explicitly. Backgr
 
 ## Cursor and screenshots
 
-The cursor is an independent NSPanel that eases in and out at about 60 Hz between target positions, and real input waits for arrival. Drags show actual packet progress. It can never become key/main, is click-through and never moves the system pointer. Text and semantic actions point at an element centre, not a measured insertion point.
+The cursor is an independent NSPanel that eases in and out at about 60 Hz between target positions, and real input waits for arrival. Drags show actual packet progress. It can never become key/main, is click-through and never moves the system pointer. Text and semantic actions point at an element center, not a measured insertion point.
 
 Two styles are selected by `CU_AGENT_CURSOR_STYLE`; anchor, motion and lifecycle behavior are identical and only the drawing differs:
 
 | Style | Appearance | Purpose |
 | --- | --- | --- |
-| `ring` (default) | amber ring, crosshair ticks and a white centre dot, no glow | shape and colour do not read as a pointer, so it stays distinguishable from Codex's own cursor |
-| `arrow` | the project's original light outline, translucent small arrow and soft glow | the historical v1 look, selected explicitly when preferred |
+| `ring` (default) | amber ring, crosshair ticks and a white center dot, no glow | shape and color do not read as a pointer, so it stays distinguishable from Codex's own cursor |
+| `arrow` | the light outline, translucent small arrow and soft glow this project drew originally | the historical v1 look, selected explicitly when preferred |
 
 An unknown value falls back to the default `ring`; `cursorState` reports the effective `style` and `styleDescription`.
 
