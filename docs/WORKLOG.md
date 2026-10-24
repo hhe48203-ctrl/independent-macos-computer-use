@@ -72,3 +72,25 @@ Reconstruct a useful independent macOS Computer Use MCP server through local Cod
 - External ZIP verification now includes real ScreenCaptureKit PNG, Vision OCR and all7document mutations, not just server startup. The source tarball independently installs locked dependencies with scripts disabled and isolated npm configuration, builds the native helper, and runs18checks with zero skipped. Release report aliases live in artifacts/release-verification and carry the actual archive hashes.
 - Executable-overwrite protection now canonicalizes symlinks; the live-process regression exercises direct and alias build paths. Temporary extraction cleanup also handles /tmp→/private/tmp. Old source-test config failures are retained; anonymous user/global npm configuration files are separate.
 - Distribution includes independent code, dependency licenses, usage/testing documents, source and separate evidence archives. Proprietary slices, pseudocode, private sockets/authentication and unrelated user contents are excluded. Remaining compatibility limits are release scope, not a claim that the original ViewBridge state machine or JavaScript/browser runtime was fully reproduced.
+
+## v1.0.0 (2026-10-19)
+
+- Replaced the 17 `cu_*` tools with `js`/`js_reset` over a persistent lexical REPL (top-level await, app objects, rich screenshots, AX diffs, OCR) and shipped an independent nonactivating cursor with eased motion.
+- Accepted by 25 regressions plus real document, pi and human rounds; the first IME/case-switching human round is retained as a failure and its later correction is recorded separately.
+
+## v1.1.0 (2026-10-21)
+
+- Added the original screenshot-pixel coordinate mode, real modifier multi-select and 0..5000 ms holds with release on cancel, calibrated vertical scrolling and explicit reconnect.
+- 39 regressions with no skips; 20 scroll cases matched real offsets; packaged and source-archive acceptance covered document, modifier/hold/cancel and reconnect. Horizontal compatibility still not claimed.
+
+## v1.2.0 (2026-10-23)
+
+- Removed synthetic AppKit activation from the default configuration and made the cooperative profile explicit (`setup-pi.mjs`, `--experimental-appkit-focus`); inactive-app raw menu shortcuts and text drags stay recorded as failures, with semantic equivalents used instead.
+- Established that the experimental route activates the target text input context while system key focus stays elsewhere, and observed the original tool causing AX Raise on an owned target; the exact original decision branch is still unproven.
+- 49 regressions with no skips, a packaged five-scenario gate, and one participant-accepted cooperative comparison (10.001 s idle, 20.551 s active, 30 operations, zero synthetic activation sessions).
+
+## v1.3.0 (2026-10-24)
+
+- Made cursor visibility follow the target's exposed area (`CU_AGENT_CURSOR_VISIBILITY=target`, default) with an optional `always` overlay; hiding or clipping never cancels an action.
+- 51 regressions with no skips, live fully covered operations, extracted-ZIP acceptance and 1x/2x offscreen pixel checks for both styles and their glow. Visible live clipping is offscreen evidence only.
+- Recorded that the installed original moved to 26.1021.31345 / sky 0.7.13 after the accepted baseline, so the drift watcher and the baseline check both report that a new comparison round is required.

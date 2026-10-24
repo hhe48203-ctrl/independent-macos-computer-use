@@ -2,6 +2,8 @@
 
 [中文版本](zh-CN/ORIGINAL_BASELINE.md)
 
+> **Superseded after this date.** The install has since moved to Codex `26.1021.31345` (build 21828), `@oai/sky` 0.7.13 and native SHA-256 `47ad8bdd901e4e55de649c319e8590eda3308f5f69c11d75486e13bd90bedeb7`, so `node scripts/reference-baseline.mjs --check` now exits 1. Everything below describes the `26.1016.61520` build only and is not evidence for the newer one; the new identity and the AX Raise observation are in [INPUT_ISOLATION.md](INPUT_ISOLATION.md). The manifest was left at the last accepted identity on purpose, because no behavior comparison has been run against the new build.
+
 This page keeps the v1.0 historical baseline. The later v1.1 coordinate compatibility, modifier keys/durations, scroll calibration and explicit reconnection are in the [compatibility acceptance](COMPATIBILITY_V1_1.md).
 
 This update records the local install's identity, interface checks and behavior comparison. The production runtime stays at v1.0.0; the original app is not modified, its private socket is not connected, its proprietary modules are not imported, and system permissions are not reset. Original actions are sent only through the `cua_repl` this session legitimately exposes, and observers read only owned windows and input/window metadata.

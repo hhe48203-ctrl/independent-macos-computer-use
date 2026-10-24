@@ -9,7 +9,7 @@ const zhDir = path.join(root, 'docs/zh-CN');
 // Pages that are deliberately English-only.
 const englishOnly = new Set(['docs/WORKLOG.md', 'docs/ARCHITECTURE.md']);
 // Root pages whose translation lives under docs/zh-CN/ instead of mirroring the path.
-const rootPairs = { 'README.md': 'docs/zh-CN/README.md', 'AGENTS.md': 'docs/zh-CN/AGENTS.md' };
+const rootPairs = { 'README.md': 'docs/zh-CN/README.md', 'AGENTS.md': 'docs/zh-CN/AGENTS.md', 'docs/README.md': 'docs/zh-CN/INDEX.md' };
 
 export function englishPages() {
   const pages = ['README.md', 'AGENTS.md', ...readdirSync(path.join(root, 'docs'))
@@ -23,6 +23,7 @@ export function counterpart(page) {
   if (rootPairs[page]) return rootPairs[page];
   if (page.startsWith('docs/zh-CN/')) {
     const name = page.slice('docs/zh-CN/'.length);
+    if (name === 'INDEX.md') return 'docs/README.md';
     return rootNames.has(name) ? name : `docs/${name}`;
   }
   return page.replace(/^docs\//, 'docs/zh-CN/');

@@ -2,6 +2,8 @@
 
 [English version](../ORIGINAL_BASELINE.md)
 
+> **本日期之后已被取代。** 安装物已变为 Codex `26.1021.31345`（build 21828）、`@oai/sky` 0.7.13、原生 SHA-256 `47ad8bdd901e4e55de649c319e8590eda3308f5f69c11d75486e13bd90bedeb7`，故 `node scripts/reference-baseline.mjs --check` 现在退出码为1。下文只描述 `26.1016.61520` 版本，不能作为更新版本的证据；新身份与 AX Raise 观测见 [INPUT_ISOLATION.md](INPUT_ISOLATION.md)。清单有意保留在最后验收的身份上，因为新版本尚未做行为对照。
+
 本页保留 v1.0 历史基线。后续 v1.1 坐标兼容、修饰键/时长、滚动校准与显式重连见 [兼容改进验收](COMPATIBILITY_V1_1.md)。
 
 本次更新的是本机安装物的身份、接口核对与行为对照。生产运行时保持 v1.0.0，不改原版应用，不连接其私有 socket，不导入其专有模块，也不重置系统权限。原版动作只通过当前会话正常提供的 `cua_repl` 发出，观察器只读取自建窗口和输入/窗口元数据。

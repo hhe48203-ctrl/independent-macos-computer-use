@@ -1,6 +1,6 @@
 # Documentation index
 
-[中文版本](zh-CN/README.md)
+[中文版本](zh-CN/INDEX.md)
 
 English is the default language for this repository's documentation. Chinese translations live under [`zh-CN/`](zh-CN/) and mirror the same file names, so every page has a link to its counterpart at the top.
 
@@ -17,13 +17,17 @@ English is the default language for this repository's documentation. Chinese tra
 
 | Document | What it covers |
 | --- | --- |
-| [VALIDATION.md](VALIDATION.md) | v1.0 and v1.1 local acceptance, deliverable verification, uncovered scope |
+| [VALIDATION.md](VALIDATION.md) | per-version local acceptance (v1.0–v1.3), deliverable verification, uncovered scope |
+| [INPUT_ISOLATION.md](INPUT_ISOLATION.md) | v1.2 input-context and original AX Raise investigation, cooperative profile |
+| [CURSOR_OCCLUSION.md](CURSOR_OCCLUSION.md) | v1.3 target-aware cursor visibility, clipping rules and limits |
 | [VALIDATION_V03.md](VALIDATION_V03.md) | v0.3 acceptance and the retained v0.1/v0.2 history |
 | [FOCUS_FIDELITY.md](FOCUS_FIDELITY.md) | background events, focus observation, corrections and human rounds |
 | [BACKGROUND.md](BACKGROUND.md) | background mechanisms, test entry points and rejected approaches |
 | [REPL_CURSOR_RESEARCH.md](REPL_CURSOR_RESEARCH.md) | REPL and cursor evidence, REA limits, feedback history |
-| [validation-index.json](validation-index.json) | current evidence index |
+| [validation-index.json](validation-index.json) | v1.0 evidence index |
 | [validation-index-v1.1.json](validation-index-v1.1.json) | v1.1 evidence index and release gate |
+| [validation-index-v1.2.json](validation-index-v1.2.json) | v1.2 evidence index and gate |
+| [validation-index-v1.3.json](validation-index-v1.3.json) | current v1.3 evidence index and gate |
 | [validation-index-v03.json](validation-index-v03.json) | v0.3 historical index |
 
 ## Reference: the original app
@@ -43,13 +47,13 @@ English is the default language for this repository's documentation. Chinese tra
 
 | Document | What it covers |
 | --- | --- |
-| [RELEASE_NOTES.md](RELEASE_NOTES.md) | v1.0.0 notes plus retained v0.3 notes |
+| [RELEASE_NOTES.md](RELEASE_NOTES.md) | v1.1–v1.3 notes plus retained v1.0 and v0.3 notes |
 | [REPL_CURSOR_PLAN.md](REPL_CURSOR_PLAN.md) | the acceptance plan that produced v1.0 |
 | [WORKLOG.md](WORKLOG.md) | chronological work log (English only) |
 
 ## Languages
 
-`docs/zh-CN/` contains the Chinese translations of every page above. It is a translation, not a second source of truth: when a page changes, update the English page first and bring the translation along. Documents that are only English (`WORKLOG.md`, `ARCHITECTURE.md`) have no Chinese counterpart by design.
+`docs/zh-CN/` contains the Chinese translations of every page above (this index is [`zh-CN/INDEX.md`](zh-CN/INDEX.md), and the root README's translation is [`zh-CN/README.md`](zh-CN/README.md)). It is a translation, not a second source of truth: when a page changes, update the English page first and bring the translation along. Documents that are only English (`WORKLOG.md`, `ARCHITECTURE.md`) have no Chinese counterpart by design.
 
 `npm run check:docs` (also part of `npm test`) verifies that every relative link resolves, that each English page has a Chinese counterpart, and that each pair links to the other, so a moved or renamed page cannot silently break the set.
 

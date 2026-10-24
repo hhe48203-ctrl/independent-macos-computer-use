@@ -1,6 +1,34 @@
-# v1.0.0 — cua REPL and a continuous independent cursor
+# v1.3.0 — target-aware cursor visibility
 
 [中文版本](zh-CN/RELEASE_NOTES.md)
+
+The cursor now respects the target window's exposed area by default: a covered anchor hides the glyph and an occluding edge clips it, while motion, clicks, drags, scrolling and typing continue normally. Occlusion alone never cancels an action. `CU_AGENT_CURSOR_VISIBILITY=always` restores the earlier top-level overlay, and the setting is independent of `CU_AGENT_CURSOR_STYLE`. Geometry is sampled from the public window inventory at about 60 Hz, so moving a cover reveals or hides a stationary cursor without a new action.
+
+Acceptance: 51 regression checks with no skips, plus live fully covered operations and an extracted-ZIP run; pixel behavior at 1× and 2× is verified offscreen for both styles and their glow, including empty and partial clips and multiple occluders. A visible, partially clipped live-window screenshot comparison is **not** claimed, and no new human IME acceptance belongs to this drawing-only change. Limits in [CURSOR_OCCLUSION.md](CURSOR_OCCLUSION.md); index in [validation-index-v1.3.json](validation-index-v1.3.json).
+
+---
+
+# v1.2.0 — cooperative input profile
+
+[中文版本](zh-CN/RELEASE_NOTES.md)
+
+Synthetic AppKit activation is no longer part of the default configuration: `setup-pi.mjs` now separates real event delivery from the experimental activation route, and only `--experimental-appkit-focus` opts back in. Concurrent use prefers verified AX text insertion, `pressKey('CMD+A')`, `selectText(...)` and ordinary `click(index)`; inactive AppKit apps can ignore some raw menu shortcuts and text-selection drags, and those attempts stay recorded as failures rather than being retried with activation.
+
+Acceptance: 49 regression checks with no skips, a packaged five-scenario gate, and a new single-participant cooperative comparison (10.001 s idle, 20.551 s active, 30 operations, zero synthetic activation sessions) that the participant accepted; no input-source/case difficulty or window raising was reported. That is not an exact foreground-character acceptance and does not prove the unique historical IME cause or the original AX Raise branch. See [INPUT_ISOLATION.md](INPUT_ISOLATION.md) and [validation-index-v1.2.json](validation-index-v1.2.json).
+
+---
+
+# v1.1.0 — original coordinate, modifier and scroll compatibility
+
+[中文版本](zh-CN/RELEASE_NOTES.md)
+
+Adds the original screenshot-pixel coordinate mode, real modifier-key multi-select and 0..5000 ms key/button holds with release on cancellation, calibrated vertical scrolling, and explicit restart reconnection. Defaults are unchanged: `adaptive` coordinates, strict PID/window binding, and `legacy` still restores the older 0.8 scroll coefficient.
+
+Acceptance: 39 regression checks with no skips, 20 scroll cases matching real offsets, packaged and source-archive runs of document, modifier/hold/cancel and reconnect scenarios. Horizontal scrolling is still not claimed compatible, and no new human long-hold acceptance was added. See [COMPATIBILITY_V1_1.md](COMPATIBILITY_V1_1.md) and [validation-index-v1.1.json](validation-index-v1.1.json).
+
+---
+
+# v1.0.0 — cua REPL and a continuous independent cursor
 
 The public MCP interface moved from 17 `cu_*` tools to `js`/`js_reset`; existing clients must migrate (scripts and syntax in JS_API.md). Top-level `await`, `var`/`let`/`const` and app objects are genuinely preserved, AX diffs and rich screenshots are emitted automatically, and timeout/cancel/reset have bounded cleanup.
 

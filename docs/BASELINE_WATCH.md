@@ -60,6 +60,8 @@ Exit codes: `0` no drift, `1` drift detected, `2` inconclusive (signal unreachab
 
 `ci/upstream-watch.json` records the upstream versions **confirmed by the current baseline** (`chatgpt-cask` = the locally accepted `26.1016.61520`). The Homebrew cask is already at `26.1016.62342`, so upstream is ahead of the baseline we accepted — a real, actionable drift that the first run reports instead of silently ignoring.
 
+Current state (2026-10-24): the tracked issue is open, and the installed app also moved past the recorded baseline — `reference-baseline.mjs --check` exits 1 with the install at `26.1021.31345` / sky 0.7.13. The manifest is intentionally not refreshed until a behavior comparison for that build exists, so both signals now agree that the baseline needs another round of work.
+
 ## Limits
 
 - The check is hash/version based and **is not behavioral equivalence**; a new version must re-run the behavior comparison before equivalence can be claimed.

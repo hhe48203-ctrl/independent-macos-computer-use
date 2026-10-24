@@ -1,6 +1,31 @@
-# v1.0.0 — cua REPL 与连续独立光标
+# v1.3.0 — 跟随目标遮挡的光标可见性
 
 [English version](../RELEASE_NOTES.md)
+
+光标默认遵守目标窗口的可见区域：覆盖的锚点隐藏整个字形，遮挡边缘会裁剪绘制，而移动、点击、拖动、滚动与键入照常进行。仅因遮挡绝不取消动作。`CU_AGENT_CURSOR_VISIBILITY=always` 恢复此前的顶层进度覆盖层，该设置与 `CU_AGENT_CURSOR_STYLE` 相互独立。几何以约60Hz从公开窗口清单采样，因此移动遮挡窗口即可让静止的光标隐藏或显示，无需新动作。
+
+验收：51项回归全部通过且无跳过，另有实时完全遮挡操作与仓库外解压 ZIP 验证；1× 与 2× 下的像素行为以离屏位图核对两种样式及其光晕，包含空区域、部分裁剪和多个遮挡者。**不声称**完成可见的部分裁剪实时截图对照，这次纯绘制改动也不附带新的人机输入法验收。限制见 [CURSOR_OCCLUSION.md](CURSOR_OCCLUSION.md)，索引见 [validation-index-v1.3.json](../validation-index-v1.3.json)。
+
+---
+
+# v1.2.0 — 协作式输入配置
+
+
+合成 AppKit 激活不再属于默认配置：`setup-pi.mjs` 把真实事件投递与实验性激活路径分开，只有 `--experimental-appkit-focus` 才会重新启用旧路径。并用时优先使用已验证的 AX 文本插入、`pressKey('CMD+A')`、`selectText(...)` 和普通 `click(index)`；未激活的 AppKit 应用可能忽略部分原始菜单快捷键与文本拖动选择，这些尝试仍记录为失败，不会改用激活后重试。
+
+验收：49项回归全部通过且无跳过，交付包五项场景门槛通过，并完成一次参与者接受的协作式对照（10.001秒空闲、20.551秒活动、30次操作、零合成激活会话），未报告输入源/大小写困难或窗口抬升。这不是逐字符前台验收，也不能证明历史输入法问题的唯一原因或原版 AX Raise 分支。详见 [INPUT_ISOLATION.md](INPUT_ISOLATION.md) 与 [validation-index-v1.2.json](../validation-index-v1.2.json)。
+
+---
+
+# v1.1.0 — 原版坐标、修饰键与滚动兼容
+
+增加原版截图像素坐标模式、真实修饰键多选与0..5000毫秒按键/按钮保持（取消时释放）、垂直滚动校准，以及显式重启重连。默认保持 `adaptive` 坐标、严格 PID/窗口绑定，`legacy` 仍可恢复旧的0.8滚动系数。
+
+验收：39项回归全部通过且无跳过，20组滚动与真实偏移一致，交付包与源码包分别运行文档、修饰键/保持/取消和重连场景。水平滚动仍不宣称兼容，也没有新增真人长按验收。详见 [COMPATIBILITY_V1_1.md](COMPATIBILITY_V1_1.md) 与 [validation-index-v1.1.json](../validation-index-v1.1.json)。
+
+---
+
+# v1.0.0 — cua REPL 与连续独立光标
 
 公开 MCP 接口从17个 cu_* 工具变为 js/js_reset；旧客户端须迁移，脚本与语法见 JS_API.md。真正保留顶层 await、var/let/const 和应用对象，自动输出 AX 差分与富截图；超时/取消/重置有界清理。
 
