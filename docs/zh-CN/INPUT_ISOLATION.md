@@ -39,4 +39,4 @@ node scripts/focus-original-controller.mjs
 
 此前测试调度的ps检查与编译之间存在竞态。现已用跨进程原子租约覆盖夹具生命周期，支持嵌套重连；构建也会拒绝占用中的输出目录。第二进程拒绝与正常释放均有回归检查。一轮重叠实验已明确改记为无法判定。歧义/缺失的测试文字、未激活时被忽略的原生动作、pi最初读回验证中的JavaScript错误也保留为失败，不用后续通过改写。
 
-没有新增真人中英文/大小写切换验收。移除观测到的激活路径是实际规避措施，不证明任意应用下真人输入都无损。原版Raise决策的精确触发条件和历史输入法困难的唯一原因仍未完全确认。精简数据与本机路径见 [input-isolation-evidence.json](../input-isolation-evidence.json)；此前[v1.1对照](COMPATIBILITY_V1_1.md)及[v1真人记录](VALIDATION.md)保留为历史证据。
+随后完成了真人并用对照：空闲10.001秒、后台20.551秒，两阶段间有等待开始信号的空档。30次后台操作均未创建局部AppKit激活会话；两阶段记录到Canadian/SCIM输入源切换，后台阶段记录到Caps Lock/Globe状态。后台区间76条key-down元数据中，62条来自真人并投向Codex，14条来自helper并投向测试应用。参与者确认“两阶段都正常，没有窗口升层”，并明确接受“可以认为解决这个问题了”。没有读取前台草稿或逐字读回。此单人验收不外推到任意应用及实验长按。原版Raise决策的精确触发条件和历史输入法困难的唯一原因仍未完全确认。精简数据与本机路径见 [input-isolation-evidence.json](../input-isolation-evidence.json)；此前[v1.1对照](COMPATIBILITY_V1_1.md)及[v1真人记录](VALIDATION.md)保留为历史证据。

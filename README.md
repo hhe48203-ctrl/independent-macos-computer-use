@@ -90,4 +90,4 @@ Architecture and research: [REPL/cursor evidence](docs/REPL_CURSOR_RESEARCH.md),
 
 The original baseline was refreshed on 2026-10-22 to App 26.1016.61520 and sky 0.7.12. Interface differences, the original's 9/10 versus the independent 10/10 behavior results, the re-derived Unicode function and reproduction commands are in the [current original baseline](docs/ORIGINAL_BASELINE.md); that page keeps the v1.0 historical comparison. The v1.1 implementation, multi-window/multi-app scroll data, original raise failures and new-interface examples are in the [compatibility acceptance](docs/COMPATIBILITY_V1_1.md). The existing v1.0.0 tag stays.
 
-The v1.2 investigation and cooperative configuration are documented in [input isolation](docs/INPUT_ISOLATION.md). No new human IME acceptance is claimed.
+The v1.2 investigation and cooperative configuration are documented in [input isolation](docs/INPUT_ISOLATION.md). The cooperative profile has been accepted by the participant after a fresh baseline/background IME and case-switching comparison.

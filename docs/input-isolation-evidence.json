@@ -1,6 +1,6 @@
 {
   "date": "2026-10-24",
-  "newHumanIMEAcceptance": false,
+  "newHumanIMEAcceptance": true,
   "installedReference": {
     "app": "26.1021.31345",
     "sky": "0.7.13",
@@ -384,11 +384,27 @@
         "toolErrors": 0,
         "uniqueRecipientKeyDown": 3
       }
+    },
+    "humanComparison": {
+      "path": "artifacts/ime-concurrency-1792826291892/report.json",
+      "sha256": "699730f0b93a75c93d5e02a5bb500d085299e65f955ce37be34715a708f3a724",
+      "status": "accepted-human-cooperative-comparison",
+      "summary": {
+        "operations": 30,
+        "syntheticAppKitSessions": 0,
+        "baselineSeconds": 10.000999927520752,
+        "activeSeconds": 20.551000118255615,
+        "humanKeyDownDuringBackground": 62,
+        "helperKeyDownDuringBackground": 14,
+        "characterIntegrityAutomaticallyVerified": false
+      },
+      "feedback": "两阶段都正常，没有窗口升层",
+      "acceptance": "可以认为解决这个问题了"
     }
   },
   "limits": [
     "Receiver AX Raise stack does not reveal the initiating AX audit token or the exact original policy condition.",
-    "No new human IME switch or Caps Lock comparison; no persistent stuck global modifier established.",
+    "Human cooperative comparison accepted on this Mac; no exact foreground character proof or new experimental-long-hold comparison; no persistent stuck global modifier established.",
     "Inactive raw CMD+A/text drag failed; cooperative workflows use semantic equivalents."
   ]
 }
