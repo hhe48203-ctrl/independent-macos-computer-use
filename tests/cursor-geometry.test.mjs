@@ -24,6 +24,10 @@ ${source}
     for i in 1..<points.count {precondition(points[i].x>points[i-1].x && points[i].y<points[i-1].y);precondition(hypot(points[i].x-points[i-1].x,points[i].y-points[i-1].y)<40)}
     precondition(AgentCursor.motionDuration(distance:10)<AgentCursor.motionDuration(distance:800))
     precondition(AgentCursor.motionDuration(distance:8000)<=0.55)
+    precondition(!AgentCursor.needsOrdering(visible:true,panelIndex:2,targetIndex:5))
+    precondition(AgentCursor.needsOrdering(visible:true,panelIndex:6,targetIndex:5))
+    precondition(AgentCursor.needsOrdering(visible:false,panelIndex:nil,targetIndex:5))
+    precondition(!AgentCursor.needsOrdering(visible:true,panelIndex:nil,targetIndex:5))
     let target=CGRect(x:-100,y:100,width:400,height:300),footprint=CGRect(x:0,y:150,width:80,height:80)
     let screens=[CGRect(x:-200,y:0,width:1000,height:900)]
     func visible(_ point:CGPoint,_ covers:[CGRect],_ area:CGRect=footprint)->[CGRect]{AgentCursorRegion.visible(footprint:area,point:point,target:target,covers:covers,screens:screens)}

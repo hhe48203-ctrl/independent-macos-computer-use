@@ -143,6 +143,12 @@ final class AgentCursorView: NSView {
         let t=min(1,max(0,progress));let eased=t*t*(3-2*t)
         return CGPoint(x:from.x+(to.x-from.x)*eased,y:from.y+(to.y-from.y)*eased)
     }
+    static func needsOrdering(visible:Bool,panelIndex:Int?,targetIndex:Int)->Bool {
+        // A user may bring the target itself in front of an existing panel.
+        // Restore only our own panel in that case; do not repeatedly reorder
+        // it when a different foreground window moves in front.
+        !visible || panelIndex.map{$0>targetIndex} == true
+    }
     private func currentFrame(pid:pid_t,windowID:CGWindowID)->CGRect? {
         guard NSRunningApplication(processIdentifier:pid)?.isHidden == false,
               let rows=CGWindowListCopyWindowInfo([.optionOnScreenOnly,.excludeDesktopElements],kCGNullWindowID) as? [Object],
@@ -245,11 +251,13 @@ final class AgentCursorView: NSView {
         visibleRects=local.map{$0.offsetBy(dx:footprint.minX,dy:footprint.minY)}
         guard !local.isEmpty else{visibilityReason="occluded-or-outside";panel.orderOut(nil);return}
         visibilityReason=visibleRects.reduce(0){$0+$1.width*$1.height}<footprint.width*footprint.height ? "clipped":"visible"
-        // Order only our own nonactivating panel when becoming visible. Never
+        // Order only our own panel when becoming visible or overtaken by the
+        // target itself. Never
         // order relative to another process, change a target level, or reorder
         // an already-visible panel on each tick. New front windows can cover
         // the normal-level panel immediately, before the next mask sample.
-        if !panel.isVisible {panel.orderFrontRegardless()}
+        let panelIndex=rows.firstIndex{($0[kCGWindowNumber as String] as? Int)==panel.windowNumber}
+        if Self.needsOrdering(visible:panel.isVisible,panelIndex:panelIndex,targetIndex:index) {panel.orderFrontRegardless()}
     }
     private func track() {
         guard Date().timeIntervalSince(touched)<30,let frame=currentFrame(pid:pid,windowID:windowID) else {hide();return}

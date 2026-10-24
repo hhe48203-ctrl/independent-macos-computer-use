@@ -42,9 +42,10 @@ try{
   const afterOrder=order();assert.ok(beforeOrder.cover>=0&&beforeOrder.target>beforeOrder.cover);assert.ok(afterOrder.cover>=0&&afterOrder.target>afterOrder.cover);
   checks.push('target remains behind the cover without changing foreground focus');
   await client.callTool({name:'js_reset',arguments:{}});assert.equal((await state()).visible,false);
-  const after=proof();assert.equal(after.frontPid,before.frontPid);
-  assert.ok(fixture.read('target','samples').every(s=>s.frontPid!==target.pid));
-  report={...report,status:'passed',before,after,beforeOrder,afterOrder,delivered,scope:'Fully covered owned windows kept behind the foreground. Actual click/drag/scroll, continuous hidden movement, reset, frontmost process and target/cover order checked. Exposed and partial glyph/glow clipping is verified by the offscreen raster test; no visible-window raising is used.'};
+  const after=proof(),samples=fixture.read('target','samples');
+  assert.ok(samples.every(s=>s.frontPid!==target.pid&&s.frontPid!==cover.pid));
+  const foreground={beforePID:before.frontPid,afterPID:after.frontPid,observedPIDs:[...new Set(samples.map(s=>s.frontPid))],ownedFixtureForegroundSamples:0,unchangedAcrossRun:before.frontPid===after.frontPid,note:'External foreground transitions are recorded without attributing them to human or helper. Native input calls retain their own isolation checks.'};
+  report={...report,status:'passed',before,after,beforeOrder,afterOrder,delivered,foreground,scope:'Fully covered owned windows kept behind the foreground. Actual click/drag/scroll, continuous hidden movement, reset, absence of fixture foreground samples and target/cover order checked. Exposed and partial glyph/glow clipping is verified by the offscreen raster test; no visible-window raising is used.'};
 }catch(error){report={...report,status:'failed',error:{message:error.message,stack:error.stack}};process.exitCode=1;}
 finally{
   writeFileSync(directory+'/report.json',JSON.stringify(report,null,2));writeFileSync(directory+'/calls.json',JSON.stringify(calls,null,2));

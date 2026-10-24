@@ -1,0 +1,32 @@
+{
+  "version": "1.3.0",
+  "checks": {
+    "regression": {
+      "passed": 51,
+      "skipped": 0
+    },
+    "coveredCursor": "artifacts/release-verification-v1.3/covered-cursor.json",
+    "packagedCursor": "artifacts/release-verification-v1.3/packaged-cursor.json",
+    "sourcePackage": "artifacts/release-verification-v1.3/source-package.json",
+    "releaseGate": "artifacts/release-verification-v1.3/release-gate.json"
+  },
+  "newHumanIMEAcceptance": false,
+  "pixelScope": "Production AgentCursorView offscreen at 1x and 2x, ring and arrow including glow; no passing visible live-window screenshot comparison is claimed.",
+  "historicalIndices": [
+    "docs/validation-index-v1.2.json"
+  ],
+  "evidenceSources": [
+    "artifacts/release-verification-v1.3/covered-cursor.json",
+    "artifacts/release-verification-v1.3/packaged-cursor.json",
+    "artifacts/release-verification-v1.3/packaged-covered-cursor.json",
+    "artifacts/release-verification-v1.3/source-package.json",
+    "artifacts/release-verification-v1.3/prior-attempts.json",
+    "artifacts/release-verification-v1.3/release-gate.json"
+  ],
+  "limits": [
+    "Window bounds are conservative for translucent windows and rounded corners.",
+    "Occlusion metadata is sampled at about 60 Hz; no atomic per-pixel compositor mask is claimed.",
+    "Early raised/floating fixture setup was removed; failed attempts retained.",
+    "Live acceptance covers fully occluded owned windows on one Mac; visible partial clipping is offscreen pixel acceptance."
+  ]
+}
