@@ -16,6 +16,10 @@ func fixtureEventRecord(_ event:NSEvent,elapsed:TimeInterval)->[String:Any] {
 
 final class FixtureApplication:NSApplication {
     override func sendEvent(_ event:NSEvent) {
+        #if CU_FOCUS_DIAGNOSTICS
+        FocusDiagnostics.event(event,phase:"sendEvent-before")
+        defer{FocusDiagnostics.event(event,phase:"sendEvent-after")}
+        #endif
         if event.type == .keyDown || event.type == .keyUp {
             (delegate as? BackgroundFixture)?.recordQueueEvent(event,phase:"sendEvent-entry")
         }
@@ -73,6 +77,9 @@ final class BackgroundFixture: NSObject, NSApplicationDelegate, NSTextFieldDeleg
         events.append(row)
     }
     func applicationDidFinishLaunching(_ notification: Notification) {
+        #if CU_FOCUS_DIAGNOSTICS
+        FocusDiagnostics.install(directory.appendingPathComponent(role+"-focus-diagnostics.json").path)
+        #endif
         let menu = NSMenu();let appItem=NSMenuItem();let applicationMenu=NSMenu(title:"Application")
         applicationMenu.addItem(withTitle:"Quit",action:#selector(NSApplication.terminate(_:)),keyEquivalent:"q")
         appItem.submenu=applicationMenu;menu.addItem(appItem)
@@ -84,7 +91,11 @@ final class BackgroundFixture: NSObject, NSApplicationDelegate, NSTextFieldDeleg
         let rect = cover ? NSRect(x: 80, y: 70, width: 1300, height: 800) : NSRect(x: 260, y: 230, width: 640, height: 460)
         var style:NSWindow.StyleMask=[.titled,.closable]
         if CommandLine.arguments.contains("--resizable") {style.insert(.resizable)}
+        #if CU_FOCUS_DIAGNOSTICS
+        window = FocusDiagnosticWindow(contentRect:rect,styleMask:style,backing:.buffered,defer:false)
+        #else
         window = NSWindow(contentRect: rect, styleMask: style, backing: .buffered, defer: false)
+        #endif
         if CommandLine.arguments.contains("--all-spaces"){window.collectionBehavior=[.canJoinAllSpaces,.stationary]}
         window.title = cover ? "Background Automation — Foreground Workspace" : "Background Automation — Target"
         window.isOpaque = true; window.backgroundColor = cover ? .windowBackgroundColor : .controlBackgroundColor
@@ -147,6 +158,9 @@ final class BackgroundFixture: NSObject, NSApplicationDelegate, NSTextFieldDeleg
     @objc func apply() { count += 1; result.stringValue = "Result: \(text.stringValue) [\(count)]"; save() }
     func controlTextDidChange(_ obj: Notification) { save() }
     func save() {
+        #if CU_FOCUS_DIAGNOSTICS
+        FocusDiagnostics.sample();FocusDiagnostics.save()
+        #endif
         let state: [String: Any] = ["pid": ProcessInfo.processInfo.processIdentifier, "windowId": window.windowNumber, "role": role, "input": text.stringValue, "result": result.stringValue, "count": count, "clicks": pad.clicks, "scrolls": pad.scrolls, "drags": pad.drags, "releases":pad.releases, "active": NSApp.isActive, "key": window.isKeyWindow, "epoch":started.timeIntervalSince1970,
             "firstResponderClass":window.firstResponder.map{String(describing:type(of:$0))} ?? "none","textEditorPresent":text.currentEditor() != nil,"applicationClass":String(describing:type(of:NSApp!)),"documentInput":documentInput?.string as Any? ?? NSNull(),"selectedRows":selectionTable.map{Array($0.selectedRowIndexes)} as Any? ?? NSNull(),
             "selectionRowPoints":selectionTable.map{table in (0..<4).map{row -> [Double] in let p=table.convert(NSPoint(x:40,y:table.rect(ofRow:row).midY),to:nil);return [p.x,window.frame.height-p.y]}} as Any? ?? NSNull(),
