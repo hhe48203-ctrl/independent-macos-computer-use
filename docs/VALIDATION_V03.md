@@ -44,7 +44,7 @@ Not tested: Intel Macs, macOS 14/15, real multiple displays, all Electron/browse
 
 ## v0.2 background acceptance (second round)
 
-Full report: [background-1792223272595/report.json](../artifacts/background-1792223272595/report.json). This is the standard-MCP measurement after the internal activation notices were removed; it used macOS's own TextEdit and Calculator plus an independent AppKit fixture.
+Full report: `artifacts/background-1792223272595/report.json`. This is the standard-MCP measurement after the internal activation notices were removed; it used macOS's own TextEdit and Calculator plus an independent AppKit fixture.
 
 - With the target fully covered, its AX, PNG and Vision OCR content were correct.
 - Background Unicode insertion, UTF-16 selection replacement and real NSScrollView/document scrolling read-backs passed for both AppKit and TextEdit.
@@ -60,7 +60,7 @@ The second human round lasted 31.718 seconds, 60 background AX button actions co
 
 ## Final default background route: after fixing the test's window stealing
 
-The [final quiet report](../artifacts/background-safe-1792223945398/report.json) contains 13 passed checks and 29 real MCP operations. Native `foregroundEnabled=false`; owned accessory windows were ordered back and relatively ordered with no activate, no `cu_focus` and no global input. The foreground was Codex PID 60201 at start, at end and in continuous sampling.
+The `artifacts/background-safe-1792223945398/report.json` contains 13 passed checks and 29 real MCP operations. Native `foregroundEnabled=false`; owned accessory windows were ordered back and relatively ordered with no activate, no `cu_focus` and no global input. The foreground was Codex PID 60201 at start, at end and in continuous sampling.
 
 Reusing still-live test windows without launching, focusing or rearranging stock apps: Calculator stayed fully covered under the old TextEdit and the AX button computed 56; the old owned TextEdit document stayed fully covered under the current Codex window and AX replacement of 110 lines of test text, Chinese/emoji replacement, directed scrolling and scrollbar read-back all passed. No user window layout was changed to achieve coverage.
 

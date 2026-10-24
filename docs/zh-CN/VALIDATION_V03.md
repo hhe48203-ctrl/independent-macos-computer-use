@@ -45,7 +45,7 @@ v0.1 的 pi 运行记录了 7 次 MCP 调用：status → windows → snapshot �
 
 ## v0.2 后台验收（第二轮）
 
-完整报告：[background-1792223272595/report.json](../../artifacts/background-1792223272595/report.json)。这是删除内部激活通知后的标准 MCP 实测；测试使用 macOS 自带 TextEdit、Calculator 和独立 AppKit fixture。
+完整报告：`artifacts/background-1792223272595/report.json`。这是删除内部激活通知后的标准 MCP 实测；测试使用 macOS 自带 TextEdit、Calculator 和独立 AppKit fixture。
 
 - 完全遮挡时目标 AX、PNG 和 Vision OCR 内容正确。
 - AppKit 与 TextEdit 的后台 Unicode 插入、UTF-16 选择替换和真正的 NSScrollView/文档滚动读回通过。
@@ -63,7 +63,7 @@ v0.1 的 pi 运行记录了 7 次 MCP 调用：status → windows → snapshot �
 
 ## 最终默认后台路径：修正测试抢窗口后
 
-[最终静默报告](../../artifacts/background-safe-1792223945398/report.json)包含13个通过检查、29次真实 MCP 操作。原生 foregroundEnabled=false；自建 accessory 窗口 orderBack 后相对排序，没有 activate、cu_focus 或全局输入。开始/结束以及连续采样的前台始终为 Codex PID60201。
+`artifacts/background-safe-1792223945398/report.json`包含13个通过检查、29次真实 MCP 操作。原生 foregroundEnabled=false；自建 accessory 窗口 orderBack 后相对排序，没有 activate、cu_focus 或全局输入。开始/结束以及连续采样的前台始终为 Codex PID60201。
 
 复用仍存活的测试窗口，不启动/聚焦/调整系统应用：Calculator 在旧 TextEdit 下完整遮挡，AX按钮计算56；旧自建 TextEdit 文档在当前 Codex 窗口下完整遮挡，AX替换110行测试文字、中文/emoji替换、定向滚动及滚动条读回通过。没有为了达成遮挡而改变用户窗口布局。
 

@@ -24,7 +24,7 @@ const running=spawnSync('/bin/ps',['-axo','pid=,comm='],{encoding:'utf8'});
 const canonical=p=>{try{return realpathSync(p)}catch{return path.resolve(p)}};
 if(running.status!==0||running.stdout.split('\n').some(line=>canonical(line.trim().replace(/^\d+\s+/,'')).startsWith(canonical(staging)+'/')))throw Error('A staged plugin executable may be running; no staging files were replaced. Close that client before packaging.');
 rmSync(staging, { recursive: true, force: true }); mkdirSync(path.join(destination, 'src'), { recursive: true });
-for (const file of ['plugin.json', 'mcp.json', 'LICENSE', 'skills', 'docs', 'examples']) cpSync(path.join(root, file), path.join(destination, file), { recursive: true });
+for (const file of ['plugin.json', 'mcp.json', 'AGENTS.md', 'LICENSE', 'skills', 'docs', 'examples']) cpSync(path.join(root, file), path.join(destination, file), { recursive: true });
 const helper = path.join(root, '.build/Local Computer Use.app');
 if (!existsSync(helper)) throw new Error('Run npm run build before packaging');
 cpSync(helper, path.join(destination, '.build/Local Computer Use.app'), { recursive: true });
@@ -80,7 +80,7 @@ try {
 // Source archive is assembled from explicit first-party paths only.
 const sourceStage = path.join(dist, 'source'); rmSync(sourceStage, { recursive: true, force: true });
 const sourceRoot = path.join(sourceStage, identity.name); mkdirSync(sourceRoot, { recursive: true });
-for (const file of ['package.json', 'package-lock.json', 'plugin.json', 'mcp.json', 'README.md', 'LICENSE', '.gitignore', 'src', 'native', 'scripts', 'tests', 'docs', 'examples', 'skills']) cpSync(path.join(root, file), path.join(sourceRoot, file), { recursive: true });
+for (const file of ['package.json', 'package-lock.json', 'plugin.json', 'mcp.json', 'AGENTS.md', 'README.md', 'LICENSE', '.gitignore', 'src', 'native', 'scripts', 'tests', 'docs', 'examples', 'skills']) cpSync(path.join(root, file), path.join(sourceRoot, file), { recursive: true });
 const sourceTar = path.join(dist, `${name}-source.tar.gz`);
 run('/usr/bin/tar', ['-czf', sourceTar, '-C', sourceStage, identity.name]);
 const artifactManifest = [pluginZip, sourceTar].map(file => ({ file: path.basename(file), bytes: readFileSync(file).length, sha256: createHash('sha256').update(readFileSync(file)).digest('hex') }));
