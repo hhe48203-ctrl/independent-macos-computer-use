@@ -45,6 +45,15 @@ export async function startBackgroundFixture(directory,{roles=['target','cover']
     const state=JSON.parse(readFileSync(stateFile,'utf8'));
     if(!child){child={kill(signal){try{process.kill(state.pid,signal)}catch{}},exitCode:null};children.push(child)}
     apps[role]={...state,child};
+    // The state file can precede AX/LaunchServices registration. Pure startup
+    // observations must settle before exposing the fixture to input tests.
+    let stable=0;const deadline=Date.now()+8000;
+    while(Date.now()<deadline&&stable<2){
+      const result=JSON.parse(run(driver,['ready',String(state.pid),String(state.windowId)]));
+      stable=result.ready&&result.bundleId===bundle?stable+1:0;
+      if(stable<2)await new Promise(r=>setTimeout(r,120));
+    }
+    if(stable<2)throw Error('Owned fixture did not finish AX/window registration; no input test was started');
   }
   return {apps,driver,run,read(role,suffix='state'){return JSON.parse(readFileSync(path.join(directory,`${role}-${suffix}.json`),'utf8'))},close(){void closeAndWait().catch(()=>{})},closeAndWait};
   }catch(e){await closeAndWait();throw e}

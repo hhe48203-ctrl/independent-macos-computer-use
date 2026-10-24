@@ -28,6 +28,11 @@ if mode=="restore-setup-foreground" {
     if activationRequested {guard application.activate(options:[]) else{fputs("Normal application activation was refused\n",stderr);exit(2)}}
     let raised=AXUIElementPerformAction(original,kAXRaiseAction as CFString)
     FileHandle.standardOutput.write(try JSONSerialization.data(withJSONObject:["setupOnly":true,"activationRequested":activationRequested,"raiseStatus":raised.rawValue,"originalPID":pid,"originalWindow":Int(args[3])!]))
+}else if mode=="ready" {
+    let root=AXUIElementCreateApplication(pid);AXUIElementSetMessagingTimeout(root,0.2)
+    let id=Int(args[3])!;let w=window(id)
+    let bundle=NSRunningApplication(processIdentifier:pid)?.bundleIdentifier ?? ""
+    FileHandle.standardOutput.write(try JSONSerialization.data(withJSONObject:["ready":w != nil && !bundle.isEmpty,"bundleId":bundle]))
 }else if mode=="layout" {
     guard let w=window(Int(args[3])!) else{fputs("Owned test window not yet available in AX\n",stderr);exit(2)}
     var position=CGPoint(x:Double(args[4])!,y:Double(args[5])!);var size=CGSize(width:Double(args[6])!,height:Double(args[7])!)
