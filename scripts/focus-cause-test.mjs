@@ -32,8 +32,10 @@ try{
  await phase('raw key zero hold',"app.pressKey('Right',{strategy:'event',durationMs:0})");
  await phase('raw key 600ms hold',"app.pressKey('Right',{strategy:'event',durationMs:600})");
  await phase('raw Unicode',"app.typeText('【ctx 中文🙂】',{strategy:'event'})");
- await phase('raw content click',"app.click([100,250],{strategy:'event'})");
- await phase('raw content drag',"app.drag([100,250],[200,260],{duration:0.6})");
+ await phase('semantic select-all',"app.pressKey('CMD+A')");
+ await phase('semantic text selection',`app.selectText(${doc.id},'Scrollable row 2 — background text')`);
+ await phase('raw EventPad click',"app.click([100,250],{strategy:'event'})");
+ await phase('raw EventPad drag',"app.drag([100,250],[200,260],{duration:0.6})");
  report.status=report.phases.some(p=>p.error)?'completed-with-errors':'completed';
 }catch(e){report={...report,status:'failed',error:e.message};process.exitCode=1}
 finally{

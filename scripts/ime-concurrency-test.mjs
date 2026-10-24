@@ -16,7 +16,7 @@ const pause=ms=>new Promise(r=>setTimeout(r,ms));
 async function waitFile(name){const limit=Date.now()+120000;while(!existsSync(directory+'/'+name)){assert.ok(!cancelled,'Test cancelled');assert.ok(Date.now()<limit,'No coordinated start signal');await pause(100)}}
 try{
   fixture=await startBackgroundFixture(directory,{background:true,documentInput:true});const target=fixture.apps.target;
-  repl=await connectRepl({...process.env,CU_ENABLE_FOREGROUND:'0',CU_EXPERIMENTAL_APPKIT_FOCUS:'1',CU_ALLOWED_BUNDLE_IDS:'io.local.computeruse.document-target'});
+  repl=await connectRepl({...process.env,CU_ENABLE_FOREGROUND:'0',CU_EXPERIMENTAL_APPKIT_FOCUS:process.env.CU_TEST_SCOPED_FOCUS==='1'?'1':'0',CU_ALLOWED_BUNDLE_IDS:'io.local.computeruse.document-target'});
   await repl.evaluate(`(async()=>{globalThis.app=await cua.getApp({pid:${target.pid},windowId:${target.windowId}});return {pid:app.pid}})()`);
   const state=parseAX(await repl.evaluate('app.getAXState({emit:false,disableDiffing:true})'));
   const scroll=state.nodes.find(n=>n.identifier==='scroll-area').frame,button=state.nodes.find(n=>n.identifier==='apply-message').id;
@@ -26,11 +26,11 @@ try{
   await waitFile('baseline-start');const baseline=Date.now()/1000;report.status='baseline';save();await pause(10000);report.phases.push({name:'baseline-no-background-operations',start:baseline,end:Date.now()/1000});save();console.log('BASELINE_DONE');
   await waitFile('active-start');const active=Date.now()/1000;report.status='active';save();
   let round=0;
-  const expressions=[()=>`app.pressKey('CMD+Down',{strategy:'event'})`,()=>`app.typeText('【IME ${round} 中文🙂】',{strategy:'event'})`,()=>`app.pressKey('CMD+A',{strategy:'event'})`,()=>`app.pressKey('CMD+Up',{strategy:'event'})`,()=>`app.drag([${scroll.x+20},${scroll.y+15}],[${scroll.x+250},${scroll.y+15}],{duration:0.2})`,()=>`app.scroll([${scroll.x+200},${scroll.y+50}],'down',0.6)`,()=>`app.click(${button},{strategy:'event'})`];
+  const expressions=[()=>`app.pressKey('CMD+Down',{strategy:'event'})`,()=>`app.typeText('【IME ${round} 中文🙂】',{strategy:'event'})`,()=>`app.pressKey('CMD+A')`,()=>`app.pressKey('CMD+Up',{strategy:'event'})`,()=>`app.drag([${scroll.x+20},${scroll.y+15}],[${scroll.x+250},${scroll.y+15}],{duration:0.2})`,()=>`app.scroll([${scroll.x+200},${scroll.y+50}],'down',0.6)`,()=>`app.click(${button})`];
   while(Date.now()/1000-active<20){
     for(const expression of expressions){assert.ok(!cancelled,'Test cancelled');if(Date.now()/1000-active>=20)break;const start=Date.now()/1000;const result=await repl.evaluate(expression());report.operations.push({start,end:Date.now()/1000,result});save();}round++;
   }
-  report.phases.push({name:'raw-background-with-corrected-scope',start:active,end:Date.now()/1000});report.status='completed-awaiting-human-review';save();console.log('IME_DONE');
+  report.phases.push({name:process.env.CU_TEST_SCOPED_FOCUS==='1'?'experimental-appkit-background':'background-without-synthetic-activation',start:active,end:Date.now()/1000});report.status='completed-awaiting-human-review';save();console.log('IME_DONE');
 }catch(error){report={...report,status:'failed',error:error.message};process.exitCode=1;}
 finally{
   await repl?.client.close();fixture?.close();if(observer){observer.kill('SIGTERM');await new Promise(r=>observer.exitCode!==null?r():observer.once('exit',r));}

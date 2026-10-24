@@ -8,7 +8,7 @@ const root=fileURLToPath(new URL('../',import.meta.url)),directory=root+`artifac
 mkdirSync(directory,{recursive:true});
 const fixture=await startBackgroundFixture(directory,{background:true,selectionInput:true});const target=fixture.apps.target;
 const server=process.env.CU_TEST_SERVER??root+'src/server.mjs',cwd=process.env.CU_TEST_CWD??root;
-const repl=await connectRepl({...process.env,CU_ENABLE_FOREGROUND:'0',CU_EXPERIMENTAL_APPKIT_FOCUS:'1',CU_ALLOWED_BUNDLE_IDS:'io.local.computeruse.background-target'},server,cwd);
+const repl=await connectRepl({...process.env,CU_ENABLE_FOREGROUND:'0',CU_EXPERIMENTAL_APPKIT_FOCUS:process.env.CU_TEST_SCOPED_FOCUS==='0'?'0':'1',CU_ALLOWED_BUNDLE_IDS:'io.local.computeruse.background-target'},server,cwd);
 const pause=ms=>new Promise(r=>setTimeout(r,ms));
 let report={status:'running',directory};
 const proof=()=>JSON.parse(fixture.run(fixture.driver,['occlusion',String(target.pid),String(target.windowId),String(fixture.apps.cover.windowId)]));

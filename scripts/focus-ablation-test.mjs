@@ -21,5 +21,7 @@ try{
   const row={mask,result,before,after,contextActivations:trace.filter(e=>e.name==='input-context-activate-before').length,contextDeactivations:trace.filter(e=>e.name==='input-context-deactivate-before').length,orders:trace.filter(e=>['order','orderFront','orderFrontRegardless','makeKeyAndOrderFront'].includes(e.name)),trace};rows.push(row);
   writeFileSync(directory+'/report.json',JSON.stringify({status:'running',rows},null,2));console.log('ABLATION',JSON.stringify({mask,rightAccepted:result.rightAccepted,error:result.keyError??result.error,context:row.contextActivations,covered:after.fullyCovered}));
  }
- writeFileSync(directory+'/report.json',JSON.stringify({status:'completed-observation',rows},null,2));
+ assert.equal(rows.length,8);assert.ok(rows.every(r=>r.result.rightAccepted));
+ assert.ok(rows.every(r=>r.contextActivations===([3,7].includes(r.mask)?1:0)),'Only active-notice + activation-point click should activate the owned text context in this verified fixture');
+ writeFileSync(directory+'/report.json',JSON.stringify({status:'passed-component-ablation',rows},null,2));
 }finally{fixture?.close();console.log('REPORT',directory+'/report.json')}
