@@ -14,8 +14,16 @@ try{
  old.child.kill('SIGTERM');await new Promise(r=>old.child.exitCode!==null?r():old.child.once('exit',r));
  await assert.rejects(repl.evaluate('oldApp.click([50,50])'),/WINDOW_GONE/);
  next=await startBackgroundFixture(directory+'/replacement',{roles:['target'],background:true,allSpaces:true});const t=next.apps.target;assert.notEqual(t.pid,old.pid);
- const candidates=await repl.evaluate('oldApp.reconnect()');assert.ok(candidates.candidates.some(w=>w.windowId===t.windowId&&w.pid===t.pid));
- await new Promise(r=>setTimeout(r,800));
+ let candidates,stable=0;const deadline=Date.now()+8000;
+ // Launch completion precedes WindowServer/LaunchServices registration. Wait
+ // using read-only previews; never retry a mutation or choose another window.
+ while(Date.now()<deadline&&stable<2){
+  candidates=await repl.evaluate('oldApp.reconnect()');
+  const candidate=candidates.candidates.find(w=>w.windowId===t.windowId&&w.pid===t.pid);
+  stable=candidate?.onScreen&&candidate.frame.width===t.nativeWindowFrame.width&&candidate.frame.height===t.nativeWindowFrame.height?stable+1:0;
+  if(stable<2)await new Promise(r=>setTimeout(r,120));
+ }
+ assert.equal(stable,2,'Exact replacement identity and geometry must register before confirmation');
  const connected=await repl.evaluate(`(async()=>{globalThis.app=await oldApp.reconnect({pid:${t.pid},windowId:${t.windowId}});return {pid:app.pid,windowId:app.windowId,mapping:await app.getCoordinateInfo({emit:false}),state:await app.getAXState({emit:false,disableDiffing:true})}})()`);
  assert.equal(connected.pid,t.pid);assert.equal(connected.mapping.mode,'original');assert.equal(connected.mapping.unit,'screenshot pixels');assert.equal(connected.mapping.range.maxXExclusive,640);
  const field=parseAX(connected.state).nodes.find(n=>n.identifier==='message-input');await repl.evaluate(`app.setValue(${field.id},'Reconnected 中文')`);assert.equal(next.read('target').input,'Reconnected 中文');
