@@ -1,0 +1,40 @@
+{
+  "version": "1.2.0",
+  "checks": {
+    "regression": {
+      "passed": 49,
+      "skipped": 0
+    },
+    "cooperativeTrace": "artifacts/release-verification-v1.2/cooperative-trace.json",
+    "cooperativeDocument": "artifacts/release-verification-v1.2/cooperative-document.json",
+    "pi": "artifacts/release-verification-v1.2/pi.json",
+    "packagedMcp": "artifacts/release-verification-v1.2/packaged-repl.json",
+    "sourcePackage": "artifacts/release-verification-v1.2/source-package.json",
+    "releaseGate": "artifacts/release-verification-v1.2/release-gate.json"
+  },
+  "newHumanIMEAcceptance": false,
+  "historicalIndices": [
+    "docs/validation-index.json",
+    "docs/validation-index-v1.1.json"
+  ],
+  "evidenceSources": [
+    "artifacts/release-verification-v1.2/cooperative-trace.json",
+    "artifacts/release-verification-v1.2/cooperative-document.json",
+    "artifacts/release-verification-v1.2/pi.json",
+    "artifacts/release-verification-v1.2/experimental-scope.json",
+    "artifacts/release-verification-v1.2/components-accessory.json",
+    "artifacts/release-verification-v1.2/components-regular.json",
+    "artifacts/release-verification-v1.2/original-raise.json",
+    "artifacts/release-verification-v1.2/original-control.json",
+    "artifacts/release-verification-v1.2/prior-attempts.json",
+    "artifacts/release-verification-v1.2/packaged-repl.json",
+    "artifacts/release-verification-v1.2/source-package.json",
+    "artifacts/release-verification-v1.2/release-gate.json"
+  ],
+  "limits": [
+    "The AX Raise receiver stack does not identify the initiating AX audit token or fully trace the original decision branch.",
+    "The current cooperative workflow avoids synthetic activation, with semantic equivalents for inactive raw menu/text-selection actions.",
+    "No new human IME/Caps Lock, third-party app or physical multidisplay acceptance.",
+    "Overlapping fixtures and failed raw/agent verification attempts remain excluded or failed."
+  ]
+}

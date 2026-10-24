@@ -1,0 +1,394 @@
+{
+  "date": "2026-10-24",
+  "newHumanIMEAcceptance": false,
+  "installedReference": {
+    "app": "26.1021.31345",
+    "sky": "0.7.13",
+    "nativeSHA256": "47ad8bdd901e4e55de649c319e8590eda3308f5f69c11d75486e13bd90bedeb7"
+  },
+  "checks": {
+    "experimentalScope": {
+      "path": "artifacts/focus-cause-1792822212274/report.json",
+      "sha256": "fa5dccd0f95f6e77e36ac4230071eca8bd31c1c7c7b7795ea182d9f19bfe4132",
+      "status": "completed-with-errors",
+      "phases": [
+        {
+          "name": "idle",
+          "contextActivations": 0,
+          "contextDeactivations": 0,
+          "orderCalls": []
+        },
+        {
+          "name": "AX selection",
+          "contextActivations": 0,
+          "contextDeactivations": 0,
+          "error": "{\"error\":{\"code\":\"AMBIGUOUS_TEXT\",\"message\":\"Expected one matching text range; found 100. Use prefix/suffix to disambiguate.\",\"stack\":\"Error: Expected one matching text range; found 100. Use prefix/suffix to disambiguate.\\n    at MessagePort.<anonymous> (file:///Users/aa/Desktop/computer_use_mcp/src/repl-worker.mjs:40:147)\\n    at [nodejs.internal.kHybridDispatch] (node:internal/event_target:843:20)\"}}",
+          "orderCalls": []
+        },
+        {
+          "name": "AX verified text",
+          "contextActivations": 0,
+          "contextDeactivations": 0,
+          "orderCalls": [],
+          "activeDurationMs": null
+        },
+        {
+          "name": "scroll without focus notices",
+          "contextActivations": 0,
+          "contextDeactivations": 0,
+          "orderCalls": [],
+          "activeDurationMs": null
+        },
+        {
+          "name": "raw key zero hold",
+          "contextActivations": 1,
+          "contextDeactivations": 1,
+          "orderCalls": [],
+          "activeDurationMs": 65.55458321236074
+        },
+        {
+          "name": "raw key 600ms hold",
+          "contextActivations": 1,
+          "contextDeactivations": 1,
+          "orderCalls": [],
+          "activeDurationMs": 663.7099166400731
+        },
+        {
+          "name": "raw Unicode",
+          "contextActivations": 1,
+          "contextDeactivations": 1,
+          "orderCalls": [],
+          "activeDurationMs": 78.14699993468821
+        },
+        {
+          "name": "raw content click",
+          "contextActivations": 1,
+          "contextDeactivations": 1,
+          "orderCalls": [],
+          "activeDurationMs": 97.21604152582586
+        },
+        {
+          "name": "raw content drag",
+          "contextActivations": 0,
+          "contextDeactivations": 0,
+          "orderCalls": [],
+          "activeDurationMs": 964.1535417176783
+        }
+      ]
+    },
+    "accessoryComponents": {
+      "path": "artifacts/focus-ablation-1792822391954/report.json",
+      "sha256": "8697fd8b5a499c197782788a49f76c1005886d275eff1fa4081a32204ce28c96",
+      "status": "completed-observation",
+      "components": [
+        {
+          "mask": 0,
+          "contextActivations": 0,
+          "contextDeactivations": 0,
+          "rightAccepted": true,
+          "covered": true
+        },
+        {
+          "mask": 1,
+          "contextActivations": 0,
+          "contextDeactivations": 0,
+          "rightAccepted": true,
+          "covered": true
+        },
+        {
+          "mask": 4,
+          "contextActivations": 0,
+          "contextDeactivations": 0,
+          "rightAccepted": true,
+          "covered": true
+        },
+        {
+          "mask": 5,
+          "contextActivations": 0,
+          "contextDeactivations": 0,
+          "rightAccepted": true,
+          "covered": true
+        },
+        {
+          "mask": 2,
+          "contextActivations": 0,
+          "contextDeactivations": 0,
+          "rightAccepted": true,
+          "covered": true
+        },
+        {
+          "mask": 3,
+          "contextActivations": 1,
+          "contextDeactivations": 1,
+          "rightAccepted": true,
+          "covered": true
+        },
+        {
+          "mask": 6,
+          "contextActivations": 0,
+          "contextDeactivations": 0,
+          "rightAccepted": true,
+          "covered": true
+        },
+        {
+          "mask": 7,
+          "contextActivations": 1,
+          "contextDeactivations": 1,
+          "rightAccepted": true,
+          "covered": true
+        }
+      ]
+    },
+    "regularComponents": {
+      "path": "artifacts/focus-ablation-1792822628506/report.json",
+      "sha256": "7614922b1821f7a9e4ce4adbe368132ad47856b10bd340b80497c5bbc453aad3",
+      "status": "completed-observation",
+      "components": [
+        {
+          "mask": 0,
+          "contextActivations": 0,
+          "contextDeactivations": 0,
+          "rightAccepted": true,
+          "covered": true
+        },
+        {
+          "mask": 1,
+          "contextActivations": 0,
+          "contextDeactivations": 0,
+          "rightAccepted": true,
+          "covered": true
+        },
+        {
+          "mask": 4,
+          "contextActivations": 0,
+          "contextDeactivations": 0,
+          "rightAccepted": true,
+          "covered": true
+        },
+        {
+          "mask": 5,
+          "contextActivations": 0,
+          "contextDeactivations": 0,
+          "rightAccepted": true,
+          "covered": true
+        },
+        {
+          "mask": 2,
+          "contextActivations": 0,
+          "contextDeactivations": 0,
+          "rightAccepted": true,
+          "covered": true
+        },
+        {
+          "mask": 3,
+          "contextActivations": 1,
+          "contextDeactivations": 1,
+          "rightAccepted": true,
+          "covered": true
+        },
+        {
+          "mask": 6,
+          "contextActivations": 0,
+          "contextDeactivations": 0,
+          "rightAccepted": true,
+          "covered": true
+        },
+        {
+          "mask": 7,
+          "contextActivations": 1,
+          "contextDeactivations": 1,
+          "rightAccepted": true,
+          "covered": true
+        }
+      ]
+    },
+    "cooperativeTrace": {
+      "path": "artifacts/focus-cause-1792824099082/report.json",
+      "sha256": "4b45135d373264e92661a679bf2a42cb78d32992423775a95bc84e265b8a958d",
+      "status": "passed-no-synthetic-focus",
+      "phases": [
+        {
+          "name": "idle",
+          "contextActivations": 0,
+          "contextDeactivations": 0,
+          "orderCalls": []
+        },
+        {
+          "name": "AX selection",
+          "contextActivations": 0,
+          "contextDeactivations": 0,
+          "orderCalls": [],
+          "activeDurationMs": null
+        },
+        {
+          "name": "AX verified text",
+          "contextActivations": 0,
+          "contextDeactivations": 0,
+          "orderCalls": [],
+          "activeDurationMs": null
+        },
+        {
+          "name": "scroll without focus notices",
+          "contextActivations": 0,
+          "contextDeactivations": 0,
+          "orderCalls": [],
+          "activeDurationMs": null
+        },
+        {
+          "name": "raw key zero hold",
+          "contextActivations": 0,
+          "contextDeactivations": 0,
+          "orderCalls": [],
+          "activeDurationMs": null
+        },
+        {
+          "name": "raw key 600ms hold",
+          "contextActivations": 0,
+          "contextDeactivations": 0,
+          "orderCalls": [],
+          "activeDurationMs": null
+        },
+        {
+          "name": "raw Unicode",
+          "contextActivations": 0,
+          "contextDeactivations": 0,
+          "orderCalls": [],
+          "activeDurationMs": null
+        },
+        {
+          "name": "semantic select-all",
+          "contextActivations": 0,
+          "contextDeactivations": 0,
+          "orderCalls": [],
+          "activeDurationMs": null
+        },
+        {
+          "name": "semantic text selection",
+          "contextActivations": 0,
+          "contextDeactivations": 0,
+          "orderCalls": [],
+          "activeDurationMs": null
+        },
+        {
+          "name": "raw EventPad click",
+          "contextActivations": 0,
+          "contextDeactivations": 0,
+          "orderCalls": [],
+          "activeDurationMs": null
+        },
+        {
+          "name": "raw EventPad drag",
+          "contextActivations": 0,
+          "contextDeactivations": 0,
+          "orderCalls": [],
+          "activeDurationMs": null
+        }
+      ]
+    },
+    "cooperativeDocument": {
+      "path": "artifacts/repl-document-1792823579023/report.json",
+      "sha256": "beda706e55aad8754d229bb2bb2549cacf13b02a4223475a7624c4487588b1ef",
+      "status": "passed"
+    },
+    "originalRaise": {
+      "path": "artifacts/original-focus-cause-1792822764407/report.json",
+      "sha256": "2e9c52a82e5eadee70de0a9b94c7ff0805b398ae5adc803cfe4d729c9772f6c1",
+      "status": "observed-reordering",
+      "phases": [
+        {
+          "name": "idle",
+          "contextActivations": 0,
+          "contextDeactivations": 0,
+          "toolError": null,
+          "orderCalls": []
+        },
+        {
+          "name": "bind-and-initial-AX",
+          "contextActivations": 0,
+          "contextDeactivations": 0,
+          "toolError": null,
+          "orderCalls": []
+        },
+        {
+          "name": "scroll-down",
+          "contextActivations": 0,
+          "contextDeactivations": 0,
+          "toolError": null,
+          "orderCalls": []
+        },
+        {
+          "name": "four-alternating-scrolls",
+          "contextActivations": 0,
+          "contextDeactivations": 0,
+          "toolError": null,
+          "orderCalls": [
+            "makeKeyAndOrderFront",
+            "order"
+          ]
+        }
+      ],
+      "observation": {
+        "sampleCount": 10246,
+        "maxSampleGap": 0.036482541589066386,
+        "targetForegroundSamples": 142,
+        "targetKeySamples": 142
+      }
+    },
+    "originalSeparatedControl": {
+      "path": "artifacts/original-focus-cause-1792823723772/report.json",
+      "sha256": "07e0f0d558ecf5af462c6ae39a04f40fb50723df13feef5d844134e0f80c8d06",
+      "status": "completed-observation",
+      "phases": [
+        {
+          "name": "idle-control",
+          "contextActivations": 0,
+          "contextDeactivations": 0,
+          "toolError": null,
+          "orderCalls": []
+        },
+        {
+          "name": "observation-only",
+          "contextActivations": 0,
+          "contextDeactivations": 0,
+          "toolError": null,
+          "orderCalls": []
+        },
+        {
+          "name": "six-scrolls-without-observation",
+          "contextActivations": 0,
+          "contextDeactivations": 0,
+          "toolError": null,
+          "orderCalls": []
+        },
+        {
+          "name": "post-scroll-observation",
+          "contextActivations": 0,
+          "contextDeactivations": 0,
+          "toolError": null,
+          "orderCalls": []
+        }
+      ],
+      "observation": {
+        "sampleCount": 22419,
+        "maxSampleGap": 0.06181033328175545,
+        "targetForegroundSamples": 0,
+        "targetKeySamples": 0
+      }
+    },
+    "pi": {
+      "path": "artifacts/pi-repl-document-1792824299716/report.json",
+      "sha256": "2e929b2d25bcb282a192a3a5aea43cb3c1bd100c56dd1d176541a7c524c592dd",
+      "status": "passed",
+      "pi": {
+        "calls": 14,
+        "toolErrors": 0,
+        "uniqueRecipientKeyDown": 3
+      }
+    }
+  },
+  "limits": [
+    "Receiver AX Raise stack does not reveal the initiating AX audit token or the exact original policy condition.",
+    "No new human IME switch or Caps Lock comparison; no persistent stuck global modifier established.",
+    "Inactive raw CMD+A/text drag failed; cooperative workflows use semantic equivalents."
+  ]
+}

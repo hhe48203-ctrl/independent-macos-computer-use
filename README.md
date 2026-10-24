@@ -56,7 +56,7 @@ pi --approve --extension builtin:mcp
 npm run test:pi
 ```
 
-setup only writes this project's `.pi/mcp.json` and never touches global configuration or credentials. On the verified macOS 26.6.2 arm64 the real-event route can be enabled explicitly with `node scripts/setup-pi.mjs --background-events`; it is off by default. The basic pi acceptance completed the Chinese input loop in only 5 js calls; another 9 js calls completed 7 real document event operations including shortcuts, Chinese/emoji, selection drag, scrolling and raw clicks.
+setup only writes this project's `.pi/mcp.json` and never touches global configuration or credentials. Setup now disables synthetic AppKit activation, including with the legacy `--background-events` argument; real event strategies remain available. `--experimental-appkit-focus` explicitly enables the older activation route when its limitations are acceptable. For concurrent use prefer semantic select-all/text selection/button press. See [input isolation](docs/INPUT_ISOLATION.md) for the measured IME mechanism and original AX Raise trace. The basic pi acceptance completed the Chinese input loop in only 5 js calls; another 9 js calls completed 7 real document event operations including shortcuts, Chinese/emoji, selection drag, scrolling and raw clicks.
 
 ## Capabilities and limits
 
@@ -89,3 +89,5 @@ Desktop tests only operate temporary owned AppKit windows. Native event tests ex
 Architecture and research: [REPL/cursor evidence](docs/REPL_CURSOR_RESEARCH.md), [native background mechanisms](docs/FOCUS_FIDELITY.md), [original reverse-engineering record](docs/REVERSE_ENGINEERING.md). The latter two contain v0.3 historical interface names; the current public interface is defined by the JS API.
 
 The original baseline was refreshed on 2026-10-22 to App 26.1016.61520 and sky 0.7.12. Interface differences, the original's 9/10 versus the independent 10/10 behavior results, the re-derived Unicode function and reproduction commands are in the [current original baseline](docs/ORIGINAL_BASELINE.md); that page keeps the v1.0 historical comparison. The v1.1 implementation, multi-window/multi-app scroll data, original raise failures and new-interface examples are in the [compatibility acceptance](docs/COMPATIBILITY_V1_1.md). The existing v1.0.0 tag stays.
+
+The v1.2 investigation and cooperative configuration are documented in [input isolation](docs/INPUT_ISOLATION.md). No new human IME acceptance is claimed.

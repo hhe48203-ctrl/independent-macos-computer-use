@@ -14,8 +14,8 @@ try{
  const built=spawnSync('xcrun',['swiftc','-O',root+'native/InputStateObserver.swift','-o',executable],{encoding:'utf8'});assert.equal(built.status,0,built.stderr);
  observer=spawn(executable,[directory+'/input-state.json','90'],{stdio:['ignore','pipe','pipe']});observer.stderr.on('data',b=>process.stderr.write(b));
  await new Promise((resolve,reject)=>{const timer=setTimeout(()=>reject(Error('Observer not ready')),8000);observer.stdout.on('data',b=>{if(String(b).includes('READY')){clearTimeout(timer);resolve()}});observer.once('error',reject)});
- const server=process.env.CU_TEST_SERVER??root+'src/server.mjs';
- repl=await connectRepl({...process.env,CU_ENABLE_FOREGROUND:'0',CU_EXPERIMENTAL_APPKIT_FOCUS:process.argv.includes('--without-appkit')?'0':'1',CU_ALLOWED_BUNDLE_IDS:'io.local.computeruse.document-target'},server);
+ const server=process.env.CU_TEST_SERVER??root+'src/server.mjs',cwd=process.env.CU_TEST_CWD??root;report.server=server;report.cwd=cwd;
+ repl=await connectRepl({...process.env,CU_ENABLE_FOREGROUND:'0',CU_EXPERIMENTAL_APPKIT_FOCUS:process.argv.includes('--without-appkit')?'0':'1',CU_ALLOWED_BUNDLE_IDS:'io.local.computeruse.document-target'},server,cwd);
  await repl.evaluate(`(async()=>{globalThis.app=await cua.getApp({pid:${t.pid},windowId:${t.windowId}});return true})()`);
  const s=parseAX(await repl.evaluate('app.getAXState({emit:false,disableDiffing:true})')),doc=s.nodes.find(n=>n.identifier==='scroll-document');
  const proof=()=>JSON.parse(fixture.run(fixture.driver,['occlusion',String(t.pid),String(t.windowId),String(fixture.apps.cover.windowId)]));
@@ -33,7 +33,7 @@ try{
  await phase('raw key 600ms hold',"app.pressKey('Right',{strategy:'event',durationMs:600})");
  await phase('raw Unicode',"app.typeText('【ctx 中文🙂】',{strategy:'event'})");
  await phase('semantic select-all',"app.pressKey('CMD+A')");
- await phase('semantic text selection',`app.selectText(${doc.id},'Scrollable row 2 — background text')`);
+ await phase('semantic text selection',`app.selectText(${doc.id},'Scrollable row 100 — background text')`);
  await phase('raw EventPad click',"app.click([100,250],{strategy:'event'})");
  await phase('raw EventPad drag',"app.drag([100,250],[200,260],{duration:0.6})");
  report.status=report.phases.some(p=>p.error)?'completed-with-errors':'completed';

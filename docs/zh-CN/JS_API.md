@@ -112,3 +112,9 @@ await cua.getScreenshot({
 原生底层分析与新证据见 REPL_CURSOR_RESEARCH.md、FOCUS_FIDELITY.md。多屏只有坐标公式测试，其他系统/应用兼容性不能由单台机器的验收推断。
 
 当前原版macOS与独立版并非完全相同：2026-10-22实测原版返回JPEG，AX-only观察后仍使用Retina截图像素；独立版返回PNG，并提供上述显式坐标兼容、重连与定时输入选项。水平滚动、输入路径及浏览器能力仍有差异，详见 [原版对照基线](ORIGINAL_BASELINE.md)。这些首次明确测量的差异不代表本次更新才引入。
+
+## 真人并用配置（v1.2）
+
+真实事件策略与局部AppKit激活是两回事。pi setup默认设置 `CU_EXPERIMENTAL_APPKIT_FOCUS=0`，`--background-events` 不再开启它；只有 `--experimental-appkit-focus` 才明确开启。`cua.status().background.appKitFocusPolicy` 报告所选策略。
+
+未内部激活的AppKit应用可能忽略原生CMD+A/菜单快捷键和文本拖选。优先用 `pressKey('CMD+A')`、`selectText(...)`、`click(index)` 的语义等价操作，不在失败后自动激活重试。可选激活路径会在系统焦点仍属别处时激活后台文本输入上下文。[输入隔离调查](INPUT_ISOLATION.md)记录了因果追踪、原版AX Raise及边界；不声称新增真人输入法验收。

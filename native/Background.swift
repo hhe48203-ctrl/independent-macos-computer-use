@@ -193,7 +193,7 @@ struct HeldBackgroundMouse {
         let root=AXUIElementCreateApplication(pid)
         let window=try axWindow(pid,frame)
         guard let focusedWindow=attr(root,kAXFocusedWindowAttribute),CFGetTypeID(focusedWindow)==AXUIElementGetTypeID(),CFEqual(focusedWindow,window) else {
-            throw BridgeError("BACKGROUND_KEY_WINDOW_MISMATCH","Raw text requires the application's existing internal key window. No focus or activation was performed.")
+            throw BridgeError("BACKGROUND_KEY_WINDOW_MISMATCH","Raw text requires the application's AX focused window to match. No focus or activation was performed.")
         }
         let element=try backgroundTextElement(p,pid,wid,frame)
         func checkFocus() throws {
@@ -279,7 +279,7 @@ struct HeldBackgroundMouse {
     }
     func backgroundKey(_ p: Object, _ pid: pid_t, _ wid: CGWindowID, _ frame: CGRect,_ observation:BackgroundFocusObservation) async throws -> Object {
         let root = AXUIElementCreateApplication(pid); let window = try axWindow(pid, frame)
-        guard let focused = attr(root, kAXFocusedWindowAttribute), CFGetTypeID(focused) == AXUIElementGetTypeID(), CFEqual(focused, window) else { throw BridgeError("BACKGROUND_KEY_WINDOW_MISMATCH", "The target is not the application's internal key window. No focus or activation was performed.") }
+        guard let focused = attr(root, kAXFocusedWindowAttribute), CFGetTypeID(focused) == AXUIElementGetTypeID(), CFEqual(focused, window) else { throw BridgeError("BACKGROUND_KEY_WINDOW_MISMATCH", "The target does not match the application's AX focused window. This does not assert NSApp key-window or text-input-context activation; no focus was performed.") }
         try ensureEditableNotSecure(pid)
         let parts = try string(p, "key").lowercased().split(separator: "+").map { $0.trimmingCharacters(in: .whitespaces) }
         guard let last = parts.last else { throw BridgeError("UNKNOWN_KEY", "Empty key") }

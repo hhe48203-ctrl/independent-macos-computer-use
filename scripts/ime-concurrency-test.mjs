@@ -26,7 +26,7 @@ try{
   await waitFile('baseline-start');const baseline=Date.now()/1000;report.status='baseline';save();await pause(10000);report.phases.push({name:'baseline-no-background-operations',start:baseline,end:Date.now()/1000});save();console.log('BASELINE_DONE');
   await waitFile('active-start');const active=Date.now()/1000;report.status='active';save();
   let round=0;
-  const expressions=[()=>`app.pressKey('CMD+Down',{strategy:'event'})`,()=>`app.typeText('【IME ${round} 中文🙂】',{strategy:'event'})`,()=>`app.pressKey('CMD+A')`,()=>`app.pressKey('CMD+Up',{strategy:'event'})`,()=>`app.drag([${scroll.x+20},${scroll.y+15}],[${scroll.x+250},${scroll.y+15}],{duration:0.2})`,()=>`app.scroll([${scroll.x+200},${scroll.y+50}],'down',0.6)`,()=>`app.click(${button})`];
+  const expressions=[()=>`app.pressKey('CMD+Down',{strategy:'event'})`,()=>`app.typeText('【IME ${round} 中文🙂】',{strategy:'event'})`,()=>`app.pressKey('CMD+A')`,()=>`app.pressKey('CMD+Up',{strategy:'event'})`,()=>process.env.CU_TEST_SCOPED_FOCUS==='1'?`app.drag([${scroll.x+20},${scroll.y+15}],[${scroll.x+250},${scroll.y+15}],{duration:0.2})`:`app.selectText(${state.nodes.find(n=>n.identifier==='scroll-document').id},'Scrollable row 100 — background text')`,()=>`app.scroll([${scroll.x+200},${scroll.y+50}],'down',0.6)`,()=>`app.click(${button})`];
   while(Date.now()/1000-active<20){
     for(const expression of expressions){assert.ok(!cancelled,'Test cancelled');if(Date.now()/1000-active>=20)break;const start=Date.now()/1000;const result=await repl.evaluate(expression());report.operations.push({start,end:Date.now()/1000,result});save();}round++;
   }

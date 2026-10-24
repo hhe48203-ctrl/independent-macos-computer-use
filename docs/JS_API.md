@@ -112,3 +112,9 @@ Standard MCP stdio → worker-thread REPL/cua → serial JSONL Swift helper; no 
 Native lower-layer analysis and new evidence are in REPL_CURSOR_RESEARCH.md and FOCUS_FIDELITY.md. Multiple displays only have coordinate-formula tests; other OS/app compatibility cannot be inferred from a single machine's acceptance.
 
 The current original macOS build and the independent build are not identical: as measured on 2026-10-22 the original returns JPEG and keeps using Retina screenshot pixels after AX-only observation, while the independent build returns PNG and offers the explicit coordinate compatibility, reconnection and timed-input options above. Horizontal scrolling, input paths and browser capabilities still differ; see the [original baseline](ORIGINAL_BASELINE.md). These differences were measured explicitly for the first time here and do not mean the update introduced them.
+
+## Concurrent-use profile (v1.2)
+
+Real event strategies and synthetic AppKit activation are separate. The pi setup defaults to `CU_EXPERIMENTAL_APPKIT_FOCUS=0`; `--background-events` no longer turns it on. Only `--experimental-appkit-focus` opts into activation. `cua.status().background.appKitFocusPolicy` reports the selected policy.
+
+Inactive AppKit apps can ignore raw CMD+A/menu shortcuts and text-selection drags. Prefer `pressKey('CMD+A')`, `selectText(...)`, and `click(index)` for their semantic equivalents. Do not retry failed input with activation automatically. The optional activation route can activate a background text input context while system focus stays elsewhere. [Input isolation](INPUT_ISOLATION.md) records the cause trace, original AX Raise observation and limits; no new human IME acceptance is claimed.

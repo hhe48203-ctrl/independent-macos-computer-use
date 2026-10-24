@@ -56,7 +56,7 @@ pi --approve --extension builtin:mcp
 npm run test:pi
 ```
 
-setup 仅写本项目 `.pi/mcp.json`，不改全局配置或凭证。当前 macOS26.6.2 arm64 已验证的真实事件路径可显式用 `node scripts/setup-pi.mjs --background-events` 启用；默认关闭。pi 基础验收仅用5次 js 调用完成中文输入闭环；另用9次 js 完成7项真实文档事件操作，包括快捷键、中文/emoji、选择拖动、滚动和原始点击。
+setup 仅写本项目 `.pi/mcp.json`，不改全局配置或凭证。现在默认关闭局部AppKit激活，旧的 `--background-events` 参数也不会再隐式开启它；真实事件策略仍可调用。只有 `--experimental-appkit-focus` 才明确开启旧实验路径。真人并用优先采用语义全选、文本选择和按钮操作。实测输入法机制与原版AX Raise栈见[输入隔离调查](INPUT_ISOLATION.md)。pi 基础验收仅用5次 js 调用完成中文输入闭环；另用9次 js 完成7项真实文档事件操作，包括快捷键、中文/emoji、选择拖动、滚动和原始点击。
 
 ## 能力与边界
 
@@ -88,3 +88,5 @@ npm run package
 架构与研究：[REPL/光标证据](../REPL_CURSOR_RESEARCH.md)、[原生后台机制](../FOCUS_FIDELITY.md)、[原始逆向记录](../REVERSE_ENGINEERING.md)。后两者包含 v0.3 历史接口名称；当前公开接口以 JS API 为准。
 
 原版对照已于2026-10-22更新至App26.1016.61520、sky0.7.12。接口差异、原版9/10与独立版10/10行为结果、Unicode函数重新逆向及复现命令见 [当前原版基线](../ORIGINAL_BASELINE.md)。该页保留v1.0历史对照。v1.1实现、滚动多窗口/多应用数据、原版升层失败与新接口示例见 [兼容改进验收](../COMPATIBILITY_V1_1.md)。既有v1.0.0标签保留。
+
+v1.2调查与并用配置见[输入隔离调查](INPUT_ISOLATION.md)，不声称新增真人输入法验收。
