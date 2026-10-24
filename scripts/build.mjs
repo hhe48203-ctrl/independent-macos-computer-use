@@ -1,5 +1,5 @@
 import { spawnSync } from 'node:child_process';
-import { mkdirSync, writeFileSync,readFileSync,realpathSync } from 'node:fs';
+import { mkdirSync, writeFileSync,readFileSync,realpathSync,existsSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import path from 'node:path';
 
@@ -13,6 +13,8 @@ const inventory=spawnSync('/bin/ps',['-axo','pid=,comm='],{encoding:'utf8'});
 if(inventory.status!==0)throw Error('Could not check whether the build output is in use; no files were changed.');
 const canonical=p=>{try{return realpathSync(p)}catch{return path.resolve(p)}};
 if(inventory.stdout.split('\n').some(line=>canonical(line.trim().replace(/^\d+\s+/,''))===canonical(outputExecutable)))throw Error('Native helper at this build output is running. Close its MCP client or choose a separate CU_BUILD_DIRECTORY before rebuilding. No files were changed.');
+const fixtureLease=path.join(path.dirname(app),'fixture.lease');
+if(existsSync(fixtureLease))throw Error('An owned GUI test holds the fixture lease. Finish it or choose a separate CU_BUILD_DIRECTORY; no build output was changed.');
 mkdirSync(path.join(app, 'Contents/MacOS'), { recursive: true });
 writeFileSync(versionSource,`let bridgeVersion = ${JSON.stringify(version)}\n`);
 writeFileSync(path.join(app, 'Contents/Info.plist'), `<?xml version="1.0" encoding="UTF-8"?>

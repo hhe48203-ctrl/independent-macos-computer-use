@@ -22,3 +22,12 @@ test('build refuses to replace an executable used by a running process',{skip:pr
   }
  }finally{child.kill();await new Promise(r=>child.exitCode!==null||child.signalCode!==null?r():child.once('exit',r));rmSync(directory+'-alias',{force:true});rmSync(directory,{recursive:true,force:true})}
 });
+
+test('build cannot start while a GUI fixture owns the output directory',{skip:process.platform!=='darwin'},()=>{
+ const directory=mkdtempSync(path.join(os.tmpdir(),'cu-build-lease-'));
+ try{
+  writeFileSync(path.join(directory,'fixture.lease'),JSON.stringify({pid:process.pid,token:'owned-test'}));
+  const built=spawnSync(process.execPath,[path.join(root,'scripts/build.mjs')],{cwd:root,env:{...process.env,CU_BUILD_DIRECTORY:directory},encoding:'utf8'});
+  assert.notEqual(built.status,0);assert.match(built.stderr,/GUI test holds the fixture lease/);assert.equal(existsSync(path.join(directory,'BridgeVersion.swift')),false);
+ }finally{rmSync(directory,{recursive:true,force:true})}
+});
