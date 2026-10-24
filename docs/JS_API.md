@@ -90,6 +90,8 @@ Two styles are selected by `CU_AGENT_CURSOR_STYLE`; anchor, motion and lifecycle
 
 An unknown value falls back to the default `ring`; `cursorState` reports the effective `style` and `styleDescription`.
 
+`CU_AGENT_CURSOR_VISIBILITY=target` (default) hides the cursor when its target point is covered, clips the complete glyph/glow to exposed target regions, and keeps motion and input running while hidden. `always` preserves the earlier top-level progress overlay. Unknown values fall back to `target`. The setting is read at helper startup; reconnect the MCP client after changing its environment. `cursorState` reports `visibilityMode`, `visibilityReason`, global logical-point `clipRects`, `occluderCount` and `occlusionGeometry`. These are drawing diagnostics, not input receipts. See [visibility rules and verification scope](CURSOR_OCCLUSION.md).
+
 The cursor follows window movement between operations, hides and rejects the old mapping on size changes, and stops input if the window moves mid-move or mid-drag. It is also cleaned up after 30 seconds of idleness, on target hide/close, reset, cancellation and disconnect. `CU_AGENT_CURSOR=0` disables it.
 
 `cursorState` returns visibility, relative/global logical points, panel state and the last 256 project-drawn records; it cannot be used to assert input success. `hideCursor` hides it explicitly.

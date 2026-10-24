@@ -10,4 +10,7 @@ test('agent cursor defaults to the ring reticle and keeps the arrow selectable',
  assert.equal((await read({CU_AGENT_CURSOR_STYLE:'Ring'})).style,'ring');
  assert.equal((await read({CU_AGENT_CURSOR_STYLE:'unknown-style'})).style,'ring');
  assert.equal((await read({CU_AGENT_CURSOR:'0'})).enabled,false);
+ assert.equal((await read({CU_AGENT_CURSOR_VISIBILITY:''})).visibilityMode,'target');
+ assert.equal((await read({CU_AGENT_CURSOR_VISIBILITY:'ALWAYS'})).visibilityMode,'always');
+ assert.equal((await read({CU_AGENT_CURSOR_VISIBILITY:'invalid'})).visibilityMode,'target');
 });

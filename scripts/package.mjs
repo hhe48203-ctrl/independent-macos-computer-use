@@ -66,12 +66,15 @@ try {
   run('/usr/bin/unzip', ['-q', pluginZip, '-d', smokeDirectory]);
   const smokeRoot = path.join(smokeDirectory, identity.name);
   run('/usr/bin/codesign', ['--verify', '--deep', path.join(smokeRoot, '.build/Local Computer Use.app')]);
-  const smokeEnv = { ...process.env }; delete smokeEnv.NODE_PATH; delete smokeEnv.CU_ENABLE_FOREGROUND;
+  const smokeEnv = { ...process.env,CU_AGENT_CURSOR_VISIBILITY:'target' }; delete smokeEnv.NODE_PATH; delete smokeEnv.CU_ENABLE_FOREGROUND;
   await client.connect(new StdioClientTransport({ command: process.execPath, args: [path.join(smokeRoot, 'src/server.mjs')], cwd: smokeDirectory, env: smokeEnv }));
   const list = await client.listTools(); if (list.tools.map(t=>t.name).join(',') !== 'js,js_reset') throw new Error('Wrong packaged tools');
   const result = await client.callTool({ name: 'js', arguments: {code:'await cua.status(); undefined'} });
   const status=JSON.parse(result.content.find(c=>c.type==='text'&&c.text.startsWith('{')).text);
   if (result.isError || status.backend !== 'independent-macos-apis' || status.bridgeVersion !== identity.version || !status.background?.default || status.foregroundEnabled !== false) throw new Error('Packaged native helper failed');
+  const cursor=await client.callTool({name:'js',arguments:{code:'await cua.cursorState(); undefined'}});
+  const cursorState=JSON.parse(cursor.content.find(c=>c.type==='text'&&c.text.startsWith('{')).text);
+  if(cursor.isError||cursorState.visibilityMode!=='target'||!Array.isArray(cursorState.clipRects))throw Error('Packaged cursor visibility contract failed');
   const lexical=await client.callTool({name:'js',arguments:{code:'let kept = await Promise.resolve(41); kept'}});if(lexical.isError)throw Error('Packaged worker failed');
   const persisted=await client.callTool({name:'js',arguments:{code:'kept+1'}});if(persisted.content[0].text!=='42')throw Error('Packaged lexical persistence failed');
   const launch=await client.callTool({name:'js',arguments:{code:'await cua.launchApp("io.local.computeruse.uninstalled-policy-test")'}});if(!launch.isError||launch.structuredContent?.error?.code!=='VISIBLE_LAUNCH_REQUIRED')throw Error('Packaged visible-launch policy failed');

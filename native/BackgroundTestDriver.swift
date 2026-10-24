@@ -62,7 +62,12 @@ if mode=="restore-setup-foreground" {
     }
     let result:[String:Any]=["expected":expected,"points":points,"aborted":aborted,"pid":pid,"epoch":started.timeIntervalSince1970,"duration":Date().timeIntervalSince(started)]
     try JSONSerialization.data(withJSONObject:result).write(to:URL(fileURLWithPath:report),options:.atomic)
- }else if mode=="covers"{
+}else if mode=="cursor-order"{
+    let targetId=Int(args[3])!,coverId=Int(args[4])!,cursorId=Int(args[5])!
+    let rows=CGWindowListCopyWindowInfo([.optionOnScreenOnly,.excludeDesktopElements],kCGNullWindowID) as? [[String:Any]] ?? []
+    func index(_ id:Int)->Int{rows.firstIndex{($0[kCGWindowNumber as String] as? Int)==id} ?? -1}
+    FileHandle.standardOutput.write(try JSONSerialization.data(withJSONObject:["target":index(targetId),"cover":index(coverId),"cursor":index(cursorId),"foregroundPID":NSWorkspace.shared.frontmostApplication?.processIdentifier ?? 0]))
+}else if mode=="covers"{
     let targetId=Int(args[3])!
     let rows=CGWindowListCopyWindowInfo([.optionOnScreenOnly,.excludeDesktopElements],kCGNullWindowID) as? [[String:Any]] ?? []
     func rect(_ row:[String:Any])->CGRect?{guard let raw=row[kCGWindowBounds as String] as? [String:Any] else{return nil};return CGRect(dictionaryRepresentation:raw as CFDictionary)}

@@ -17,7 +17,7 @@ async function js(code) {
 }
 const text=r=>r.content.filter(c=>c.type==='text').map(c=>c.text).join('\n');
 try{
-  const env={...process.env,CU_ENABLE_FOREGROUND:'0'};delete env.CU_ALLOWED_BUNDLE_IDS;
+  const env={...process.env,CU_AGENT_CURSOR_VISIBILITY:'always',CU_ENABLE_FOREGROUND:'0'};delete env.CU_ALLOWED_BUNDLE_IDS;
   await client.connect(new StdioClientTransport({command:process.execPath,args:[root+'src/server.mjs'],cwd:root,env}));
   assert.deepEqual((await client.listTools()).tools.map(t=>t.name),['js','js_reset']);
   const bound=await js(`let app=await cua.getApp({pid:${fixture.apps.target.pid},windowId:${fixture.apps.target.windowId}})`);

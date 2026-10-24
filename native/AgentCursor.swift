@@ -25,14 +25,56 @@ enum AgentCursorStyle: String {
     }
 }
 
+enum AgentCursorVisibility: String {
+    case target, always
+    static var configured: AgentCursorVisibility {
+        AgentCursorVisibility(rawValue:(ProcessInfo.processInfo.environment["CU_AGENT_CURSOR_VISIBILITY"] ?? "").lowercased()) ?? .target
+    }
+}
+
+// WindowServer exposes bounds and z-order, not other processes' per-pixel
+// shapes. Treat every nonzero-alpha window above the target as an occluder,
+// including translucent windows and windows owned by the target's process.
+// Subtract only inside the small cursor footprint, keeping the work bounded.
+enum AgentCursorRegion {
+    static func subtract(_ cover:CGRect,from rect:CGRect)->[CGRect] {
+        let hit=rect.intersection(cover)
+        guard !hit.isNull,!hit.isEmpty else{return [rect]}
+        return [CGRect(x:rect.minX,y:rect.minY,width:rect.width,height:hit.minY-rect.minY),
+                CGRect(x:rect.minX,y:hit.maxY,width:rect.width,height:rect.maxY-hit.maxY),
+                CGRect(x:rect.minX,y:hit.minY,width:hit.minX-rect.minX,height:hit.height),
+                CGRect(x:hit.maxX,y:hit.minY,width:rect.maxX-hit.maxX,height:hit.height)]
+            .filter{!$0.isEmpty && !$0.isNull}
+    }
+    static func visible(footprint:CGRect,point:CGPoint,target:CGRect,covers:[CGRect],screens:[CGRect])->[CGRect] {
+        guard target.contains(point),screens.contains(where:{$0.contains(point)}),!covers.contains(where:{$0.contains(point)}) else{return []}
+        let area=footprint.intersection(target)
+        guard !area.isNull,!area.isEmpty else{return []}
+        var regions=screens.map{area.intersection($0)}.filter{!$0.isNull && !$0.isEmpty}
+        for cover in covers where cover.intersects(area) {
+            regions=regions.flatMap{subtract(cover,from:$0)}
+            if regions.count>256{return []} // Fail closed on pathological geometry.
+        }
+        return regions
+    }
+}
+
 final class AgentCursorView: NSView {
     var pressed=false
     var activity="move"
     var style:AgentCursorStyle = .ring
+    var clipRects:[CGRect]? // nil is the explicit always-visible mode.
     override var isFlipped: Bool {true}
     override func draw(_ dirtyRect: NSRect) {
         NSColor.clear.setFill(); bounds.fill(using:.copy)
+        // AppKit treats an empty NSBezierPath clip as a no-op.
+        if clipRects?.isEmpty == true {return}
         NSGraphicsContext.saveGraphicsState()
+        if let clipRects {
+            let clip=NSBezierPath()
+            for rect in clipRects {clip.appendRect(rect)}
+            clip.addClip() // Includes the arrow shadow, not just the glyph.
+        }
         switch style {
         case .arrow: drawArrow()
         case .ring: drawRing()
@@ -93,6 +135,9 @@ final class AgentCursorView: NSView {
     private var motionGeneration=0
     private var hasPosition=false
     private var pulseUntil=Date.distantPast
+    private var visibleRects:[CGRect]=[]
+    private var visibilityReason="inactive"
+    private var occluderCount=0
     static func motionDuration(distance:Double)->Double {min(0.55,max(0.16,0.16+distance/1600))}
     static func interpolate(from:CGPoint,to:CGPoint,progress:Double)->CGPoint {
         let t=min(1,max(0,progress));let eased=t*t*(3-2*t)
@@ -124,6 +169,7 @@ final class AgentCursorView: NSView {
     }
     private let enabled=ProcessInfo.processInfo.environment["CU_AGENT_CURSOR"] != "0"
     private let style=AgentCursorStyle.configured
+    private let visibility=AgentCursorVisibility.configured
     static func appKitOrigin(global:CGPoint, primaryTop:Double, size:Double=80)->CGPoint {
         // The pointer tip is (24,24) from the panel's top-left. Cocoa uses
         // bottom-left coordinates; CG uses primary-display top-left coordinates.
@@ -139,24 +185,71 @@ final class AgentCursorView: NSView {
         if panel==nil {
             let p=AgentCursorPanel(contentRect:NSRect(x:0,y:0,width:80,height:80),styleMask:[.borderless,.nonactivatingPanel],backing:.buffered,defer:false)
             p.title="Local Computer Use — Agent Cursor";p.isOpaque=false;p.backgroundColor = .clear;p.hasShadow=false
-            p.ignoresMouseEvents=true;p.hidesOnDeactivate=false;p.isFloatingPanel=true;p.becomesKeyOnlyIfNeeded=true
-            p.level = .statusBar;p.collectionBehavior=[.canJoinAllSpaces,.fullScreenAuxiliary,.stationary,.ignoresCycle]
+            p.ignoresMouseEvents=true;p.hidesOnDeactivate=false;p.isFloatingPanel=visibility == .always;p.becomesKeyOnlyIfNeeded=true
+            p.level = visibility == .always ? .statusBar:.normal;p.collectionBehavior=[.canJoinAllSpaces,.fullScreenAuxiliary,.stationary,.ignoresCycle]
             p.isExcludedFromWindowsMenu=true;p.setAccessibilityElement(false)
             let v=AgentCursorView(frame:NSRect(x:0,y:0,width:80,height:80));v.setAccessibilityElement(false);v.style=style;p.contentView=v
             panel=p;view=v
         }
         position(frame)
-        panel?.orderFrontRegardless() // Nonactivating, click-through, never key/main.
-        if timer==nil {timer=Timer.scheduledTimer(withTimeInterval:1.0/30,repeats:true){[weak self] _ in MainActor.assumeIsolated{self?.track()}}}
-        history.append(["sequence":sequence,"motion":motionGeneration,"moving":moving,"time":Date().timeIntervalSince1970,"pid":Int(pid),"windowId":Int(windowID),"x":relative.x,"y":relative.y,"globalX":global.x,"globalY":global.y,"pressed":pressed,"activity":activity,"panelFrame":rectJSON(panel?.frame ?? .zero)])
+        if timer==nil {timer=Timer.scheduledTimer(withTimeInterval:1.0/60,repeats:true){[weak self] _ in MainActor.assumeIsolated{self?.track()}}}
+        history.append(["sequence":sequence,"motion":motionGeneration,"moving":moving,"time":Date().timeIntervalSince1970,"pid":Int(pid),"windowId":Int(windowID),"x":relative.x,"y":relative.y,"globalX":global.x,"globalY":global.y,"pressed":pressed,"activity":activity,"panelFrame":rectJSON(panel?.frame ?? .zero),"visible":panel?.isVisible ?? false,"visibilityReason":visibilityReason])
         if history.count>256 {history.removeFirst(history.count-256)}
     }
     private func position(_ frame:CGRect) {
         global=CGPoint(x:frame.minX+relative.x,y:frame.minY+relative.y)
         let top=NSScreen.screens.first?.frame.maxY ?? CGDisplayBounds(CGMainDisplayID()).height
-        panel?.setFrameOrigin(Self.appKitOrigin(global:global,primaryTop:top))
+        // Clear the old mask before moving the panel: an old, less restrictive
+        // mask must not be reused at a new screen position.
+        let origin=Self.appKitOrigin(global:global,primaryTop:top)
+        if panel?.frame.origin != origin {
+            if visibility == .target {view?.clipRects=[];view?.needsDisplay=true;panel?.displayIfNeeded()}
+            panel?.setFrameOrigin(origin)
+        }
         view?.pressed=pressed || Date()<pulseUntil;view?.activity=activity;view?.needsDisplay=true
+        refreshVisibility(primaryTop:top)
         panel?.displayIfNeeded()
+    }
+    private func refreshVisibility(primaryTop:Double) {
+        guard let panel,let view else{return}
+        let footprint=CGRect(x:global.x-24,y:global.y-24,width:80,height:80)
+        if visibility == .always {
+            visibleRects=[footprint];view.clipRects=nil;visibilityReason="always";occluderCount=0
+            if !panel.isVisible {panel.orderFrontRegardless()};return
+        }
+        guard let rows=CGWindowListCopyWindowInfo([.optionOnScreenOnly,.excludeDesktopElements],kCGNullWindowID) as? [Object],
+              let index=rows.firstIndex(where:{($0[kCGWindowNumber as String] as? Int)==Int(windowID) && ($0[kCGWindowOwnerPID as String] as? Int)==Int(pid)}),
+              let raw=rows[index][kCGWindowBounds as String] as? Object,
+              let target=CGRect(dictionaryRepresentation:raw as CFDictionary),
+              (rows[index][kCGWindowAlpha as String] as? Double ?? 1)>0 else {
+            visibleRects=[];view.clipRects=[];visibilityReason="target-unavailable";panel.orderOut(nil);return
+        }
+        let covers=rows.prefix(index).compactMap{row -> CGRect? in
+            // Exclude exactly this panel, never all windows of a process.
+            guard (row[kCGWindowNumber as String] as? Int) != panel.windowNumber,
+                  (row[kCGWindowAlpha as String] as? Double ?? 1)>0,
+                  let raw=row[kCGWindowBounds as String] as? Object else{return nil}
+            return CGRect(dictionaryRepresentation:raw as CFDictionary)
+        }
+        occluderCount=covers.filter{$0.intersects(footprint)}.count
+        let screens=NSScreen.screens.map{CGRect(x:$0.frame.minX,y:primaryTop-$0.frame.maxY,width:$0.frame.width,height:$0.frame.height)}
+        visibleRects=AgentCursorRegion.visible(footprint:footprint,point:global,target:target,covers:covers,screens:screens)
+        // Round inward in view-local backing pixels, so antialiased glyphs and
+        // glow cannot cross the conservative visibility boundary on Retina.
+        let scale=panel.backingScaleFactor
+        let local=visibleRects.map{r -> CGRect in
+            let x=ceil((r.minX-footprint.minX)*scale)/scale,y=ceil((r.minY-footprint.minY)*scale)/scale
+            return CGRect(x:x,y:y,width:max(0,floor((r.maxX-footprint.minX)*scale)/scale-x),height:max(0,floor((r.maxY-footprint.minY)*scale)/scale-y))
+        }.filter{!$0.isEmpty}
+        view.clipRects=local
+        visibleRects=local.map{$0.offsetBy(dx:footprint.minX,dy:footprint.minY)}
+        guard !local.isEmpty else{visibilityReason="occluded-or-outside";panel.orderOut(nil);return}
+        visibilityReason=visibleRects.reduce(0){$0+$1.width*$1.height}<footprint.width*footprint.height ? "clipped":"visible"
+        // Order only our own nonactivating panel when becoming visible. Never
+        // order relative to another process, change a target level, or reorder
+        // an already-visible panel on each tick. New front windows can cover
+        // the normal-level panel immediately, before the next mask sample.
+        if !panel.isVisible {panel.orderFrontRegardless()}
     }
     private func track() {
         guard Date().timeIntervalSince(touched)<30,let frame=currentFrame(pid:pid,windowID:windowID) else {hide();return}
@@ -166,8 +259,8 @@ final class AgentCursorView: NSView {
         guard frame.size==dimensions,relative.x>=0,relative.y>=0,relative.x<frame.width,relative.y<frame.height else{hide();return}
         position(frame)
     }
-    func hide() {motionGeneration+=1;panel?.orderOut(nil);timer?.invalidate();timer=nil;pressed=false;pulseUntil = .distantPast}
+    func hide() {motionGeneration+=1;panel?.orderOut(nil);timer?.invalidate();timer=nil;pressed=false;pulseUntil = .distantPast;visibleRects=[];visibilityReason="inactive"}
     var state:Object {
-        ["enabled":enabled,"moving":moving,"style":style.rawValue,"styleDescription":style.summary,"visible":panel?.isVisible ?? false,"windowId":Int(panel?.windowNumber ?? 0),"targetPID":Int(pid),"targetWindowId":Int(windowID),"relative":["x":relative.x,"y":relative.y],"global":["x":global.x,"y":global.y],"panelFrame":rectJSON(panel?.frame ?? .zero),"backingScale":panel?.backingScaleFactor ?? 1,"pressed":pressed,"activity":activity,"sequence":sequence,"ignoresMouseEvents":panel?.ignoresMouseEvents ?? true,"canBecomeKey":panel?.canBecomeKey ?? false,"canBecomeMain":panel?.canBecomeMain ?? false,"history":history]
+        ["enabled":enabled,"moving":moving,"style":style.rawValue,"styleDescription":style.summary,"visibilityMode":visibility.rawValue,"visibilityReason":visibilityReason,"clipRects":visibleRects.map{rectJSON($0)},"occluderCount":occluderCount,"occlusionGeometry":"conservative-window-bounds","visible":panel?.isVisible ?? false,"windowId":Int(panel?.windowNumber ?? 0),"targetPID":Int(pid),"targetWindowId":Int(windowID),"relative":["x":relative.x,"y":relative.y],"global":["x":global.x,"y":global.y],"panelFrame":rectJSON(panel?.frame ?? .zero),"backingScale":panel?.backingScaleFactor ?? 1,"pressed":pressed,"activity":activity,"sequence":sequence,"ignoresMouseEvents":panel?.ignoresMouseEvents ?? true,"canBecomeKey":panel?.canBecomeKey ?? false,"canBecomeMain":panel?.canBecomeMain ?? false,"history":history]
     }
 }

@@ -1,6 +1,6 @@
 {
   "name": "independent-macos-computer-use",
-  "version": "1.2.0",
+  "version": "1.3.0",
   "description": "Independent macOS desktop perception and control over MCP stdio",
   "private": true,
   "type": "module",
@@ -31,7 +31,9 @@
     "check:docs": "node scripts/check-docs.mjs",
     "docs:bilingual": "node scripts/build-bilingual.mjs",
     "test:focus": "node scripts/focus-cause-test.mjs --without-appkit --regular",
-    "test:document:cooperative": "CU_TEST_SCOPED_FOCUS=0 node scripts/repl-document-test.mjs"
+    "test:document:cooperative": "CU_TEST_SCOPED_FOCUS=0 node scripts/repl-document-test.mjs",
+    "test:cursor:occlusion": "node scripts/repl-cursor-occlusion-test.mjs",
+    "test:packaged-cursor": "node scripts/packaged-cursor-test.mjs"
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "1.32.1",

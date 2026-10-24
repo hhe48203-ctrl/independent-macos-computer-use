@@ -9,7 +9,9 @@ const root=fileURLToPath(new URL('../',import.meta.url));
 const directory=root+`artifacts/repl-cursor-lifecycle-${Date.now()}`;mkdirSync(directory,{recursive:true});
 const fixture=await startBackgroundFixture(directory,{background:true,resizable:true});
 const target=fixture.apps.target,client=new Client({name:'cursor-lifecycle',version:'1'}),calls=[],checks=[];
-const env={...process.env,CU_ENABLE_FOREGROUND:'0',CU_EXPERIMENTAL_APPKIT_FOCUS:process.env.CU_TEST_SCOPED_FOCUS==='0'?'0':'1',CU_ALLOWED_BUNDLE_IDS:'io.local.computeruse.background-target'};
+// This historical lifecycle test exercises the explicit progress overlay under
+// full cover. Default target clipping has a separate pixel/occlusion test.
+const env={...process.env,CU_AGENT_CURSOR_VISIBILITY:'always',CU_ENABLE_FOREGROUND:'0',CU_EXPERIMENTAL_APPKIT_FOCUS:process.env.CU_TEST_SCOPED_FOCUS==='0'?'0':'1',CU_ALLOWED_BUNDLE_IDS:'io.local.computeruse.background-target'};
 const plain=r=>r.content.filter(c=>c.type==='text').map(c=>c.text).join('\n');
 async function js(code){const r=await client.callTool({name:'js',arguments:{code}});calls.push({code,result:r});assert.ok(!r.isError,plain(r));return r;}
 async function cursor(){const r=await js('await cua.cursorState(); undefined');return JSON.parse(r.content.find(c=>c.type==='text'&&c.text.trimStart().startsWith('{')).text);}

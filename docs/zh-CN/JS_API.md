@@ -90,6 +90,8 @@ click/pressKey 的 `durationMs` 为0..5000毫秒，控制每个 down/up 对之�
 
 未知取值回落到默认的 `ring`；`cursorState` 的 `style` 与 `styleDescription` 报告实际生效的样式。
 
+`CU_AGENT_CURSOR_VISIBILITY=target`（默认）在目标点被遮挡时隐藏光标，并将完整图形和光晕裁剪到目标窗口的露出区域；隐藏时连续移动与后台输入继续。`always` 保留旧版置顶进度光标。未知取值回落到 `target`。设置在 helper 启动时读取，修改环境后需重连 MCP 客户端。`cursorState` 增加 `visibilityMode`、`visibilityReason`、全局逻辑点的 `clipRects`、`occluderCount`、`occlusionGeometry`，这些是绘制诊断，不能证明输入成功。详见[可见性规则与验证范围](CURSOR_OCCLUSION.md)。
+
 操作间窗口移动会跟随；尺寸变化会隐藏并拒绝旧映射；移动或拖动途中窗口变化则停止输入。光标还会在30秒空闲、目标隐藏/关闭、重置、取消、断开时清理。CU_AGENT_CURSOR=0 可关闭。
 
 cursorState 返回可见性、相对/全局逻辑点、面板状态和最近256个本项目绘制记录，不能据此断言输入成功。hideCursor 显式隐藏。

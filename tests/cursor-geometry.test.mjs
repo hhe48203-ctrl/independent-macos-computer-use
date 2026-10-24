@@ -24,6 +24,23 @@ ${source}
     for i in 1..<points.count {precondition(points[i].x>points[i-1].x && points[i].y<points[i-1].y);precondition(hypot(points[i].x-points[i-1].x,points[i].y-points[i-1].y)<40)}
     precondition(AgentCursor.motionDuration(distance:10)<AgentCursor.motionDuration(distance:800))
     precondition(AgentCursor.motionDuration(distance:8000)<=0.55)
+    let target=CGRect(x:-100,y:100,width:400,height:300),footprint=CGRect(x:0,y:150,width:80,height:80)
+    let screens=[CGRect(x:-200,y:0,width:1000,height:900)]
+    func visible(_ point:CGPoint,_ covers:[CGRect],_ area:CGRect=footprint)->[CGRect]{AgentCursorRegion.visible(footprint:area,point:point,target:target,covers:covers,screens:screens)}
+    let point=CGPoint(x:24,y:174)
+    precondition(visible(point,[])==[footprint])
+    precondition(visible(point,[target]).isEmpty)
+    let cover=CGRect(x:30,y:100,width:200,height:300),clipped=visible(point,[cover])
+    precondition(clipped==[CGRect(x:0,y:150,width:30,height:80)])
+    precondition(visible(CGPoint(x:31,y:174),[cover]).isEmpty)
+    let holes=[CGRect(x:40,y:160,width:10,height:10),CGRect(x:60,y:190,width:30,height:80)]
+    let regions=visible(point,holes)
+    precondition(!regions.isEmpty)
+    for r in regions {precondition(footprint.contains(r));for hole in holes {precondition(r.intersection(hole).isEmpty || r.intersection(hole).isNull)}}
+    precondition(abs(regions.reduce(0){$0+$1.width*$1.height}-5500)<0.01)
+    precondition(visible(CGPoint(x:-90,y:174),[],CGRect(x:-114,y:150,width:80,height:80))==[CGRect(x:-100,y:150,width:66,height:80)])
+    precondition(AgentCursorRegion.visible(footprint:footprint,point:point,target:target,covers:[],screens:[]).isEmpty)
+    precondition(AgentCursorRegion.visible(footprint:footprint,point:point,target:target,covers:[],screens:[CGRect(x:0,y:100,width:40,height:200)])==[CGRect(x:0,y:150,width:40,height:80)])
     print("geometry and motion passed")
   }
 }`;

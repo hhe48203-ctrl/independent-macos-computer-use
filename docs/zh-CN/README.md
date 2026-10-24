@@ -4,7 +4,7 @@
 
 本机运行的独立 Computer Use MCP。Agent 只使用 `js`、`js_reset` 两个入口，在持久 JavaScript REPL 内调用 `cua` 和应用对象。Swift helper 提供 Accessibility、ScreenCaptureKit、Vision OCR、后台输入，以及可见、穿透点击、不抢焦点的独立光标。
 
-v1.1 增加原版坐标兼容模式、修饰键点击/定时按键、垂直滚动校准和显式重连，保持持久 REPL 与独立光标接口。运行不需要 Codex、`@oai/sky`、原版服务、OpenAI API key 或 REA。研究使用了 [REA](https://github.com/morluto/rea)；交付物不含原版专有模块、二进制或图形资源，不修改原版应用或系统权限数据库。
+v1.3 增加遵守目标遮挡的光标，以及可选的始终显示进度模式。v1.1 增加原版坐标兼容模式、修饰键点击/定时按键、垂直滚动校准和显式重连，保持持久 REPL 与独立光标接口。运行不需要 Codex、`@oai/sky`、原版服务、OpenAI API key 或 REA。研究使用了 [REA](https://github.com/morluto/rea)；交付物不含原版专有模块、二进制或图形资源，不修改原版应用或系统权限数据库。
 
 ## 构建和启动
 
@@ -38,7 +38,7 @@ await app.getAXStateAndScreenshot();
 
 观察会自动显示 AX 文本/差分及 MCP 图像。`emit:false` 只返回内容。移植原版脚本可用 `cua.getApp(reference,{coordinateMode:"original"})`，AX-only 后仍保留截图像素坐标；每次观察明确报告单位、缩放和范围。`app.reconnect()` 预览候选，显式选择 PID/窗口后返回新绑定。完整方法、截图坐标规则和差异见 [JS API](../JS_API.md)。每个桌面操作都应 await；调用结束后的异步回调不能继续操作桌面。超时、取消或重置会清除绑定并停止原生输入，已经发生的副作用不会回滚。REPL 是可信本地 Node.js，不是安全沙箱。
 
-光标独立绘制并连续缓入缓出移动，到位后才投递输入；默认是琥珀色圆环十字，可与 Codex 自身指针区分（`CU_AGENT_CURSOR_STYLE=arrow` 换回 v1 的浅色描边、半透明箭头与柔和光晕）。拖动位置随真实事件包更新；不会移动系统鼠标。它不可成为 key/main，穿透点击，随窗口移动；大小变化、目标关闭、重置、断开及空闲超时会隐藏。文本操作指向元素中心，并不声称测量到插入点。
+光标独立绘制并连续缓入缓出移动，到位后才投递输入；默认是琥珀色圆环十字，可与 Codex 自身指针区分（`CU_AGENT_CURSOR_STYLE=arrow` 换回 v1 的浅色描边、半透明箭头与柔和光晕）。拖动位置随真实事件包更新；不会移动系统鼠标。它不可成为 key/main，穿透点击，随窗口移动；大小变化、目标关闭、重置、断开及空闲超时会隐藏。文本操作指向元素中心，并不声称测量到插入点。 默认遵守目标窗口的遮挡：目标点被盖住时隐藏，边缘仅绘制可见部分（包含光晕裁剪），隐藏时连续移动与后台操作继续。服务启动时设 `CU_AGENT_CURSOR_VISIBILITY=always` 可使用旧版置顶进度光标，详见[光标可见性](CURSOR_OCCLUSION.md)。
 
 ## MCP 客户端和 pi
 
