@@ -1,11 +1,26 @@
+import {acquireFixtureLease} from './fixture-lease.mjs';
 import { spawn, spawnSync } from 'node:child_process';
 import { mkdirSync, writeFileSync, readFileSync, existsSync, readdirSync, rmSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import path from 'node:path';
 const root=fileURLToPath(new URL('../',import.meta.url));
-export async function startBackgroundFixture(directory,{roles=['target','cover'],background=true,regular=false,targetRegular=false,launchServices=false,documentInput=false,selectionInput=false,focusDiagnostics=false,allSpaces=false,reference=false,resizable=false,beforeLaunch}={}){
+export async function startBackgroundFixture(directory,{roles=['target','cover'],background=true,regular=false,targetRegular=false,launchServices=false,documentInput=false,selectionInput=false,focusDiagnostics=false,rejectRaise=false,allSpaces=false,reference=false,resizable=false,beforeLaunch}={}){
   if(regular && !launchServices && process.env.CU_TEST_ALLOW_FOREGROUND_SETUP!=='1')throw Error('Direct regular AppKit launch may activate itself; CU_TEST_ALLOW_FOREGROUND_SETUP=1 is required.');
-  mkdirSync(directory,{recursive:true});const children=[];const apps={};
+  const release=acquireFixtureLease(path.join(root,'.build'));
+  const children=[],apps={};let closing;
+  const closeAndWait=()=>closing??=(async()=>{
+    for(const c of children)c.kill('SIGTERM');
+    try{
+      for(const c of children){if(typeof c.once==='function'&&c.exitCode===null&&c.signalCode===null)await new Promise(r=>c.once('exit',r))}
+      for(const a of Object.values(apps)){
+        const c=a.child;
+        if(typeof c.once!=='function'){let gone=false;for(let i=0;i<60;i++){try{process.kill(a.pid,0)}catch{gone=true;break}await new Promise(r=>setTimeout(r,50))}if(!gone)throw Error('Owned LaunchServices fixture did not exit; retaining fixture lease');}
+      }
+      release();
+    }catch(e){process.stderr.write(e.message+'\n');throw e}
+  })();
+  try{
+  mkdirSync(directory,{recursive:true});
   const driver=path.join(root,'.build/background-test-driver');
   function run(command,args){const r=spawnSync(command,args,{encoding:'utf8'});if(r.status!==0)throw Error(r.stderr||r.stdout);return r.stdout.trim()}
   // Recompiling an in-use signed Mach-O can invalidate its executable pages.
@@ -21,7 +36,7 @@ export async function startBackgroundFixture(directory,{roles=['target','cover']
     writeFileSync(path.join(app,'Contents/Info.plist'),`<?xml version="1.0"?><plist version="1.0"><dict><key>CFBundleIdentifier</key><string>${bundle}</string><key>CFBundleName</key><string>${name}</string><key>CFBundleExecutable</key><string>fixture</string><key>CFBundleVersion</key><string>1</string></dict></plist>`);
     run('xcrun',['swiftc','-parse-as-library','-swift-version','5','-O',path.join(root,'native/BackgroundFixture.swift'),...(focusDiagnostics?['-D','CU_FOCUS_DIAGNOSTICS',path.join(root,'native/FocusDiagnostics.swift')]:[]),'-o',executable]);run('/usr/bin/codesign',['--force','--sign','-',app]);
     const roleRegular=regular||(targetRegular&&role==='target'),roleLaunchServices=launchServices||(targetRegular&&role==='target');
-    const args=[role,directory,...(allSpaces?['--all-spaces']:[]),...(resizable?['--resizable']:[]),...(roleRegular?['--regular-background']:[]),...(roleLaunchServices?['--launch-services-background']:[]),...(documentInput&&role==='target'?['--document-input']:[]),...(selectionInput&&role==='target'?['--selection-input']:[]),...(background?['--background',String(role==='cover'?apps.target?.windowId??0:0)]:[])];
+    const args=[role,directory,...(rejectRaise&&role==='target'?['--diagnostic-reject-raise']:[]),...(allSpaces?['--all-spaces']:[]),...(resizable?['--resizable']:[]),...(roleRegular?['--regular-background']:[]),...(roleLaunchServices?['--launch-services-background']:[]),...(documentInput&&role==='target'?['--document-input']:[]),...(selectionInput&&role==='target'?['--selection-input']:[]),...(background?['--background',String(role==='cover'?apps.target?.windowId??0:0)]:[])];
     let child;
     if(roleLaunchServices){run('/usr/bin/open',['-g','-n',app,'--args',...args])}
     else {child=spawn(executable,args,{stdio:['ignore','ignore','pipe']});children.push(child);child.stderr.on('data',d=>process.stderr.write(d))}
@@ -31,12 +46,6 @@ export async function startBackgroundFixture(directory,{roles=['target','cover']
     if(!child){child={kill(signal){try{process.kill(state.pid,signal)}catch{}},exitCode:null};children.push(child)}
     apps[role]={...state,child};
   }
-  return {apps,driver,run,read(role,suffix='state'){return JSON.parse(readFileSync(path.join(directory,`${role}-${suffix}.json`),'utf8'))},close(){for(const c of children)c.kill('SIGTERM')},async closeAndWait(){
-    for(const c of children)c.kill('SIGTERM');
-    for(const a of Object.values(apps)){
-      const c=a.child;
-      if(typeof c.once==='function'){if(c.exitCode===null&&c.signalCode===null)await new Promise(r=>c.once('exit',r))}
-      else for(let i=0;i<60;i++){try{process.kill(a.pid,0)}catch{break}await new Promise(r=>setTimeout(r,50))}
-    }
-  }};
+  return {apps,driver,run,read(role,suffix='state'){return JSON.parse(readFileSync(path.join(directory,`${role}-${suffix}.json`),'utf8'))},close(){void closeAndWait().catch(()=>{})},closeAndWait};
+  }catch(e){await closeAndWait();throw e}
 }

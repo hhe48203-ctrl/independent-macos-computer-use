@@ -53,6 +53,11 @@ enum FocusDiagnostics {
     static func save(){guard let output,let data=try? JSONSerialization.data(withJSONObject:["events":rows,"dropped":dropped,"scope":"Only this disposable fixture; public input-context methods call the original implementation once; no keyboard text recorded"],options:[.sortedKeys]) else{return};try? data.write(to:output,options:.atomic)}
 }
 final class FocusDiagnosticWindow:NSWindow {
+    override func accessibilityPerformRaise()->Bool {
+        FocusDiagnostics.record("AXRaise-request",stack:true)
+        if CommandLine.arguments.contains("--diagnostic-reject-raise"){FocusDiagnostics.record("AXRaise-rejected-by-owned-control");return false}
+        return super.accessibilityPerformRaise()
+    }
     override func order(_ place:NSWindow.OrderingMode,relativeTo other:Int){FocusDiagnostics.record("order",stack:true,extra:["mode":place.rawValue,"relativeTo":other,"window":windowNumber]);super.order(place,relativeTo:other)}
     override func orderFront(_ sender:Any?){FocusDiagnostics.record("orderFront",stack:true);super.orderFront(sender)}
     override func orderFrontRegardless(){FocusDiagnostics.record("orderFrontRegardless",stack:true);super.orderFrontRegardless()}
