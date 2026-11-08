@@ -42,7 +42,7 @@ The server process has the desktop privileges of the user who started it. It is 
 
 ## Install, build, and doctor
 
-From a checkout of this repository (clone directory `macos-computer-use-mcp`):
+From a checkout of this repository. The examples use `macos-computer-use-mcp` as the checkout directory; if the cloned directory name differs, substitute that path.
 
 ```sh
 npm ci --ignore-scripts
@@ -130,6 +130,6 @@ Desktop tests drive temporary owned AppKit windows. Native event tests explicitl
 
 Running the server does not require Codex, `@oai/sky`, an original service, an OpenAI API key, or [REA](https://github.com/morluto/rea). Research used REA. The deliverable contains no original proprietary modules, binaries, or image assets, and it does not modify another app or the system permission database. Interface differences measured against a local install are kept in the [original baseline](docs/ORIGINAL_BASELINE.md), with mechanism notes in [focus fidelity](docs/FOCUS_FIDELITY.md) and the [reverse-engineering record](docs/REVERSE_ENGINEERING.md). Those research pages include historical interface names; the public tools are only `js` and `js_reset`.
 
-This documentation pass does not rename distribution identifiers. `package.json`, `plugin.json`, and the MCP server name remain `independent-macos-computer-use` (`package.json` is `"private": true`). The npm bin is `macos-computer-use-mcp`.
+This documentation pass does not rename distribution identifiers. `package.json`, `plugin.json`, and the MCP server name remain `independent-macos-computer-use` (`package.json` is `"private": true`). The npm bin is `macos-computer-use-mcp`. The GitHub repository slug is still `independent-macos-computer-use` until a repository admin renames it.
 
 Licensed under [MIT](LICENSE).

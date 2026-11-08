@@ -42,7 +42,7 @@
 
 ## 安装、构建与 doctor
 
-在本仓库的检出目录中操作（克隆目录名 `macos-computer-use-mcp`）：
+在本仓库的检出目录中操作。下面的示例把检出目录写成 `macos-computer-use-mcp`；如果克隆下来的目录名不同，请换成实际路径。
 
 ```sh
 npm ci --ignore-scripts
@@ -130,6 +130,6 @@ npm run package
 
 运行服务器不需要 Codex、`@oai/sky`、原版服务、OpenAI API key 或 [REA](https://github.com/morluto/rea)。研究过程使用了 REA。交付物不含原版专有模块、二进制或图像资源，也不修改其他应用或系统权限数据库。相对本机安装测得的接口差异保存在[原版基线](ORIGINAL_BASELINE.md)，机制笔记在[焦点保真](FOCUS_FIDELITY.md)和[逆向记录](REVERSE_ENGINEERING.md)。这些研究页含有历史接口名；公开工具只有 `js` 和 `js_reset`。
 
-这次文档更新不改分发标识。`package.json`、`plugin.json` 和 MCP 服务器名仍是 `independent-macos-computer-use`（`package.json` 为 `"private": true`）。npm bin 是 `macos-computer-use-mcp`。
+这次文档更新不改分发标识。`package.json`、`plugin.json` 和 MCP 服务器名仍是 `independent-macos-computer-use`（`package.json` 为 `"private": true`）。npm bin 是 `macos-computer-use-mcp`。在仓库管理员完成改名之前，GitHub 仓库 slug 仍是 `independent-macos-computer-use`。
 
 许可证为 [MIT](../../LICENSE)。
