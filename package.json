@@ -33,7 +33,8 @@
     "test:focus": "node scripts/focus-cause-test.mjs --without-appkit --regular",
     "test:document:cooperative": "CU_TEST_SCOPED_FOCUS=0 node scripts/repl-document-test.mjs",
     "test:cursor:occlusion": "node scripts/repl-cursor-occlusion-test.mjs",
-    "test:packaged-cursor": "node scripts/packaged-cursor-test.mjs"
+    "test:packaged-cursor": "node scripts/packaged-cursor-test.mjs",
+    "bench:v2": "node scripts/bench-v2.mjs"
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "1.32.1",
@@ -41,6 +42,7 @@
   },
   "license": "MIT",
   "devDependencies": {
+    "acorn": "8.15.0",
     "esbuild": "0.28.2",
     "yaml": "2.9.1"
   }
