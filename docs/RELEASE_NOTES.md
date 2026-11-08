@@ -55,7 +55,7 @@ By default the verified AX text/button paths plus independent screenshots, OCR a
 On the **macOS 26.6.2 arm64** verified in this round, the app-local AppKit focus route can be enabled explicitly to improve real control handling in unactivated windows:
 
 ```sh
-CU_EXPERIMENTAL_APPKIT_FOCUS=1 node /absolute/path/to/independent-macos-computer-use/src/server.mjs
+CU_EXPERIMENTAL_APPKIT_FOCUS=1 node /absolute/path/to/macos-computer-use-mcp/src/server.mjs
 ```
 
 MCP clients can follow `examples/mcp-background-events.json` and put that variable in the server's `env`. For a source checkout, install pi with `node scripts/setup-pi.mjs --background-events`; it only updates project-local configuration, keeps existing server environment settings, and does not touch global configuration or credentials. This machine's project is configured that way. The default plugin manifest does not enable the experimental route.

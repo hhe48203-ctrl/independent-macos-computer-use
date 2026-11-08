@@ -52,7 +52,7 @@ Node MCP stdio 与独立 Swift helper，17 个工具；运行时无需 Codex、�
 在本轮验证的 **macOS 26.6.2 arm64**，可显式启用局部 AppKit 焦点路径，改善未激活窗口的真实控件处理：
 
 ```sh
-CU_EXPERIMENTAL_APPKIT_FOCUS=1 node /absolute/path/to/independent-macos-computer-use/src/server.mjs
+CU_EXPERIMENTAL_APPKIT_FOCUS=1 node /absolute/path/to/macos-computer-use-mcp/src/server.mjs
 ```
 
 MCP 客户端可参考 `examples/mcp-background-events.json`，将该变量放入服务器配置的 `env`。源码项目的 pi 安装命令为 `node scripts/setup-pi.mjs --background-events`；只更新项目内配置，保留已有服务器环境设置，不改全局配置或凭证。本机项目已配置此模式。默认插件清单不开启实验路径。

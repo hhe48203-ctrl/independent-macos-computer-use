@@ -2,7 +2,7 @@
   "mcpServers": {
     "macos_computer_use": {
       "command": "/absolute/path/to/node",
-      "args": ["/absolute/path/to/independent-macos-computer-use/src/server.mjs"],
+      "args": ["/absolute/path/to/macos-computer-use-mcp/src/server.mjs"],
       "env": {
         "CU_ENABLE_FOREGROUND": "0",
         "CU_EXPERIMENTAL_APPKIT_FOCUS": "1"

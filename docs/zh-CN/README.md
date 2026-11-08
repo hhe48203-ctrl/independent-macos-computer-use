@@ -1,72 +1,116 @@
-# Independent macOS Computer Use MCP
+# macOS Computer Use MCP
 
 [English version](../../README.md)
 
-本机运行的独立 Computer Use MCP。Agent 只使用 `js`、`js_reset` 两个入口，在持久 JavaScript REPL 内调用 `cua` 和应用对象。Swift helper 提供 Accessibility、ScreenCaptureKit、Vision OCR、后台输入，以及可见、穿透点击、不抢焦点的独立光标。
+用持久的 JavaScript 会话编写 macOS 应用脚本——只需两个 MCP 工具。
 
-v1.3 增加遵守目标遮挡的光标，以及可选的始终显示进度模式。v1.1 增加原版坐标兼容模式、修饰键点击/定时按键、垂直滚动校准和显式重连，保持持久 REPL 与独立光标接口。运行不需要 Codex、`@oai/sky`、原版服务、OpenAI API key 或 REA。研究使用了 [REA](https://github.com/morluto/rea)；交付物不含原版专有模块、二进制或图形资源，不修改原版应用或系统权限数据库。
+变量、函数和应用句柄在多次工具调用之间保留。一次调用观察窗口，下一次调用继续使用同一批对象。原生 Swift helper 提供 Accessibility 树、截图、OCR，以及以后台为先的交互。
 
-## 构建和启动
+灵感来自 Codex 风格的 JavaScript computer-use 会话。这是独立实现，不是官方 Codex 集成。它作为可信的本地 Node.js 进程运行，不是安全沙箱。
 
-源码需要 macOS14.4+、Node.js22+、Xcode Command Line Tools。本机验证 macOS26.6.2 arm64、Node24.15.0。预编译包只需 macOS 与 Node，无须编译器或 npm install。其他系统/架构尚未实机验证。
+## 两个工具，一个会话
+
+公开服务只暴露 `js` 和 `js_reset`。`cua` 与 `nodeRepl` 已经初始化。顶层 `await`、`var` / `let` / `const`、函数和应用对象在下一次 `js` 调用中仍然可用。
+
+| 工具 | 参数 | 行为 |
+| --- | --- | --- |
+| `js` | `{code, timeout_ms?, title?}` | 在持久的 Node.js REPL 中执行 `code`。`timeout_ms` 可选，默认 30000，必须是 100 到 120000 的整数。 |
+| `js_reset` | `{}` | 停止进行中的 JavaScript 与原生输入，隐藏代理光标，并清除词法绑定和应用对象。 |
+
+观察会自动附带 Accessibility 文本或差分；若返回截图，还会附带 MCP 图像块。传入 `emit:false` 只返回值、不附带这些展示。方法、坐标规则和光标见 [JS API](JS_API.md)。
+
+### 什么会留下来，失败时又会清掉什么
+
+- 普通抛出的错误会保留已经存在的绑定。重复声明已有的 `let` 或 `const` 会抛出 `SyntaxError`。
+- `js_reset`、超时、客户端取消、进程退出，或输出/内存上限，都会重建会话。这些路径丢掉变量、函数和应用对象，并停止该会话的原生输入。
+- 已经送达应用的点击、按键和文本不会回滚。
+- 每个桌面操作都要 await。`js` 调用结束后才运行的回调，不能在之后的调用里继续操作桌面。
+- 单次调用最多返回 8 MiB 或 256 个块。控制台和 worker 的 stdout 不进入 MCP 协议 stdout。
+
+## 环境要求
+
+从本仓库构建需要：
+
+- macOS 14.4 或更高版本，以及 Xcode Command Line Tools，用于编译 Swift helper
+- Node.js 22 或更高版本
+
+已记录的验证环境是 macOS 26.6.2 arm64、Node.js 24.15.0。其他操作系统和架构没有实机验证。`npm run package` 可以在本地生成插件 ZIP；该 ZIP 只需要 macOS 和 Node.js，不需要编译器或 `npm install`。本仓库有 `v1.0.0` 至 `v1.3.0` 标签，不发布 GitHub Releases。这些本地包的验收见[验证记录](VALIDATION.md)。
+
+请在系统设置中，把辅助功能（Accessibility）和屏幕录制授给实际启动服务器的终端、Agent 或 helper。本项目不能替你修改 TCC 数据库。启动链变化后，重新运行 doctor。
+
+服务器进程拥有启动它的用户的桌面权限。它是可信的本地 Node.js 进程，不是安全沙箱，只应执行你信任的 Agent 提供的 JavaScript。
+
+## 安装、构建与 doctor
+
+在本仓库的检出目录中操作（克隆目录名 `macos-computer-use-mcp`）：
 
 ```sh
 npm ci --ignore-scripts
 npm run build
 npm run doctor
-node /absolute/path/to/computer_use_mcp/src/server.mjs
+node /absolute/path/to/macos-computer-use-mcp/src/server.mjs
 ```
 
-最后一条启动 MCP stdio 服务，等待客户端 JSON-RPC 输入；不是交互式终端。stdout 保持协议输出。正常授予启动终端/Agent/helper 的辅助功能与屏幕录制权限，换启动链后重新运行 doctor。本项目无法代替用户授予 TCC。构建会拒绝覆盖仍在运行的 helper，先关闭其客户端或指定独立 CU_BUILD_DIRECTORY。
+`npm run doctor` 向已构建的 helper 查询状态并打印 JSON。它不会弹出权限请求，也不会授予权限。最后一条命令启动 MCP stdio 服务并等待客户端 JSON-RPC。它不是交互式 shell，stdout 只保留协议输出。`npm start` 运行同一个 `src/server.mjs` 入口。构建会拒绝覆盖仍在运行的 helper；先关闭其客户端，或另选 `CU_BUILD_DIRECTORY`。
 
-## Agent 接口
+## MCP 客户端配置
 
-`js` 参数为 `{code,timeout_ms?,title?}`，`js_reset` 参数为 `{}`。`cua`、`nodeRepl` 已初始化；顶层 await、var/let/const 和应用对象跨调用保留。
-
-```js
-let state = await cua.getState();
-let app = await cua.getApp({pid:123,windowId:456}); // 从真实 inventory 选择
-```
-
-下一次 `js` 调用继续使用同一个 app：
-
-```js
-await app.getAXStateAndScreenshot();
-// 按最新观察到的索引操作：await app.click(7)
-// await app.typeText('你好'); await app.pressKey('CMD+A')
-```
-
-观察会自动显示 AX 文本/差分及 MCP 图像。`emit:false` 只返回内容。移植原版脚本可用 `cua.getApp(reference,{coordinateMode:"original"})`，AX-only 后仍保留截图像素坐标；每次观察明确报告单位、缩放和范围。`app.reconnect()` 预览候选，显式选择 PID/窗口后返回新绑定。完整方法、截图坐标规则和差异见 [JS API](../JS_API.md)。每个桌面操作都应 await；调用结束后的异步回调不能继续操作桌面。超时、取消或重置会清除绑定并停止原生输入，已经发生的副作用不会回滚。REPL 是可信本地 Node.js，不是安全沙箱。
-
-光标独立绘制并连续缓入缓出移动，到位后才投递输入；默认是琥珀色圆环十字，可与 Codex 自身指针区分（`CU_AGENT_CURSOR_STYLE=arrow` 换回 v1 的浅色描边、半透明箭头与柔和光晕）。拖动位置随真实事件包更新；不会移动系统鼠标。它不可成为 key/main，穿透点击，随窗口移动；大小变化、目标关闭、重置、断开及空闲超时会隐藏。文本操作指向元素中心，并不声称测量到插入点。 默认遵守目标窗口的遮挡：目标点被盖住时隐藏，边缘仅绘制可见部分（包含光晕裁剪），隐藏时连续移动与后台操作继续。服务启动时设 `CU_AGENT_CURSOR_VISIBILITY=always` 可使用旧版置顶进度光标，详见[光标可见性](CURSOR_OCCLUSION.md)。
-
-## MCP 客户端和 pi
-
-普通 stdio 配置：
+把 stdio MCP 客户端指向 Node.js 可执行文件和这份检出：
 
 ```json
-{"mcpServers":{"macos-computer-use":{"command":"/absolute/path/to/node","args":["/absolute/path/to/computer_use_mcp/src/server.mjs"]}}}
+{
+  "mcpServers": {
+    "macos-computer-use": {
+      "command": "/absolute/path/to/node",
+      "args": ["/absolute/path/to/macos-computer-use-mcp/src/server.mjs"]
+    }
+  }
+}
 ```
 
-`mcp.json` 可供支持 PLUGIN_ROOT 的本地插件客户端使用；[SDK 示例](../../examples/mcp-client.mjs) 展示真实调用。
+[`mcp.json`](../../mcp.json) 是同一服务，供会展开 `PLUGIN_ROOT` 的本地插件客户端使用。[`examples/mcp-client.mjs`](../../examples/mcp-client.mjs) 展示直接的 SDK 会话。可选的 pi 安装只写本项目的 `.pi/mcp.json`，不改全局配置或凭证：
 
 ```sh
 node scripts/setup-pi.mjs
 pi --approve --extension builtin:mcp
-npm run test:pi
 ```
 
-setup 仅写本项目 `.pi/mcp.json`，不改全局配置或凭证。现在默认关闭局部AppKit激活，旧的 `--background-events` 参数也不会再隐式开启它；真实事件策略仍可调用。只有 `--experimental-appkit-focus` 才明确开启旧实验路径。真人并用优先采用语义全选、文本选择和按钮操作。实测输入法机制与原版AX Raise栈见[输入隔离调查](INPUT_ISOLATION.md)。pi 基础验收仅用5次 js 调用完成中文输入闭环；另用9次 js 完成7项真实文档事件操作，包括快捷键、中文/emoji、选择拖动、滚动和原始点击。
+该安装保持合成 AppKit 激活关闭，即使传入旧的 `--background-events` 参数也是如此。`--experimental-appkit-focus` 才会显式打开旧的激活路径。见[输入隔离](INPUT_ISOLATION.md)。
 
-## 能力与边界
+## 持久会话
 
-后台默认不激活、不移动系统鼠标、不回退前台。目标可完全被覆盖，但应在当前解锁桌面且未最小化。AXPress 与验证后的 AX 文本默认优先。真实鼠标/键盘事件为可选路径，依赖未公开的 CGEventSetWindowLocation 等系统行为，应用可能忽略或自行重排窗口；隔离错误需要停止并观察。实验局部 AppKit 焦点路径仅在指定本机版本验证，不能承诺任意应用兼容。
+第一次 `js` 调用读取当前清单并绑定一个窗口。`state.windows` 的每一项包含 `pid`、`windowId`、`title`、`app`、`bundleId`、`path`、`frame` 和 `onScreen`。`cua.listWindows()` 只返回这个窗口数组。请复制一对真实的值。下面的常量是占位符，不是你这台 Mac 上的窗口。
 
-可设 CU_ALLOWED_BUNDLE_IDS 限定应用，空值拒绝所有目标；此模式禁用显示器截图。CU_AGENT_CURSOR=0 关闭可见覆盖层。光标默认是琥珀色圆环十字（与 Codex 自身指针区分）；CU_AGENT_CURSOR_STYLE=arrow 可换回 v1 的浅色小箭头。普通截图排除光标，显式 `cua.getScreenshot({region,includeAgentCursor:true})` 可作视觉验证。
+```js
+const state = await cua.getState();
+const EXAMPLE_PID = 123;        // 换成 state.windows[].pid
+const EXAMPLE_WINDOW_ID = 456;  // 换成对应的 state.windows[].windowId
+let app = await cua.getApp({pid: EXAMPLE_PID, windowId: EXAMPLE_WINDOW_ID});
+```
 
-当前没有浏览器 API和富文本粘贴；不支持的选项明确报错。纯文本 paste 使用 AX 插入，无需剪贴板。只有一块物理 Retina 屏幕完成实测，多屏坐标公式测试不等价于真实多屏验收。不包含锁屏、隐藏桌面、TCC 绕过或凭证提取。
+`cua.getApp("com.apple.calculator")` 这类 bundle id 只有在恰好匹配一个窗口时才可用。零个或多个匹配都会抛错，而且 `getApp` 不会启动应用。
 
-## 验证和打包
+下一次 `js` 调用仍是同一个 REPL，因此 `app` 还是那个对象：
+
+```js
+await app.getAXStateAndScreenshot();
+const EXAMPLE_ELEMENT_INDEX = 7; // 换成这次最新观察里的索引
+await app.click(EXAMPLE_ELEMENT_INDEX);
+```
+
+元素索引指的是该应用对象最近一次观察中的行，不是跨观察稳定的 id。`await app.typeText("...")` 和 `await app.pressKey("CMD+A")` 也在同一会话里。`coordinateMode:"original"` 是移植脚本时显式选择的坐标映射，并不表示其余行为与另一产品一致。细节见 [JS API](JS_API.md)。
+
+## 配置与限制
+
+后台操作默认不激活目标、不移动系统指针，也不回退到前台。窗口可以完全被挡住，但仍须在当前已解锁的桌面且未最小化。锁屏、其他 Space 和隐藏桌面不在支持保证内。默认动作优先使用 `AXPress` 和经过读回校验的 Accessibility 文本。真实鼠标和键盘事件是可选项，依赖未公开的系统行为，包括 `CGEventSetWindowLocation`。应用可能忽略这些事件，或自行重排窗口。隔离错误会停止操作，以便调用方重新观察。
+
+`CU_ALLOWED_BUNDLE_IDS` 限制可操作的应用。空值拒绝所有目标，并禁用显示器截图。`CU_AGENT_CURSOR=0` 隐藏覆盖层。`CU_AGENT_CURSOR_STYLE` 为 `ring`（默认）或 `arrow`。`CU_AGENT_CURSOR_VISIBILITY` 在 helper 启动时读取：`target`（默认）在锚点被挡住时隐藏或裁剪图形，`always` 保留较早的进度覆盖层。图形隐藏时，移动和后台输入继续。普通截图不含光标；`cua.getScreenshot({region, includeAgentCursor:true})` 可以把它包含进来做视觉检查。见[光标可见性](CURSOR_OCCLUSION.md)。
+
+除非设置 `CU_EXPERIMENTAL_APPKIT_FOCUS=1` 或上面的 pi 参数，实验性的应用内 AppKit 焦点路径保持关闭。它只在已记录的 macOS 26.6.2 arm64 机器上验证过，不能承诺任意应用。没有浏览器 API，也没有富文本粘贴；不支持的选项会明确失败。纯文本粘贴走 Accessibility 插入，不使用剪贴板。只测量过一块物理 Retina 显示器。多显示器坐标公式测试不是多显示器验收。TCC 绕过和凭证提取不属于本项目。
+
+## 开发、验证与许可证
+
+[文档索引](INDEX.md)列出 [JS API](../JS_API.md)、[架构](../ARCHITECTURE.md)（仅英文）、[验证](VALIDATION.md)、[开发状态](DEVELOPMENT_STATUS.md)和[发行说明](RELEASE_NOTES.md)。`npm run check:docs` 检查相对链接，以及 [docs/zh-CN](INDEX.md) 下的中文对应页。
 
 ```sh
 npm test
@@ -76,17 +120,16 @@ npm run test:input-options
 npm run test:reconnect
 npm run test:scroll
 node scripts/repl-document-test.mjs
+npm run check:docs
 npm run test:pi
 npm run test:pi:document
 npm run package
 ```
 
-桌面测试只操作临时自建 AppKit 窗口。原生事件测试显式启用本机已验证的局部焦点实验路径。真人并用测试必须先协调开始时间，自动脚本不能替代真人输入完整性。
+桌面测试只驱动临时自建的 AppKit 窗口。原生事件测试会显式打开实验焦点路径。真人并用检查需要事先约定开始时间；自动脚本不能代替它。`artifacts/` 保留本地结果，默认不提交。仓库外的打包检查写在[验证记录](VALIDATION.md)。v1.3 光标可见性、v1.2 并用输入配置，以及 v1.1 的坐标、修饰键、滚动和重连，都记录在该页和发行说明中。既有 `v1.0.0` 标签保留。
 
-`artifacts/` 保留本机测试结果和失败记录，默认不进入 Git。`dist/` 生成预编译插件 ZIP、源码包和 SHA256；打包须验证工作线程及 helper 在仓库外运行。v1.0 已通过真人输入法/大小写切换对照；v1.1新增功能的验收范围见下文，未新增真人长按并用验收；首次失败与后续修正分开保留。仓库外打包验证见 docs/VALIDATION.md。旧 v0.3 结果不作为新版验收。
+运行服务器不需要 Codex、`@oai/sky`、原版服务、OpenAI API key 或 [REA](https://github.com/morluto/rea)。研究过程使用了 REA。交付物不含原版专有模块、二进制或图像资源，也不修改其他应用或系统权限数据库。相对本机安装测得的接口差异保存在[原版基线](ORIGINAL_BASELINE.md)，机制笔记在[焦点保真](FOCUS_FIDELITY.md)和[逆向记录](REVERSE_ENGINEERING.md)。这些研究页含有历史接口名；公开工具只有 `js` 和 `js_reset`。
 
-架构与研究：[REPL/光标证据](../REPL_CURSOR_RESEARCH.md)、[原生后台机制](../FOCUS_FIDELITY.md)、[原始逆向记录](../REVERSE_ENGINEERING.md)。后两者包含 v0.3 历史接口名称；当前公开接口以 JS API 为准。
+这次文档更新不改分发标识。`package.json`、`plugin.json` 和 MCP 服务器名仍是 `independent-macos-computer-use`（`package.json` 为 `"private": true`）。npm bin 是 `macos-computer-use-mcp`。
 
-原版对照已于2026-10-22更新至App26.1016.61520、sky0.7.12。接口差异、原版9/10与独立版10/10行为结果、Unicode函数重新逆向及复现命令见 [当前原版基线](../ORIGINAL_BASELINE.md)。该页保留v1.0历史对照。v1.1实现、滚动多窗口/多应用数据、原版升层失败与新接口示例见 [兼容改进验收](../COMPATIBILITY_V1_1.md)。既有v1.0.0标签保留。
-
-v1.2调查与并用配置见[输入隔离调查](INPUT_ISOLATION.md)，本轮并用配置已通过参与者新的空闲/后台输入法与大小写切换验收。
+许可证为 [MIT](../../LICENSE)。
