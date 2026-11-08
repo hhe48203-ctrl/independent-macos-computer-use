@@ -18,6 +18,7 @@ English is the default language for this repository's documentation. Chinese tra
 | Document | What it covers |
 | --- | --- |
 | [VALIDATION.md](VALIDATION.md) | per-version local acceptance (v1.0–v1.3), deliverable verification, uncovered scope |
+| [BENCH_V2.md](BENCH_V2.md) | pinned Cua Driver Bench v2, Pi login, task selection and A22 reports |
 | [INPUT_ISOLATION.md](INPUT_ISOLATION.md) | v1.2 input-context and original AX Raise investigation, cooperative profile |
 | [CURSOR_OCCLUSION.md](CURSOR_OCCLUSION.md) | v1.3 target-aware cursor visibility, clipping rules and limits |
 | [VALIDATION_V03.md](VALIDATION_V03.md) | v0.3 acceptance and the retained v0.1/v0.2 history |

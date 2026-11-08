@@ -1,0 +1,39 @@
+# 用 Pi 运行 Cua Driver Bench v2
+
+[English version](../BENCH_V2.md)
+
+`npm run bench:v2` 接入 Cua Driver Bench v2 指定提交 `22a67eacd15dc71811e330ed88951dd615bb395d` 的十个 macOS 任务。运行器将锁定的源码取到 `.research/`，按 Git blob ID 校验文件，复用上游任务提示、种子、测试应用、检查器和 A22 计分。我们的实验组由 Pi 调用本仓库的 MCP，模型固定为 `openai-codex/gpt-6.1-terra`，推理档位为 `low`。[上游锁定版本](https://github.com/trycua/cua/tree/22a67eacd15dc71811e330ed88951dd615bb395d/libs/cua-driver-bench)
+
+```sh
+npm ci --ignore-scripts
+npm run build
+npm run bench:v2 -- --doctor
+npm run bench:v2 -- --prepare
+npm run bench:v2 -- --run --tasks benchlab
+```
+
+需要解锁的 Apple silicon Mac、macOS 26 或更新版本、Python 3.10+、Node 22+、Xcode Command Line Tools，以及支持内置直连 MCP 的 Pi。通过 macOS 设置给现有 helper 授予辅助功能和屏幕录制权限。运行器用 `pi auth check` 核对指定提供方和模型，由 Pi 通过临时链接复用现有登录。运行器不读取或导出凭证，平时的 Pi 设置和 MCP 配置保留。非默认安装可通过 `PI_COMMAND`、`PI_CODING_AGENT_DIR` 或 `CU_BENCH_PYTHON` 指定。
+
+`--run` 启动自建的 BenchLab 和 BenchSentinel。哨兵按实验设计取得焦点，在自己的窗口内模拟用户输入。请留出桌面供测试使用。每轮先等硬件空闲，检测到硬件空闲计时回落，或结果目录里出现 `STOP` 文件时，会中止当前模型运行。也可用 Ctrl+C 停止。运行器只清理自己启动的进程组并释放测试租约。
+
+## 选择任务和条件
+
+默认 `benchlab` 选择 MB-09–11 和 IR-01–04。快速验证可用 `--tasks IR-02,MB-09`。省略 `--run` 只输出计划。`--condition` 可选 `background`（默认）、`foreground` 或 `both`。前台条件使用上游的见证窗口，工具层仍采用本项目的后台输入。用 `--runs 1` 至 `--runs 5` 控制每项重复次数，`--seed` 控制任务顺序。每轮最多 360 秒和 45 回合。
+
+`--tasks v2` 还包含 CDB-G02、G03、G04。它们需要 LibreOffice、GnuCash、Chrome 和 taskpack 中锁定的 Electron 应用。在锁定源码的 `taskpack/tasks/shared/cdb-s0{2,3,4}/apps/` 下各项目目录执行 `npm ci`，再用 `--doctor --tasks v2` 检查确切依赖。全量实跑应在专用桌面进行，先关闭已有的这些应用，然后加 `--allow-multi-app`。运行器为每轮新建工作区和应用配置，只允许自己启动的进程组内的窗口。选中的任务缺依赖时会明确终止预检。
+
+```sh
+npm run bench:v2 -- --tasks v2 --condition both --runs 5
+npm run bench:v2 -- --doctor --tasks v2
+npm run bench:v2 -- --run --tasks v2 --condition both --runs 5 --allow-multi-app
+```
+
+## 读取结果
+
+`artifacts/bench-v2-pi-*/summary.json` 记录计划、实测提供方和模型、token 用量、实际回合数、用时、检查器结果和 A22 判据。各轮保留 Pi JSONL、测试应用状态和事件、哨兵记录与检查器输出。基础设施错误会终止后续计划，不进入已计分分母。任务未完成或发生干扰也会保留为有效成绩。退出码零表示计划内各轮均完成计分。任务成功率与后台完成率请读取报告中的独立计数。
+
+Pi 只获得两个 MCP 工具。benchmark 的 JS 限制阻止系统、文件和网络调用，原生操作按 bundle、受控 PID 和已观察快照限定范围。截图只覆盖测试窗口。当前 `app.move` 只移动视觉光标，尚未投递真实悬停事件，MB-10、MB-11 可以检出这个缺口。测试保留能力失败，用上游哨兵测量 A22 的八项判据。
+
+这是使用锁定任务集的本地 Pi 实验组。解读成绩时请注明显示器、任务、重复数和工具策略。上游横评使用不同的 agent、桌面和运行计划。[上游方法](https://github.com/trycua/cua/blob/22a67eacd15dc71811e330ed88951dd615bb395d/libs/cua-driver-bench/METHOD.md)
+
+2026-11-08，隔离的 Pi 连接确认了指定提供方和模型，并完成一次空窗口 MCP 调用。桌面试验在启动任何窗口之前等待空闲超时，本次集成暂无计分结果。三项多应用工作流所需的部分依赖在本机尚未安装。

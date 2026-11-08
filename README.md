@@ -68,6 +68,8 @@ There are currently no browser APIs and no rich-text paste; unsupported options 
 
 ## Verification and packaging
 
+`npm run bench:v2` prints the pinned Cua Driver Bench v2 plan for Pi and `openai-codex/gpt-6.1-terra`. The `--run` option starts desktop trials. [Benchmark setup and results](docs/BENCH_V2.md)
+
 ```sh
 npm test
 npm run test:desktop

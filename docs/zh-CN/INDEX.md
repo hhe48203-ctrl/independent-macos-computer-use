@@ -18,6 +18,7 @@
 | 文档 | 内容 |
 | --- | --- |
 | [VALIDATION.md](VALIDATION.md) | 各版本本机验收（v1.0–v1.3）、交付文件验证、未覆盖范围 |
+| [BENCH_V2.md](BENCH_V2.md) | 锁定的 Cua Driver Bench v2、Pi 登录、任务选择与 A22 报告 |
 | [INPUT_ISOLATION.md](INPUT_ISOLATION.md) | v1.2 输入上下文与原版 AX Raise 调查、协作式配置 |
 | [CURSOR_OCCLUSION.md](CURSOR_OCCLUSION.md) | v1.3 跟随目标遮挡的光标可见性、裁剪规则与限制 |
 | [VALIDATION_V03.md](VALIDATION_V03.md) | v0.3 验收与保留的 v0.1/v0.2 历史 |

@@ -68,6 +68,8 @@ setup 仅写本项目 `.pi/mcp.json`，不改全局配置或凭证。现在默�
 
 ## 验证和打包
 
+`npm run bench:v2` 输出锁定版本的 Cua Driver Bench v2 计划，使用 Pi 和 `openai-codex/gpt-6.1-terra`。加 `--run` 才启动桌面试验。[Benchmark 安装与结果说明](BENCH_V2.md)
+
 ```sh
 npm test
 npm run test:desktop
