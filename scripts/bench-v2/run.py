@@ -149,9 +149,57 @@ def wait_targets(pids, bundle_ids):
     raise RuntimeError("The owned GUI processes did not register all benchmark windows")
 
 
+def workspace_profile(app, option, workspace_variable):
+    """Return a profile path only for a single explicit workspace-local option."""
+    flags = [arg for arg in app["command"] if arg == option or arg.startswith(option + "=")]
+    prefix = f"{option}=${{{workspace_variable}}}/"
+    if len(flags) != 1 or not flags[0].startswith(prefix):
+        return None
+    suffix = flags[0][len(prefix):]
+    relative = Path(suffix)
+    if (not relative.is_absolute() and len(relative.parts) >= 2 and relative.parts[0] == ".runtime" and
+            ".." not in relative.parts and "$" not in suffix and "%" not in suffix):
+        return relative
+    return None
+
+
+def prepare_app_profile(pack, app, option, workspace_variable):
+    relative = workspace_profile(app, option, workspace_variable)
+    if relative is None:
+        raise RuntimeError(f"{app['id']} requires an explicit trial-local profile")
+    profile = pack.workspace / relative
+    if (profile.resolve() != pack.workspace.resolve() / relative or
+            (profile.exists() and (not profile.is_dir() or any(profile.iterdir())))):
+        raise RuntimeError(f"{app['id']} profile is not a fresh trial-local path")
+    return profile
+
+
+def prepare_pack_apps(pack):
+    for app in pack.apps():
+        if app["kind"] == "spreadsheet" and Path(app["command"][0]).name == "soffice":
+            # The throwaway profile otherwise opens a first-use modal over the workbook.
+            profile = prepare_app_profile(pack, app, "-env:UserInstallation", "workspace_uri")
+            config = profile / "user" / "registrymodifications.xcu"
+            config.parent.mkdir(parents=True)
+            config.write_text(
+                '<?xml version="1.0" encoding="UTF-8"?>\n'
+                '<oor:items xmlns:oor="http://openoffice.org/2001/registry">\n'
+                '<item oor:path="/org.openoffice.Office.Common/Misc">'
+                '<prop oor:name="ShowTipOfTheDay" oor:op="fuse"><value>false</value></prop></item>\n'
+                '<item oor:path="/org.openoffice.Setup/Product">'
+                '<prop oor:name="WhatsNew" oor:op="fuse"><value>false</value></prop>'
+                '</item>\n</oor:items>\n', "utf-8")
+        elif app["kind"] == "browser" and workspace_profile(app, "--user-data-dir", "workspace"):
+            prepare_app_profile(pack, app, "--user-data-dir", "workspace")
+        elif app["kind"] == "service":
+            # The pinned adapter waits on `http`, whereas the
+            # descriptor can use `url`. Wait before opening GUI apps.
+            app["ready"]["http"] = service_endpoint(app["ready"]).geturl()
+
+
 def pack_requirements(cdb, spec):
     descriptor = cdb._descriptor(spec)
-    bundles, missing, services = set(), [], []
+    bundles, exclusive_bundles, missing, services = set(), set(), [], []
     for app in descriptor["apps"]:
         if app["kind"] == "electron":
             bundle = cdb.pack_tasks_root() / spec["pack_task"]
@@ -162,20 +210,27 @@ def pack_requirements(cdb, spec):
             if (not expected or not (electron / "Contents/MacOS/Electron").is_file() or
                 bundle_info(electron).get("CFBundleShortVersionString") != expected):
                 missing.append(f"locked Electron installation in {cwd}")
-            bundles.add(cdb.electron_bundle_id(cdb.app_display_name(app)))
+            bundle_id = cdb.electron_bundle_id(cdb.app_display_name(app))
+            bundles.add(bundle_id)
+            exclusive_bundles.add(bundle_id)
         for command in app["command"]:
             if command.startswith("/Applications/") and ".app/" in command:
                 if not Path(command).is_file() or not os.access(command, os.X_OK):
                     missing.append(command)
                 else:
-                    bundles.add(bundle_info(Path(command.split(".app/")[0] + ".app"))["CFBundleIdentifier"])
+                    bundle_id = bundle_info(Path(command.split(".app/")[0] + ".app"))["CFBundleIdentifier"]
+                    bundles.add(bundle_id)
+                    isolated_chrome = (app["kind"] == "browser" and bundle_id == "com.google.Chrome" and
+                                       workspace_profile(app, "--user-data-dir", "workspace") is not None)
+                    if not isolated_chrome:
+                        exclusive_bundles.add(bundle_id)
         if app["kind"] == "service":
             endpoint = service_endpoint(app.get("ready") or {})
             if endpoint is None:
                 missing.append(f"loopback readiness URL for {app['id']}")
             else:
                 services.append(endpoint)
-    return bundles, missing, services
+    return bundles, exclusive_bundles, missing, services
 
 
 def service_endpoint(ready):
@@ -271,11 +326,14 @@ def run_agent(pi, auth, catalog, targets, prompt, artifacts, turns, seconds, des
                    PI_OFFLINE="1", PI_SKIP_VERSION_CHECK="1", PI_TELEMETRY="0", CU_BENCH_TURNS=str(turns))
         instructions = (
             "You are taking a GUI-only desktop benchmark. Use mcp__cua__js and its preinitialized cua/app APIs. "
-            "Start with await cua.listWindows(), then bind a listed window by PID and windowId. "
-            "Use only these benchmark windows. Use direct documented GUI calls, simple named variables and "
-            "array/string methods. Read current AX indices before using them. Window screenshots are available. "
-            "No shell, files, imports, network or clipboard access. The move method only moves a visual overlay. "
-            "Await actions, observe their effects, and report what you achieved."
+            "Start with await cua.listWindows(), then bind a named, on-screen task window by PID and windowId. "
+            "For a task spanning several apps, identify the required sources and destinations in the window list. "
+            "Re-list windows if a document or dialog opens. Use only these benchmark windows and direct documented GUI calls. "
+            "Read current AX indices before using them. If an AX tree omits a control, inspect the bound window screenshot. "
+            "Use only the GUI to open task-specified workspace documents, logs and local URLs. "
+            "Direct filesystem and network APIs, shell, imports and clipboard access are prohibited. "
+            "The move method only moves a visual overlay. Verify each navigation, edit and save from fresh GUI output. "
+            "If a documented operation fails, report which required app or document you could not use and the observed error."
         )
         if allow_foreground_hover:
             instructions += (" This foreground trial permits app.hover([x,y], {durationMs:1500,screenshot:true}) "
@@ -378,11 +436,7 @@ def run_trial(entry, condition, out, task, spec, bundle_ids, login, modules):
                         (artifacts / f"reset-{step}.log").write_text(result.stdout + result.stderr, "utf-8")
                         result.check_returncode()
                     brief = pack.brief()
-                    for app in pack.apps():
-                        if app["kind"] == "service":
-                            # The pinned adapter waits on `http`, whereas the
-                            # descriptor can use `url`. Wait before opening GUI apps.
-                            app["ready"]["http"] = service_endpoint(app["ready"]).geturl()
+                    prepare_pack_apps(pack)
                     pack.start_apps(force_accessibility=True)
                     for app, proc in zip(pack.apps(), pack.procs, strict=True):
                         if app["kind"] == "service":
@@ -529,13 +583,14 @@ def main():
     if not (args.run or args.doctor):
         print(json.dumps(report, indent=2))
         return 0
-    bundles, missing, services = {}, [], []
+    bundles, exclusive_bundles, missing, services = {}, {"ai.cua.benchlab", "ai.cua.benchsentinel"}, [], []
     node_version = capture(NODE, "--version")
     if int(node_version.lstrip("v").split(".")[0]) < 22:
         raise RuntimeError("The benchmark requires Node 22 or later")
     for tid, spec in specs.items():
         if spec.get("kind") == "cdb":
-            bundles[tid], deps, endpoints = pack_requirements(cdb, spec)
+            bundles[tid], exclusive, deps, endpoints = pack_requirements(cdb, spec)
+            exclusive_bundles.update(exclusive)
             missing.extend(deps)
             services.extend(endpoints)
         else:
@@ -555,9 +610,10 @@ def main():
     if args.doctor:
         print(json.dumps(dict(report, prerequisites="ready", node=node_version, pi_version=capture(login[0], "--version"), displays=status["displays"]), indent=2))
         return 0
-    running_apps = inspect_bridge({"ai.cua.benchlab", "ai.cua.benchsentinel"} | set().union(*bundles.values()))["apps"]
+    running_apps = inspect_bridge(exclusive_bundles)["apps"]
     if running_apps:
-        raise RuntimeError("A benchmark or selected stock app is already running. Use a dedicated desktop with those apps closed.")
+        names = ", ".join(sorted({app["bundleId"] for app in running_apps}))
+        raise RuntimeError(f"Benchmark or unisolated stock apps already running: {names}")
     if any(spec.get("kind") == "cdb" for spec in specs.values()):
         if not args.allow_multi_app:
             parser.error("Use --allow-multi-app on a dedicated desktop for the stock-app workloads")

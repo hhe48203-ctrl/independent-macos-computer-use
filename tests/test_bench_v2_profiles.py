@@ -1,0 +1,44 @@
+from pathlib import Path
+import sys
+import tempfile
+from types import SimpleNamespace
+import unittest
+from unittest.mock import patch
+
+sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "scripts/bench-v2"))
+with patch.dict("os.environ", {"CU_BENCH_NODE": "node"}):
+    from run import prepare_app_profile, workspace_profile
+
+
+class BenchmarkProfileTest(unittest.TestCase):
+    def test_chrome_requires_one_unambiguous_workspace_local_flag(self):
+        def profile(*args):
+            return workspace_profile({"command": ["Chrome", *args]}, "--user-data-dir", "workspace")
+
+        flag = "--user-data-dir=${workspace}/.runtime/browser"
+        self.assertEqual(profile(flag), Path(".runtime/browser"))
+        for args in ((), (flag, flag), (flag, "--user-data-dir", "/tmp/personal"),
+                     ("--user-data-dir=/tmp/personal",), ("--user-data-dir=${workspace}/.runtime/../browser",),
+                     ("--user-data-dir=${workspace}/.runtime/%2e%2e/browser",)):
+            self.assertIsNone(profile(*args), args)
+
+    def test_profile_may_be_empty_but_cannot_contain_state_or_follow_symlinks(self):
+        with tempfile.TemporaryDirectory() as temp:
+            workspace = Path(temp) / "workspace"
+            profile = workspace / ".runtime/libreoffice"
+            profile.mkdir(parents=True)
+            pack = SimpleNamespace(workspace=workspace)
+            app = {"id": "calc", "command": ["soffice", "-env:UserInstallation=${workspace_uri}/.runtime/libreoffice"]}
+            def prepare():
+                return prepare_app_profile(pack, app, "-env:UserInstallation", "workspace_uri")
+
+            self.assertEqual(prepare(), profile)
+            config = profile / "profile"
+            config.touch()
+            with self.assertRaisesRegex(RuntimeError, "fresh trial-local"):
+                prepare()
+            config.unlink()
+            profile.rmdir()
+            profile.symlink_to(Path(temp) / "other", target_is_directory=True)
+            with self.assertRaisesRegex(RuntimeError, "fresh trial-local"):
+                prepare()

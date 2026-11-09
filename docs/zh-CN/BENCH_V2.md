@@ -22,7 +22,7 @@ npm run bench:v2 -- --run --tasks benchlab
 
 用 `--run-index 0` 至 `--run-index 4` 代替 `--runs`，可只复现一次上游重复。计划会列出实际任务种子。中断后可用 `npm run bench:v2 -- --run --resume artifacts/bench-v2-pi-…/summary.json` 继续新版记录。运行器从逐轮目录恢复结果，跳过已计分轮次，把基础设施重试写入独立目录。续跑前核对源码与可执行文件哈希、测试应用、提供方和模型、任务计划及环境。旧汇总可用于查找重复索引，再开一轮对照。若留有 `STOP` 文件，需先移除才能续跑。
 
-`--tasks v2` 还包含 CDB-G02、G03、G04。它们需要 LibreOffice、GnuCash、Chrome 和 taskpack 中锁定的 Electron 应用。在锁定源码的 `taskpack/tasks/shared/cdb-s0{2,3,4}/apps/` 下各项目目录执行 `npm ci`，再用 `--doctor --tasks v2` 检查确切依赖。全量实跑应在专用桌面进行，先关闭已有的这些应用，然后加 `--allow-multi-app`。运行器为每轮新建工作区和应用配置，只允许自己启动的进程组内的窗口。选中的任务缺依赖时会明确终止预检。
+`--tasks v2` 还包含 CDB-G02、G03、G04。它们需要 LibreOffice、GnuCash、Chrome 和 taskpack 中锁定的 Electron 应用。在锁定源码的 `taskpack/tasks/shared/cdb-s0{2,3,4}/apps/` 下各项目目录执行 `npm ci`，再用 `--doctor --tasks v2` 检查确切依赖。实跑在专用桌面进行，并加 `--allow-multi-app`。已有测试应用或需独占运行的桌面应用会拦截预检。锁定命令使用本轮全新的 `--user-data-dir` 时，测试 Chrome 可与已有实例并行运行。MCP 仅可访问运行器启动的进程组内的 PID。临时 LibreOffice profile 会在启动前关闭欢迎与提示对话框。缺少依赖时预检会停止运行。
 
 ```sh
 npm run bench:v2 -- --tasks v2 --condition both --runs 5
