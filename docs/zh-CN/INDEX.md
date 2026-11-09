@@ -8,7 +8,7 @@
 
 | 文档 | 内容 |
 | --- | --- |
-| [../README.md](../../README.md) | 构建、启动、MCP/pi 配置、能力与边界 |
+| [../README.md](../../README.md) | 定位、环境要求、MCP 客户端、持久 REPL、限制 |
 | [JS_API.md](JS_API.md) | 两个 MCP 入口、`cua`/应用方法、坐标、光标与截图 |
 | [ARCHITECTURE.md](../ARCHITECTURE.md) | 进程分层与独立实现（仅英文） |
 | [DEVELOPMENT_STATUS.md](DEVELOPMENT_STATUS.md) | 当前检查点、剩余工作与 v1.0 交付检查点 |

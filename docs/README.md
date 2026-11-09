@@ -8,7 +8,7 @@ English is the default language for this repository's documentation. Chinese tra
 
 | Document | What it covers |
 | --- | --- |
-| [../README.md](../README.md) | build, start, MCP/pi configuration, capabilities and limits |
+| [../README.md](../README.md) | positioning, requirements, MCP client setup, persistent REPL, limits |
 | [JS_API.md](JS_API.md) | the two MCP entries, `cua`/app methods, coordinates, cursor and screenshots |
 | [ARCHITECTURE.md](ARCHITECTURE.md) | process layering and the independent implementation |
 | [DEVELOPMENT_STATUS.md](DEVELOPMENT_STATUS.md) | current checkpoint plus the v1.0 delivery checkpoints |
