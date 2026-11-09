@@ -7,6 +7,7 @@ test('benchmark JS allows ordinary REPL actions and filters out process, network
   const validate = createGuiValidator();
   validate('let app = await cua.getApp({pid: 123, windowId: 7});');
   validate('await app.click(4); await app.getAXStateAndScreenshot();');
+  validate('await app.hover([15, 25], {durationMs:1500, screenshot:true});');
   validate('await (async () => {const s = await app.getAXState({emit:false}); nodeRepl.write(s.split("\\n").filter(line => line.includes("Button")));})();');
   for (const code of [
     'await import("node:fs")', 'require("child_process")', 'nodeRepl.env', 'process.env',
@@ -34,4 +35,20 @@ test('benchmark scope limits observations and mutations to owned PIDs and snapsh
     ['key',{pid:42,windowId:8,key:'CMD+V'}], ['click',{pid:42,windowId:8,mode:'foreground'}],
   ]) await assert.rejects(request(method,params), {code:'BENCH_GUI_ONLY'});
   assert.equal(calls.length, 4);
+});
+
+test('benchmark permits explicit real hover only in a foreground trial on an owned window', async () => {
+  const targets = [{pid:42, bundleId:'ai.cua.benchlab'}];
+  const calls = [];
+  const record = async (method, params) => { calls.push([method, params]); return {ok:true}; };
+  const params = {pid:42, windowId:8, mode:'foreground', x:15, y:25, screenshot:true};
+  const background = createScopedRequest(record, targets);
+  const foreground = createScopedRequest(record, targets, undefined, {allowForegroundHover:true});
+  await assert.rejects(background('hover', params), {code:'BENCH_GUI_ONLY'});
+  await assert.rejects(foreground('hover', {...params, mode:'background'}), {code:'BENCH_GUI_ONLY'});
+  await assert.rejects(foreground('hover', {...params, pid:77}), {code:'BENCH_GUI_ONLY'});
+  await assert.rejects(foreground('hover', {...params, windowId:undefined}), {code:'BENCH_GUI_ONLY'});
+  await assert.rejects(foreground('click', params), {code:'BENCH_GUI_ONLY'});
+  await foreground('hover', params);
+  assert.deepEqual(calls, [['hover', params]]);
 });

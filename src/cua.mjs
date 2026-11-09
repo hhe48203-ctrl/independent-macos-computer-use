@@ -105,11 +105,14 @@ export function createCua({request, emit}) {
     }
     async getAXState(opts) {return (await this.#observe(false,opts)).state;}
     async getAXStateAndScreenshot(opts) {return this.#observe(true,opts);}
+    #recordScreenshot(s,opts) {
+      this.#unit='screenshot pixels';this.#scale={x:s.scaleX,y:s.scaleY};this.#dimensions=s.frame;this.#maxDimension=opts.maxDimension??this.#maxDimension;
+      if(opts.emit!==false){display({windowId:this.windowId,width:s.width,height:s.height,scaleX:s.scaleX,scaleY:s.scaleY,coordinates:this.#coordinates(),agentCursorIncluded:false},opts);emit({type:'image',data:s.data,mimeType:s.mimeType});}
+    }
     async getScreenshot(opts={}) {
       options(opts,['emit','maxDimension']);
       const {screenshot:s}=await native('screenshot',{...this.#target,maxDimension:opts.maxDimension??this.#maxDimension});
-      this.#unit='screenshot pixels';this.#scale={x:s.scaleX,y:s.scaleY};this.#dimensions=s.frame;this.#maxDimension=opts.maxDimension??this.#maxDimension;
-      if(opts.emit!==false){display({windowId:this.windowId,width:s.width,height:s.height,scaleX:s.scaleX,scaleY:s.scaleY,coordinates:this.#coordinates(),agentCursorIncluded:false},opts);emit({type:'image',data:s.data,mimeType:s.mimeType});}
+      this.#recordScreenshot(s,opts);
       return Buffer.from(s.data,'base64');
     }
     async ocr(opts={}) {options(opts,['emit','maxDimension']);const result=await native('ocr',{...this.#target,maxDimension:opts.maxDimension??1600});return display({...result,rectUnit:'logical points',arrayCoordinates:await this.getCoordinateInfo({emit:false})},opts);}
@@ -151,6 +154,16 @@ export function createCua({request, emit}) {
     async setValue(index,value) {return this.#action('ax_action',{...this.#ref(index),action:'setValue',value});}
     async performSecondaryAction(index,action) {return this.#action('ax_action',{...this.#ref(index),action});}
     async move(point) {const at=await this.#point(point);return native('cursor',{...this.#target,...at});}
+    async hover(point,opts={}) {
+      options(opts,['durationMs','screenshot']);
+      const at=await this.#point(point);
+      const {screenshot,...result}=await this.#action('hover',{
+        ...this.#target,...at,mode:'foreground',durationMs:opts.durationMs??1000,
+        screenshot:opts.screenshot??false,maxDimension:this.#maxDimension
+      });
+      if(screenshot)this.#recordScreenshot(screenshot,{});
+      return result;
+    }
   }
   return Object.freeze({
     bootstrap(){doc(coreDocumentation);},

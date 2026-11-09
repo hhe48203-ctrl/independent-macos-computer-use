@@ -4,15 +4,17 @@ import {Bridge} from '../../src/bridge.mjs';
 import {createServer} from '../../src/server.mjs';
 import {BenchPolicyError, createGuiValidator} from './guard.mjs';
 
-const windowMethods = new Set(['snapshot', 'screenshot', 'ocr', 'click', 'drag', 'scroll', 'type_text', 'key', 'cursor']);
+const windowMethods = new Set(['snapshot', 'screenshot', 'ocr', 'click', 'drag', 'scroll', 'type_text', 'key', 'cursor', 'hover']);
 const referenceMethods = new Set(['click', 'ax_action', 'select_text']);
 const metadataMethods = new Set(['status', 'apps', 'windows', 'cursor_state', 'cursor_hide']);
 
-export function createScopedRequest(request, targets, reject = message => { throw new BenchPolicyError(message, true); }) {
+export function createScopedRequest(request, targets, reject = message => { throw new BenchPolicyError(message, true); }, {allowForegroundHover = false} = {}) {
   const pids = new Set(targets.map(target => target.pid));
   const snapshots = new Set();
   return async (method, params = {}, options) => {
-    if (params.mode === 'foreground' || (params.pid !== undefined && !pids.has(params.pid))) {
+    const foregroundHover = allowForegroundHover && method === 'hover' && params.mode === 'foreground';
+    if ((params.mode === 'foreground' && !foregroundHover) || (method === 'hover' && !foregroundHover) ||
+        (params.pid !== undefined && !pids.has(params.pid))) {
       return reject('Only the owned benchmark processes are in scope.');
     }
     if (method === 'key') {
@@ -49,7 +51,7 @@ if (process.argv[2] === '--check') {
   bridge.request = createScopedRequest(bridge.request.bind(bridge), scope.targets, message => {
     audit('BENCH_GUI_ONLY', message);
     throw new BenchPolicyError(message, true);
-  });
+  }, {allowForegroundHover: scope.allowForegroundHover === true});
   const validate = createGuiValidator();
   const {server, runtime} = createServer(bridge, {validateCode(code) {
     try { validate(code); }

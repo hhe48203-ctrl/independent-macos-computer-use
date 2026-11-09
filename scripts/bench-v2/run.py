@@ -241,7 +241,8 @@ def owned_stop(desktop, proc):
     proc.wait(timeout=5)
 
 
-def run_agent(pi, auth, catalog, targets, prompt, artifacts, turns, seconds, desktop, idle_seconds, stop_file):
+def run_agent(pi, auth, catalog, targets, prompt, artifacts, turns, seconds, desktop, idle_seconds, stop_file,
+              *, allow_foreground_hover=False):
     with tempfile.TemporaryDirectory(prefix="cdb-pi-") as temp:
         sandbox = Path(temp)
         agent = sandbox / "agent"
@@ -253,12 +254,13 @@ def run_agent(pi, auth, catalog, targets, prompt, artifacts, turns, seconds, des
         if model_catalog.is_file():
             (agent / model_catalog.name).symlink_to(model_catalog.resolve())
         scope = artifacts / "scope.json"
-        write_json(scope, {"targets": targets, "audit": str(artifacts / "gui-guard.jsonl")})
+        write_json(scope, {"targets": targets, "audit": str(artifacts / "gui-guard.jsonl"),
+                           "allowForegroundHover": allow_foreground_hover})
         bundles = ",".join(sorted({t["bundleId"] for t in targets}))
         mcp = {"autoEnableCodemode": False, "mcpServers": {"cua": {
             "command": "/usr/bin/env", "exposure": "direct", "args": [
                 "-i", f"HOME={home}", f"PATH={BASE_ENV['PATH']}", f"TMPDIR={temp}",
-                f"CU_ALLOWED_BUNDLE_IDS={bundles}", "CU_ENABLE_FOREGROUND=0",
+                f"CU_ALLOWED_BUNDLE_IDS={bundles}", f"CU_ENABLE_FOREGROUND={int(allow_foreground_hover)}",
                 "CU_ENABLE_CLIPBOARD=0", "CU_EXPERIMENTAL_APPKIT_FOCUS=0", "CU_AGENT_CURSOR_VISIBILITY=target",
                 NODE, str(HERE / "mcp.mjs"), "--serve", str(scope)
             ]
@@ -275,6 +277,9 @@ def run_agent(pi, auth, catalog, targets, prompt, artifacts, turns, seconds, des
             "No shell, files, imports, network or clipboard access. The move method only moves a visual overlay. "
             "Await actions, observe their effects, and report what you achieved."
         )
+        if allow_foreground_hover:
+            instructions += (" This foreground trial permits app.hover([x,y], {durationMs:1500,screenshot:true}) "
+                             "when the task needs real mouse hover. It activates the bound window and captures its own transient UI.")
         command = [pi, "--print", "--mode", "json", "--no-session", "--provider", PROVIDER, "--model", MODEL,
                    "--thinking", "low", "--approve", "--no-extensions", "-e", "builtin:mcp", "-e",
                    str(HERE / "pi-gate.mjs"), "--no-skills", "--no-context-files", "--no-prompt-templates",
@@ -399,7 +404,8 @@ def run_trial(entry, condition, out, task, spec, bundle_ids, login, modules):
                 (artifacts / "prompt.txt").write_text(prompt, "utf-8")
                 max_turns = min(45, int(spec.get("max_turns", 45)))
                 row.update(run_agent(*login, targets, prompt, artifacts, max_turns, min(360, task.timeout_s),
-                                     desktop, pilot.hid_idle_seconds, out / "STOP"))
+                                     desktop, pilot.hid_idle_seconds, out / "STOP",
+                                     allow_foreground_hover=condition == "foreground"))
                 sentinel.toggle_armed()
                 armed = False
                 row["disturbance"] = sentinel.summary()

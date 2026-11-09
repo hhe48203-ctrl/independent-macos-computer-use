@@ -252,14 +252,30 @@ struct Snapshot {
         }
         return result
     }
-    func capture(_ p: Object) async throws -> (CGImage, CGRect, String) {
+    func capture(_ p: Object, includeOwnedTransients: Bool = false) async throws -> (CGImage, CGRect, String) {
         try requireScreen()
-        let content = try await SCShareableContent.excludingDesktopWindows(true, onScreenWindowsOnly: false)
+        let content = try await SCShareableContent.excludingDesktopWindows(true, onScreenWindowsOnly: includeOwnedTransients)
         let filter: SCContentFilter; let frame: CGRect; let kind: String
+        var ownedCrop: CGRect?
         if p["windowId"] != nil {
             let (_, _, f) = try target(p)
             guard let window = content.windows.first(where: { $0.windowID == CGWindowID(number(p, "windowId")) && $0.owningApplication?.processID == pid_t(number(p, "pid")) }) else { throw BridgeError("CAPTURE_WINDOW_GONE", "Window is not capturable") }
-            filter = SCContentFilter(desktopIndependentWindow: window); frame = f; kind = "window"
+            if includeOwnedTransients {
+                guard let display = content.displays.first(where: { CGDisplayBounds($0.displayID).contains(f) }) else {
+                    throw BridgeError("CAPTURE_VIEWPORT_UNAVAILABLE", "Hover screenshot requires the target window to fit within one display")
+                }
+                let pid = pid_t(number(p, "pid"))
+                let transients = content.windows.filter {
+                    $0.windowID != window.windowID && $0.owningApplication?.processID == pid &&
+                    $0.windowLayer > 0 && $0.isOnScreen && $0.frame.intersects(f)
+                }
+                filter = SCContentFilter(display: display, including: [window] + transients)
+                let bounds = CGDisplayBounds(display.displayID)
+                ownedCrop = f.offsetBy(dx: -bounds.minX, dy: -bounds.minY)
+            } else {
+                filter = SCContentFilter(desktopIndependentWindow: window)
+            }
+            frame = f; kind = "window"
         } else {
             guard allowed == nil else { throw BridgeError("DESKTOP_CAPTURE_DISABLED", "Full-display capture is disabled when CU_ALLOWED_BUNDLE_IDS is set. Capture an allowed window.") }
             let id = CGDirectDisplayID(number(p, "displayId", Double(CGMainDisplayID())))
@@ -271,6 +287,7 @@ struct Snapshot {
         let scale = min(2, maxDim / max(frame.width, frame.height))
         let config = SCStreamConfiguration()
         var capturedFrame=frame
+        if let ownedCrop { config.sourceRect = ownedCrop }
         if let region=p["region"] as? Object {
             guard kind=="display" else{throw BridgeError("INVALID_ARGUMENT","Region capture is supported only for displays")}
             let crop=CGRect(x:number(region,"x"),y:number(region,"y"),width:number(region,"width"),height:number(region,"height"))
@@ -285,8 +302,8 @@ struct Snapshot {
         let image = try await SCScreenshotManager.captureImage(contentFilter: filter, configuration: config)
         return (image, capturedFrame, kind)
     }
-    func screenshot(_ p: Object) async throws -> Object {
-        let (image, frame, kind) = try await capture(p)
+    func screenshot(_ p: Object, includeOwnedTransients: Bool = false) async throws -> Object {
+        let (image, frame, kind) = try await capture(p, includeOwnedTransients: includeOwnedTransients)
         let rep = NSBitmapImageRep(cgImage: image)
         guard let data = rep.representation(using: .png, properties: [:]) else { throw BridgeError("PNG_FAILED", "PNG encoding failed") }
         return ["data": data.base64EncodedString(), "mimeType": "image/png", "width": image.width, "height": image.height, "frame": rectJSON(frame), "scaleX": Double(image.width)/frame.width, "scaleY": Double(image.height)/frame.height, "kind": kind, "coordinateSpace": "image pixels; divide by scaleX/scaleY for window-relative input points"]
@@ -307,6 +324,52 @@ struct Snapshot {
         event.setIntegerValueField(.mouseEventClickState, value: Int64(count)); event.post(tap: .cghidEventTap)
         if [.leftMouseDown, .rightMouseDown, .otherMouseDown, .leftMouseDragged, .rightMouseDragged, .otherMouseDragged].contains(kind) { heldMouse = (button, at) }
         if [.leftMouseUp, .rightMouseUp, .otherMouseUp].contains(kind) { heldMouse = nil }
+    }
+    func foregroundHover(_ p: Object) async throws -> Object {
+        guard p["mode"] as? String == "foreground" else {
+            throw BridgeError("FOREGROUND_REQUIRED", "Real hover requires explicit foreground mode. Use app.move for the independent cursor.")
+        }
+        let (_, _, beforeFrame) = try target(p)
+        let at = try point(p, beforeFrame)
+        let duration = number(p, "durationMs", 1000)
+        guard duration.isFinite, (0...5000).contains(duration) else {
+            throw BridgeError("INVALID_ARGUMENT", "Hover duration must be from 0 to 5000 milliseconds")
+        }
+        let captureAfter = p["screenshot"] as? Bool == true
+        if captureAfter { try requireScreen() }
+        guard CGPreflightPostEventAccess(), let source = CGEventSource(stateID: .privateState),
+              let move = CGEvent(mouseEventSource: source, mouseType: .mouseMoved, mouseCursorPosition: at, mouseButton: .left) else {
+            throw BridgeError("EVENT_FAILED", "Could not prepare the authorized foreground mouse move")
+        }
+        let (app, _, frame) = try await focus(p)
+        guard frame == beforeFrame else { throw BridgeError("WINDOW_MOVED", "Target window changed during focus. Observe it before hovering.") }
+        try assertFocus(app.processIdentifier)
+        try assertHitTarget(app.processIdentifier, frame, at)
+        agentCursor.hide()
+        guard CGWarpMouseCursorPosition(at) == .success else {
+            throw BridgeError("POINTER_MOVE_FAILED", "macOS refused the foreground pointer move")
+        }
+        move.flags = []
+        move.post(tap: .cgSessionEventTap)
+        let deadline = ProcessInfo.processInfo.systemUptime + duration / 1000
+        repeat {
+            try await Task.sleep(nanoseconds: 20_000_000)
+            guard !shuttingDown else { throw BridgeError("CANCELLED", "Helper is stopping") }
+            try assertFocus(app.processIdentifier)
+            guard let position = CGEvent(source: nil)?.location, hypot(position.x-at.x, position.y-at.y) <= 1 else {
+                throw BridgeError("POINTER_CHANGED", "The real pointer left the hover point. No further move was sent.")
+            }
+        } while ProcessInfo.processInfo.systemUptime < deadline
+        let (_, _, currentFrame) = try target(p)
+        guard currentFrame == frame else { throw BridgeError("WINDOW_MOVED", "Target window changed during hover") }
+        var result: Object = ["ok": true, "mode": "foreground", "method": "real pointer hover", "durationMs": duration,
+                              "point": ["x": at.x-frame.minX, "y": at.y-frame.minY]]
+        if captureAfter {
+            do { result["screenshot"] = try await screenshot(p, includeOwnedTransients: true) }
+            catch let e as BridgeError { result["screenshotError"] = ["code": e.code, "message": e.message] }
+            catch { result["screenshotError"] = ["code": "CAPTURE_FAILED", "message": error.localizedDescription] }
+        }
+        return result
     }
     func releaseInput() {
         defer {activeAppKitSession?.finish();activeAppKitSession=nil;agentCursor.hide()}
@@ -369,6 +432,7 @@ struct Snapshot {
         switch method {
         case "cursor_state": return agentCursor.state
         case "cursor_hide": agentCursor.hide();return ["ok":true]
+        case "hover": return try await foregroundHover(p)
         case "cursor":
             try requireAX()
             let (application,window,frame)=try target(p)

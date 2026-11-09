@@ -18,7 +18,7 @@ npm run bench:v2 -- --run --tasks benchlab
 
 ## 选择任务和条件
 
-默认 `benchlab` 选择 MB-09–11 和 IR-01–04。快速验证可用 `--tasks IR-02,MB-09`。省略 `--run` 只输出计划。`--condition` 可选 `background`（默认）、`foreground` 或 `both`。前台条件使用上游的见证窗口，工具层仍采用本项目的后台输入。用 `--runs 1` 至 `--runs 5` 控制每项重复次数，`--seed` 控制任务顺序。每轮最多 360 秒和 45 回合。
+默认 `benchlab` 选择 MB-09–11 和 IR-01–04。快速验证可用 `--tasks IR-02,MB-09`。省略 `--run` 只输出计划。`--condition` 可选 `background`（默认）、`foreground` 或 `both`。前台条件使用上游的见证窗口，并允许显式调用 `app.hover` 聚焦测试窗口、移动系统鼠标。其余操作仍走后台输入。用 `--runs 1` 至 `--runs 5` 控制每项重复次数，`--seed` 控制任务顺序。每轮最多 360 秒和 45 回合。
 
 用 `--run-index 0` 至 `--run-index 4` 代替 `--runs`，可只复现一次上游重复。计划会列出实际任务种子。中断后可用 `npm run bench:v2 -- --run --resume artifacts/bench-v2-pi-…/summary.json` 继续新版记录。运行器从逐轮目录恢复结果，跳过已计分轮次，把基础设施重试写入独立目录。续跑前核对源码与可执行文件哈希、测试应用、提供方和模型、任务计划及环境。旧汇总可用于查找重复索引，再开一轮对照。若留有 `STOP` 文件，需先移除才能续跑。
 
