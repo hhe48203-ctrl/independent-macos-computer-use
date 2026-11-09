@@ -304,6 +304,11 @@ def run_agent(pi, auth, catalog, targets, prompt, artifacts, turns, seconds, des
                             previous_idle, now_idle, previous_counters, now_counters,
                             lambda max_age: activity.owned_tickle(NATIVE, HERE / "mcp.mjs", scope, proc.pid, max_age),
                         )
+                        if decision == "owned_tickle":
+                            now_counters = read_counters()
+                            if now_counters != previous_counters:
+                                decision, changed, tickle_pid = activity.activity_decision(
+                                    previous_idle, now_idle, previous_counters, now_counters, lambda _: None)
                         if decision != "idle":
                             activity.log_activity(artifacts / "idle-guard.jsonl", decision, previous_idle, now_idle, changed, tickle_pid)
                         if stop_file.exists() or decision not in ("idle", "owned_tickle"):

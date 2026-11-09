@@ -2,7 +2,6 @@
 
 import ctypes
 import json
-import os
 from pathlib import Path
 import re
 import subprocess
@@ -29,7 +28,7 @@ def recent_tickle_pids(assertions, max_age):
             if 3600 * int(hours) + 60 * int(minutes) + int(seconds) <= max_age}
 
 
-def owned_tickle(helper, server, scope, agent_group, max_age):
+def owned_tickle(helper, server, scope, agent_pid, max_age):
     def ps(pid, field):
         return subprocess.check_output(["/bin/ps", "-ww", "-p", str(pid), "-o", field + "="],
                                        stderr=subprocess.DEVNULL, text=True, timeout=2).strip()
@@ -41,13 +40,21 @@ def owned_tickle(helper, server, scope, agent_group, max_age):
         if len(pids) != 1:
             return None
         pid = pids.pop()
-        if os.getpgid(pid) != agent_group or Path(ps(pid, "comm")).resolve() != helper.resolve():
+        if Path(ps(pid, "comm")).resolve() != helper.resolve():
             return None
         parent = int(ps(pid, "ppid"))
         command = ps(parent, "command")
-        if os.getpgid(parent) != agent_group or not command.endswith(f" {server} --serve {scope}"):
+        if not command.endswith(f" {server} --serve {scope}"):
             return None
-        return pid
+        # Pi's MCP transport starts a separate process group. The direct
+        # parent chain and exact trial scope, not group equality, prove origin.
+        for _ in range(12):
+            if parent == agent_pid:
+                return pid
+            if parent <= 1:
+                break
+            parent = int(ps(parent, "ppid"))
+        return None
     except (OSError, ValueError, subprocess.SubprocessError):
         return None
 
