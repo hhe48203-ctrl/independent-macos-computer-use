@@ -32,7 +32,7 @@ Observations automatically include Accessibility text or a diff, plus MCP image 
 Building from this checkout needs:
 
 - macOS 14.4 or later, plus Xcode Command Line Tools, to compile the Swift helper
-- Node.js 22 or later
+- Node.js 22 or later to run the MCP server. The development checks use Node.js 22.13 or later on the 22.x line, or Node.js 24 or later.
 
 Recorded verification is macOS 26.6.2 arm64 with Node.js 24.15.0. Other operating systems and architectures are not machine-verified. `npm run package` can produce a local plugin ZIP that needs macOS and Node.js and does not need a compiler or `npm install`. This repository has tags `v1.0.0` through `v1.3.0` and does not publish GitHub Releases. Acceptance of those local packages is in [validation](docs/VALIDATION.md).
 
@@ -112,7 +112,7 @@ The experimental app-local AppKit focus route is off unless `CU_EXPERIMENTAL_APP
 
 The [documentation index](docs/README.md) lists the [JS API](docs/JS_API.md), [architecture](docs/ARCHITECTURE.md), [validation](docs/VALIDATION.md), [development status](docs/DEVELOPMENT_STATUS.md), and [release notes](docs/RELEASE_NOTES.md). `npm run check:docs` checks relative links and the Chinese counterparts under [docs/zh-CN](docs/zh-CN/README.md).
 
-Start with [the contributor guide](AGENTS.md). Run `npm run check` for portable tests and `npm run check:native` on macOS to build the helper and run the full Node regression suite. PR checks run both commands on their respective runners. Select the desktop and packaging checks below according to the change.
+Start with [the contributor guide](AGENTS.md). Run `npm run check` for lint and portable tests, or `npm run lint` for lint alone. Run `npm run check:native` on macOS to build the helper and run the full Node regression suite. PR checks run the portable and native checks on their respective runners. Select the desktop and packaging checks below according to the change.
 
 `npm run bench:v2` prints the pinned Cua Driver Bench v2 plan for Pi and `openai-codex/gpt-6.1-terra`. The `--run` option starts desktop trials. [Benchmark setup and results](docs/BENCH_V2.md)
 

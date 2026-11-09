@@ -32,7 +32,7 @@
 从本仓库构建需要：
 
 - macOS 14.4 或更高版本，以及 Xcode Command Line Tools，用于编译 Swift helper
-- Node.js 22 或更高版本
+- MCP 服务器需要 Node.js 22 或更高版本。开发检查使用 Node.js 22.13 及以上的 22.x 版本，或 Node.js 24 及以上版本。
 
 已记录的验证环境是 macOS 26.6.2 arm64、Node.js 24.15.0。其他操作系统和架构没有实机验证。`npm run package` 可以在本地生成插件 ZIP；该 ZIP 只需要 macOS 和 Node.js，不需要编译器或 `npm install`。本仓库有 `v1.0.0` 至 `v1.3.0` 标签，不发布 GitHub Releases。这些本地包的验收见[验证记录](VALIDATION.md)。
 
@@ -112,7 +112,7 @@ await app.click(EXAMPLE_ELEMENT_INDEX);
 
 [文档索引](INDEX.md)列出 [JS API](../JS_API.md)、[架构](../ARCHITECTURE.md)（仅英文）、[验证](VALIDATION.md)、[开发状态](DEVELOPMENT_STATUS.md)和[发行说明](RELEASE_NOTES.md)。`npm run check:docs` 检查相对链接，以及 [docs/zh-CN](INDEX.md) 下的中文对应页。
 
-开发前请阅读[仓库开发指南](AGENTS.md)。运行 `npm run check` 执行通用测试，在 macOS 上运行 `npm run check:native` 构建 helper 并执行完整的 Node 回归测试。PR 检查在对应的 runner 上运行这两条命令。按改动范围选择下列桌面和打包检查。
+开发前请阅读[仓库开发指南](AGENTS.md)。运行 `npm run check` 执行 lint 和通用测试，或用 `npm run lint` 单独执行 lint。在 macOS 上运行 `npm run check:native` 构建 helper 并执行完整的 Node 回归测试。PR 检查在对应的 runner 上执行通用检查和原生检查。按改动范围选择下列桌面和打包检查。
 
 `npm run bench:v2` 输出锁定版本的 Cua Driver Bench v2 计划，使用 Pi 和 `openai-codex/gpt-6.1-terra`。加 `--run` 才启动桌面试验。[Benchmark 安装与结果说明](BENCH_V2.md)
 

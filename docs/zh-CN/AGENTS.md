@@ -4,8 +4,8 @@
 
 ## 环境与验证
 
-- 使用 Node.js 22 或以上版本，运行 `npm ci --ignore-scripts` 安装依赖。
-- 运行 `npm run check` 执行通用 JS 测试和文档检查。此命令无需原生 helper 或桌面权限。将新增的 macOS 专用测试文件登记到 `scripts/check.mjs`。
+- 开发时使用 Node.js 22.13 及以上的 22.x 版本，或 Node.js 24 及以上版本。运行 `npm ci --ignore-scripts` 安装依赖。
+- 运行 `npm run check` 执行 ESLint、通用 JS 测试和文档检查。可用 `npm run lint` 单独执行 ESLint。这些命令无需原生 helper 或桌面权限。将新增的 macOS 专用测试文件登记到 `scripts/check.mjs`。
 - 修改 Swift 或原生桥接时运行 `npm run check:native`。它在装有 Xcode 命令行工具的 macOS 上构建到 `.build`，再跑完整的 Node 回归测试。若当前 helper 正由 MCP 客户端使用，请在独立检出中运行。
 - 用 `npm run doctor` 查看已构建 helper 的状态和 macOS 权限。验证桌面行为时，从 [README](README.md#开发验证与许可证) 选择相关的 `npm run test:*` 命令，在已解锁、已授权的桌面上使用自建测试窗口并串行执行。Benchmark 和真人试验需预留桌面。
 - 报告已执行的检查和未覆盖的范围。离屏测试、真实桌面测试和真人并发验收各自覆盖不同的行为。发布时按[验证记录](VALIDATION.md)验收实际归档。
