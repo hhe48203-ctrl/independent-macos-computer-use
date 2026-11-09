@@ -112,17 +112,17 @@ await app.click(EXAMPLE_ELEMENT_INDEX);
 
 [文档索引](INDEX.md)列出 [JS API](../JS_API.md)、[架构](../ARCHITECTURE.md)（仅英文）、[验证](VALIDATION.md)、[开发状态](DEVELOPMENT_STATUS.md)和[发行说明](RELEASE_NOTES.md)。`npm run check:docs` 检查相对链接，以及 [docs/zh-CN](INDEX.md) 下的中文对应页。
 
+开发前请阅读[仓库开发指南](AGENTS.md)。运行 `npm run check` 执行通用测试，在 macOS 上运行 `npm run check:native` 构建 helper 并执行完整的 Node 回归测试。PR 检查在对应的 runner 上运行这两条命令。按改动范围选择下列桌面和打包检查。
+
 `npm run bench:v2` 输出锁定版本的 Cua Driver Bench v2 计划，使用 Pi 和 `openai-codex/gpt-6.1-terra`。加 `--run` 才启动桌面试验。[Benchmark 安装与结果说明](BENCH_V2.md)
 
 ```sh
-npm test
 npm run test:desktop
 npm run test:cursor
 npm run test:input-options
 npm run test:reconnect
 npm run test:scroll
 node scripts/repl-document-test.mjs
-npm run check:docs
 npm run test:pi
 npm run test:pi:document
 npm run package

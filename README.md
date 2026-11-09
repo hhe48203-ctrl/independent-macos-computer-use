@@ -112,17 +112,17 @@ The experimental app-local AppKit focus route is off unless `CU_EXPERIMENTAL_APP
 
 The [documentation index](docs/README.md) lists the [JS API](docs/JS_API.md), [architecture](docs/ARCHITECTURE.md), [validation](docs/VALIDATION.md), [development status](docs/DEVELOPMENT_STATUS.md), and [release notes](docs/RELEASE_NOTES.md). `npm run check:docs` checks relative links and the Chinese counterparts under [docs/zh-CN](docs/zh-CN/README.md).
 
+Start with [the contributor guide](AGENTS.md). Run `npm run check` for portable tests and `npm run check:native` on macOS to build the helper and run the full Node regression suite. PR checks run both commands on their respective runners. Select the desktop and packaging checks below according to the change.
+
 `npm run bench:v2` prints the pinned Cua Driver Bench v2 plan for Pi and `openai-codex/gpt-6.1-terra`. The `--run` option starts desktop trials. [Benchmark setup and results](docs/BENCH_V2.md)
 
 ```sh
-npm test
 npm run test:desktop
 npm run test:cursor
 npm run test:input-options
 npm run test:reconnect
 npm run test:scroll
 node scripts/repl-document-test.mjs
-npm run check:docs
 npm run test:pi
 npm run test:pi:document
 npm run package
