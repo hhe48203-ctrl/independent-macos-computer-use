@@ -8,6 +8,8 @@ test('benchmark JS allows ordinary REPL actions and filters out process, network
   validate('let app = await cua.getApp({pid: 123, windowId: 7});');
   validate('await app.click(4); await app.getAXStateAndScreenshot();');
   validate('await app.hover([15, 25], {durationMs:1500, screenshot:true});');
+  validate('const shown = (await cua.listWindows()).filter(w => w.onScreen);');
+  validate('const update = await app.setValue(5, "sample"); nodeRepl.write(update.valueVerified);');
   validate('await (async () => {const s = await app.getAXState({emit:false}); nodeRepl.write(s.split("\\n").filter(line => line.includes("Button")));})();');
   for (const code of [
     'await import("node:fs")', 'require("child_process")', 'nodeRepl.env', 'process.env',

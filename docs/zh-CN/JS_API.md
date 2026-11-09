@@ -63,7 +63,7 @@ let replacement=await app.reconnect({pid:789,windowId:1011});
 | drag(from,to,{duration?}) | duration0.1..2秒，默认0.4；后台真实事件 |
 | scroll(index或point,direction,pages?,{distanceMode?}) | up/down/left/right，pages默认1、范围>0..10；calibrated默认，legacy可选 |
 | selectText(index,text,{prefix?,suffix?,selectionType?}) | text/cursor_before/cursor_after，UTF-16选择范围 |
-| setValue(index,text) | AXValue 语义设置 |
+| setValue(index,text) | AXValue 语义设置，可读时回读字符串 |
 | performSecondaryAction(index,action) | focus/press/showMenu/increment/decrement/confirm |
 | paste(text,{format:'text'}) | 纯文本 AX 插入，不用剪贴板 |
 | ocr({emit?,maxDimension?}) | 本机 Vision OCR，矩形为窗口内逻辑点 |
@@ -78,7 +78,7 @@ click/pressKey 的 `durationMs` 为0..5000毫秒，控制每个 down/up 对之�
 
 垂直默认距离已校准为 `round(windowHeight*pages)`；两种自建应用、两档尺寸和连续滚动的实测一致。水平保留 `round(windowWidth*0.8*pages)`：原版本轮水平输入未产生位移，不能声称水平兼容。第四个参数 `{distanceMode:'legacy'}` 保留 v1.0 两轴的0.8算法。返回 `scrollDistance` 给出发送的逻辑点增量；实际位移仍由应用决定。完整数据见 [兼容改进验收](COMPATIBILITY_V1_1.md)。
 
-富文本 paste 和浏览器 API 未实现，显式报错。纯后台菜单操作受限。真实事件需要应用支持；event 文本要求已经存在的可读、非安全文本焦点和选择范围，不因传了索引而自动设置焦点。
+字符串 `AXValue` 可读时，`setValue` 用 `valueVerified` 报告回读是否与请求完全一致。请求修改后仍读到原值会报 `AX_VALUE_UNCHANGED`。应用格式化了结果或回读不可用时，应重新观察。后台打开值只读、没有子节点且只暴露原生菜单动作的关闭下拉框时，会报 `BACKGROUND_POPUP_UNSUPPORTED`。真实事件需要应用支持。`event` 文本要求控件已经具有可读的非安全文本焦点和选择范围。
 
 ## 光标和截图
 

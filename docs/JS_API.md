@@ -63,7 +63,7 @@ A confirmed call returns a **new object plus a full initial AX observation**, in
 | drag(from,to,{duration?}) | duration 0.1..2 s, default 0.4; background real events |
 | scroll(index or point,direction,pages?,{distanceMode?}) | up/down/left/right, pages default 1 with range >0..10; calibrated by default, legacy optional |
 | selectText(index,text,{prefix?,suffix?,selectionType?}) | text/cursor_before/cursor_after with UTF-16 ranges |
-| setValue(index,text) | semantic AXValue set |
+| setValue(index,text) | semantic AXValue set, with string readback when available |
 | performSecondaryAction(index,action) | focus/press/showMenu/increment/decrement/confirm |
 | paste(text,{format:'text'}) | plain-text AX insertion, no clipboard |
 | ocr({emit?,maxDimension?}) | local Vision OCR; rectangles are logical points in the window |
@@ -78,7 +78,7 @@ Modifier-click example: `await app.click([200,400],{key:'super+shift',durationMs
 
 The default vertical distance is calibrated to `round(windowHeight*pages)`, consistent with measurements on two owned apps, two sizes and consecutive scrolling. Horizontal keeps `round(windowWidth*0.8*pages)`: the original produced no horizontal displacement in this round, so no horizontal compatibility is claimed. The fourth parameter `{distanceMode:'legacy'}` restores the v1.0 0.8 algorithm on both axes. The returned `scrollDistance` gives the logical-point delta sent; the actual displacement is still up to the app. Full data is in the [compatibility acceptance](COMPATIBILITY_V1_1.md).
 
-Rich-text paste and browser APIs are not implemented and fail explicitly. Background menu operation is limited. Real events require app support; `event` text needs a pre-existing, readable, non-secure text focus and selection range and never sets focus just because an index was passed.
+For a readable string `AXValue`, `setValue` reports `valueVerified` when the returned value exactly matches the request. If a requested change leaves the previous value in place, it reports `AX_VALUE_UNCHANGED`. Observe normalized or unreadable values before proceeding. Closed popups with read-only values, no children and only native menu actions report `BACKGROUND_POPUP_UNSUPPORTED` for background opens. Real events require app support. The `event` text strategy requires a pre-existing, readable, non-secure text focus and selection range.
 
 ## Cursor and screenshots
 

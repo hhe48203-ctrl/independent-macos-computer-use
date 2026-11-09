@@ -516,6 +516,7 @@ struct Snapshot {
             let semanticFront = NSWorkspace.shared.frontmostApplication?.processIdentifier
             let r = try ref(p); let action = try string(p, "action")
             let inputObservation=backgroundMode ? BackgroundFocusObservation(targetPID:r.pid):nil
+            var valueWrite: (before: String, requested: String)?
             defer {inputObservation?.stop()}
             if r.scope == "menu", backgroundMode { throw BridgeError("BACKGROUND_MENU_UNSUPPORTED", "Global application menus can interfere with the foreground session. Use explicit foreground mode only when authorized.") }
             if backgroundMode, action == "press" || action == "showMenu" { try checkBackgroundPopup(r.element) }
@@ -530,6 +531,9 @@ struct Snapshot {
                 var settable: DarwinBoolean = false
                 try axCheck(AXUIElementIsAttributeSettable(r.element, kAXValueAttribute as CFString, &settable), "Check value")
                 guard settable.boolValue else { throw BridgeError("AX_NOT_SETTABLE", "AXValue is not settable") }
+                if backgroundMode, let before = attr(r.element, kAXValueAttribute) as? String {
+                    valueWrite = (before, value)
+                }
                 try axCheck(AXUIElementSetAttributeValue(r.element, kAXValueAttribute as CFString, value as CFString), "Set value")
             } else if action == "focus" {
                 if !backgroundMode { _ = try await focus(["pid": Int(r.pid), "windowId": Int(r.windowID)]) }
@@ -540,12 +544,25 @@ struct Snapshot {
                 try axCheck(AXUIElementPerformAction(r.element, name as CFString), action)
                 if action == "press" {agentCursor.pulse()}
             }
+            var result:Object=["ok": true, "mode":backgroundMode ? "background" : "foreground", "verificationRequired":true]
             if backgroundMode {
                 try await Task.sleep(nanoseconds:80_000_000)
+                var unchanged = false
+                if let write = valueWrite {
+                    var actual = attr(r.element, kAXValueAttribute) as? String
+                    if actual == write.before, write.requested != write.before {
+                        try await Task.sleep(nanoseconds:120_000_000)
+                        actual = attr(r.element, kAXValueAttribute) as? String
+                    }
+                    result["valueVerified"] = actual == write.requested
+                    unchanged = actual == write.before && write.requested != write.before
+                }
                 try inputObservation?.validate()
                 try assertBackgroundIsolation(r.pid,r.windowID,semanticOrder,semanticFront)
+                if unchanged {
+                    throw BridgeError("AX_VALUE_UNCHANGED", "AX accepted the write, but the element still reports its previous value. Observe the control before choosing another action.")
+                }
             }
-            var result:Object=["ok": true, "mode":backgroundMode ? "background" : "foreground", "verificationRequired":true]
             if let inputObservation {result["inputFocusObservation"]=inputObservation.json}
             return result
         case "click":
