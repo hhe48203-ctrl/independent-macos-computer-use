@@ -400,6 +400,19 @@ struct HeldBackgroundMouse {
         }
         return search(window,0)
     }
+
+    func checkBackgroundPopup(_ element: AXUIElement) throws {
+        // Closed native popups can offer only menu tracking, with no direct selection endpoint.
+        guard attr(element, kAXRoleAttribute) as? String == kAXPopUpButtonRole else { return }
+        var actions: CFArray?
+        var writable = DarwinBoolean(false)
+        guard AXUIElementCopyActionNames(element, &actions) == .success,
+              let names = actions as? [String], Set(names) == [kAXPressAction, kAXShowMenuAction],
+              AXUIElementIsAttributeSettable(element, kAXValueAttribute as CFString, &writable) == .success,
+              !writable.boolValue, children(element).isEmpty else { return }
+        throw BridgeError("BACKGROUND_POPUP_UNSUPPORTED", "This closed popup only exposes native menu tracking, which can take the user's keyboard focus. No input was sent.")
+    }
+
     // A row label is often exposed as AXStaticText with no AXPress. Use the
     // containing table's declared selection attribute for a single row click.
     func backgroundTableRow(_ element: AXUIElement) -> (table: AXUIElement, row: AXUIElement)? {
@@ -519,8 +532,10 @@ struct HeldBackgroundMouse {
             let modifiers=try (p["modifiers"] as? String).map{try modifierFlags($0)} ?? []
             let extended=p["modifiers"] != nil || p["durationMs"] != nil
             if extended,strategy == "ax"{throw BridgeError("INVALID_ARGUMENT","Modifier/hold clicks require event delivery")}
-            if !extended,strategy != "event", button == .left, count == 1,
-                let element = try backgroundPressTarget(p,pid,frame,point) {
+            let semantic = !extended && strategy != "event" && button == .left && count == 1
+            let candidate = semantic ? try backgroundPressTarget(p,pid,frame,point) : try? backgroundPressTarget(p,pid,frame,point)
+            if let candidate { try checkBackgroundPopup(candidate) }
+            if semantic, let element = candidate {
                 try await agentCursor.move(pid:pid,windowID:wid,frame:frame,point:point,activity:"click")
                 try inputObservation.validate();try assertBackgroundIsolation(pid,wid,orderBefore,foregroundBefore)
                 try axCheck(AXUIElementPerformAction(element,kAXPressAction as CFString),"Background press")
@@ -600,7 +615,13 @@ struct HeldBackgroundMouse {
         case "key":
             let normalized=(p["key"] as? String ?? "").lowercased().replacingOccurrences(of:" ",with:"")
             let semanticSelectAll=p["durationMs"] == nil && p["strategy"] as? String != "event" && ["cmd+a","command+a","meta+a","super+a"].contains(normalized)
-            if let focused=attr(AXUIElementCreateApplication(pid),kAXFocusedUIElementAttribute),CFGetTypeID(focused)==AXUIElementGetTypeID(),let at=axFrame(focused as! AXUIElement){try await agentCursor.move(pid:pid,windowID:wid,frame:frame,point:CGPoint(x:at.midX,y:at.midY),activity:"key")}
+            if let focused=attr(AXUIElementCreateApplication(pid),kAXFocusedUIElementAttribute),CFGetTypeID(focused)==AXUIElementGetTypeID() {
+                let element = focused as! AXUIElement
+                if ["down", "up", "space", "enter", "return", "alt+down", "option+down", "alt+up", "option+up"].contains(normalized) {
+                    try checkBackgroundPopup(element)
+                }
+                if let at=axFrame(element) {try await agentCursor.move(pid:pid,windowID:wid,frame:frame,point:CGPoint(x:at.midX,y:at.midY),activity:"key")}
+            }
             if !semanticSelectAll,ProcessInfo.processInfo.environment["CU_EXPERIMENTAL_APPKIT_FOCUS"] == "1" {
                 pointerDelivery=try BackgroundPointerDelivery(pid:pid,windowID:wid)
                 appKitSession=try await prepareScopedAppKitFocus(pid,wid,frame,pointerDelivery!,inputObservation)

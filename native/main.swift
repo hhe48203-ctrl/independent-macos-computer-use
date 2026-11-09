@@ -518,6 +518,7 @@ struct Snapshot {
             let inputObservation=backgroundMode ? BackgroundFocusObservation(targetPID:r.pid):nil
             defer {inputObservation?.stop()}
             if r.scope == "menu", backgroundMode { throw BridgeError("BACKGROUND_MENU_UNSUPPORTED", "Global application menus can interfere with the foreground session. Use explicit foreground mode only when authorized.") }
+            if backgroundMode, action == "press" || action == "showMenu" { try checkBackgroundPopup(r.element) }
             if r.scope == "menu" { _ = try await focus(["pid": Int(r.pid), "windowId": Int(r.windowID)]) }
             if backgroundMode,let at=axFrame(r.element) {
                 let (_,_,frame)=try target(["pid":Int(r.pid),"windowId":Int(r.windowID)])
