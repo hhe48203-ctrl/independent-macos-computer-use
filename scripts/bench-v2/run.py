@@ -18,6 +18,8 @@ import sys
 import tempfile
 import time
 
+import journal
+
 HERE = Path(__file__).resolve().parent
 ROOT = HERE.parents[1]
 UPSTREAM = "https://github.com/trycua/cua.git"
@@ -33,6 +35,7 @@ MODEL = "gpt-6.1-terra"
 ARM = "pi-terra-independent-macos"
 TOOLS = ("mcp__cua__js", "mcp__cua__js_reset")
 BASE_ENV = {"PATH": os.environ["PATH"], "LANG": "en_US.UTF-8"}
+ARTIFACTS = ROOT / "artifacts"
 
 
 def capture(*command, timeout=20, env=None):
@@ -93,6 +96,17 @@ def pinned_source():
 
 def bundle_info(app):
     return plistlib.loads((app / "Contents/Info.plist").read_bytes())
+
+
+def code_identity():
+    digest = hashlib.sha256()
+    files = [ROOT / p for p in ("package.json", "package-lock.json", "scripts/bench-v2.mjs", "scripts/fixture-lease.mjs")]
+    for directory, patterns in ((ROOT / "src", ("*.mjs",)), (ROOT / "native", ("*.swift",)), (HERE, ("*.py", "*.mjs"))):
+        for pattern in patterns:
+            files.extend(directory.glob(pattern))
+    for path in sorted(files):
+        digest.update(str(path.relative_to(ROOT)).encode() + b"\0" + hashlib.sha256(path.read_bytes()).digest())
+    return digest.hexdigest()
 
 
 def build_fixtures(bench):
@@ -269,11 +283,12 @@ def agent_facts(events, guard, v2):
 
 def run_trial(entry, condition, out, task, spec, bundle_ids, login, modules):
     pilot, v2, runner, desktop, cdb = modules
-    seed = pilot.probe_seed(task.id, entry["run_index"])
-    trial = out / f"{entry['order_index']:03d}-{task.id}-{condition}"
+    seed = entry["seed"]
+    attempt = journal.next_attempt(out, entry)
+    trial = journal.attempt_dir(out, entry, attempt)
     artifacts = trial / "artifacts"
     artifacts.mkdir(parents=True)
-    row = dict(entry, id=task.id, seed=seed, condition=condition, status="infrastructure_error")
+    row = dict(entry, id=task.id, attempt=attempt, artifacts=str(artifacts), status="infrastructure_error")
     sentinel = pilot.Sentinel(APPS / "BenchSentinel.app", artifacts / "sentinel.jsonl",
                               v2.sentinel_args(condition) + ["--no-activate"])
     lab = pack = None
@@ -340,7 +355,10 @@ def run_trial(entry, condition, out, task, spec, bundle_ids, login, modules):
                     if armed:
                         cleanup.callback(sentinel.toggle_armed)
     except (RuntimeError, OSError, sp.SubprocessError, ValueError) as error:
-        row["error"] = f"{type(error).__name__}: {error}"
+        row.update(status="infrastructure_error", error=f"{type(error).__name__}: {error}")
+    except (KeyboardInterrupt, SystemExit):
+        row.update(status="infrastructure_error", error="Benchmark supervisor interrupted")
+        raise
     finally:
         write_json(trial / "trial.json", row)
     print(f"RESULT {task.id} {row['status']} passed={row.get('passed')} A22={row.get('multiplayer', {}).get('background_completion')}", flush=True)
@@ -348,18 +366,28 @@ def run_trial(entry, condition, out, task, spec, bundle_ids, login, modules):
 
 
 def main():
-    parser = argparse.ArgumentParser(description=__doc__)
+    parser = argparse.ArgumentParser(description=__doc__, allow_abbrev=False)
     command = parser.add_mutually_exclusive_group()
     command.add_argument("--run", action="store_true", help="Run on a dedicated, unlocked desktop; the owned witness takes focus")
     command.add_argument("--prepare", action="store_true", help="Fetch and verify the pinned source, then build the owned fixtures")
     command.add_argument("--doctor", action="store_true", help="Check local prerequisites without starting a trial")
-    parser.add_argument("--tasks", default="benchlab", help="benchlab (seven native probes), v2 (all ten), or comma-separated IDs")
-    parser.add_argument("--condition", choices=["background", "foreground", "both"], default="background")
-    parser.add_argument("--runs", type=int, default=1, help="Replications per task and condition")
-    parser.add_argument("--seed", type=int, default=2026, help="Blocked task-order seed")
+    parser.add_argument("--tasks", help="benchlab (default), v2 (all ten), or comma-separated IDs")
+    parser.add_argument("--condition", choices=["background", "foreground", "both"])
+    parser.add_argument("--runs", type=int, help="Replications per task and condition (default: 1)")
+    parser.add_argument("--run-index", type=int, help="Select exactly one upstream replicate index (0–4)")
+    parser.add_argument("--seed", type=int, help="Blocked task-order seed (default: 2026)")
+    parser.add_argument("--resume", type=Path, help="Resume an existing report without repeating scored trials")
     parser.add_argument("--idle-seconds", type=float, default=10, help="Require this much hardware idle time before each trial")
     parser.add_argument("--allow-multi-app", action="store_true", help="Allow stock-app launches on a dedicated benchmark desktop")
     args = parser.parse_args()
+    if args.resume and (not args.run or any(v is not None for v in (args.tasks, args.condition, args.runs, args.run_index, args.seed))):
+        parser.error("--resume requires --run and uses the saved task selection, conditions and seeds")
+    if args.run_index is not None and (args.runs is not None or not 0 <= args.run_index <= 4):
+        parser.error("Use --run-index 0–4 without --runs")
+    args.tasks = args.tasks or "benchlab"
+    args.condition = args.condition or "background"
+    args.runs = 1 if args.runs is None else args.runs
+    args.seed = 2026 if args.seed is None else args.seed
     if not 1 <= args.runs <= 5 or not 0 <= args.idle_seconds <= 60:
         parser.error("Use 1–5 runs and 0–60 idle seconds")
     if platform.system() != "Darwin" or platform.machine() != "arm64" or int(platform.mac_ver()[0].split('.')[0]) < 26:
@@ -375,20 +403,41 @@ def main():
     import cdb_adapter as cdb
 
     tasks = runner.load_tasks(bench / "probes")
-    ids = list(v2.V2_TASKS) if args.tasks == "v2" else [tid for tid in v2.V2_TASKS if not tid.startswith("CDB-")] \
-        if args.tasks == "benchlab" else args.tasks.split(",")
+    saved = None
+    if args.resume:
+        out, saved = journal.load_resume(args.resume, ARTIFACTS)
+        plan = saved["plan"]
+        ids = list(dict.fromkeys(entry["task"] for entry in plan))
+        args.seed = saved["schedule_seed"]
+    elif args.tasks == "v2":
+        ids = list(v2.V2_TASKS)
+    elif args.tasks == "benchlab":
+        ids = [tid for tid in v2.V2_TASKS if not tid.startswith("CDB-")]
+    else:
+        ids = args.tasks.split(",")
     if len(ids) != len(set(ids)) or any(tid not in v2.V2_TASKS for tid in ids):
         parser.error(f"Select distinct v2 tasks: {', '.join(v2.V2_TASKS)}")
     specs = {tid: json.loads((tasks[tid].probe_dir / "task.json").read_text("utf-8")) for tid in ids}
     problems = v2.validate_tasks(specs, ids)
     if problems:
         parser.error("; ".join(problems))
-    schedule = pilot.build_schedule(ids, [ARM], args.runs, args.seed)
-    conditions = list(v2.CONDITIONS) if args.condition == "both" else [args.condition]
-    plan = [dict(row, condition=condition) for row in schedule for condition in conditions]
+    if saved is None:
+        runs = args.runs if args.run_index is None else args.run_index + 1
+        schedule = pilot.build_schedule(ids, [ARM], runs, args.seed)
+        if args.run_index is not None:
+            schedule = [row for row in schedule if row["run_index"] == args.run_index]
+        conditions = list(v2.CONDITIONS) if args.condition == "both" else [args.condition]
+        plan = [dict(row, condition=condition, seed=pilot.probe_seed(row["task"], row["run_index"]))
+                for row in schedule for condition in conditions]
+        for index, entry in enumerate(plan):
+            entry["order_index"] = index
     for index, entry in enumerate(plan):
-        entry["order_index"] = index
-    report = {"benchmark_version": 2, "upstream_commit": REVISION, "upstream_tree": tree, "arm": ARM,
+        if (entry["order_index"] != index or entry["condition"] not in v2.CONDITIONS or entry["arm"] != ARM or
+            not 0 <= entry["run_index"] <= 4 or entry["seed"] != pilot.probe_seed(entry["task"], entry["run_index"])):
+            parser.error("Invalid benchmark trial plan")
+    if not plan or len({(e['task'], e['condition'], e['run_index']) for e in plan}) != len(plan):
+        parser.error("Empty or duplicate benchmark trial plan")
+    report = {"journal_schema": journal.SCHEMA, "benchmark_version": 2, "upstream_commit": REVISION, "upstream_tree": tree, "arm": ARM,
               "provider": PROVIDER, "model": MODEL, "thinking": "low", "schedule_seed": args.seed, "plan": plan}
     if args.prepare:
         build_fixtures(bench)
@@ -423,15 +472,32 @@ def main():
             with socket.socket() as listener:
                 listener.bind(("127.0.0.1", 4184))
     build_fixtures(bench)
-    out = ROOT / "artifacts" / ("bench-v2-pi-" + dt.datetime.now(dt.timezone.utc).strftime("%Y%m%dT%H%M%S%fZ"))
-    out.mkdir(parents=True, mode=0o700)
-    report.update(project_commit=capture("git", "rev-parse", "HEAD") if (ROOT / ".git").exists() else None,
-                  pi_version=capture(login[0], "--version"), macos=platform.mac_ver()[0], displays=status["displays"],
-                  scope="Local Pi arm, pinned task fixtures/checkers and A22 metrics. No official cross-arm run.", trials=[])
+    native = ROOT / ".build/Local Computer Use.app/Contents/MacOS/computer-use-bridge"
+    identity = {"code_sha256": code_identity(), "native_sha256": hashlib.sha256(native.read_bytes()).hexdigest(),
+                "fixture_sha256": {name: hashlib.sha256((APPS / f"{name}.app/Contents/MacOS/{name}").read_bytes()).hexdigest()
+                                   for name in ("BenchLab", "BenchSentinel")},
+                "node": capture(NODE, "--version"), "pi_version": capture(login[0], "--version"),
+                "macos": platform.mac_ver()[0], "displays": status["displays"]}
+    report.update(identity)
+    if saved is None:
+        out = ARTIFACTS / ("bench-v2-pi-" + dt.datetime.now(dt.timezone.utc).strftime("%Y%m%dT%H%M%S%fZ"))
+        out.mkdir(parents=True, mode=0o700)
+    else:
+        journal.require_same_run(saved, report)
+        if (out / "STOP").exists():
+            raise RuntimeError("The saved run still has a STOP file. Remove it only when ready to resume.")
+        report = saved
+        report.pop("stop_reason", None)
+    report.setdefault("project_commit", capture("git", "rev-parse", "HEAD") if (ROOT / ".git").exists() else None)
+    report.setdefault("scope", "Local Pi arm, pinned task fixtures/checkers and A22 metrics. No official cross-arm run.")
+    report["trials"] = journal.read_attempts(out, plan)
+    done = {row["order_index"] for row in report["trials"] if row["status"] == "scored"}
     print(f"REPORT {out / 'summary.json'}", flush=True)
     write_json(out / "summary.json", report)
     try:
         for entry in plan:
+            if entry["order_index"] in done:
+                continue
             if pilot.wait_for_idle(args.idle_seconds, 60, out / "STOP") is None:
                 report["stop_reason"] = "Desktop was not idle or STOP file was created"
                 break
@@ -443,13 +509,11 @@ def main():
                 report["stop_reason"] = row.get("error", "Infrastructure error")
                 break
     finally:
-        rows = [r for r in report["trials"] if r["status"] == "scored"]
-        background = [r for r in rows if r["condition"] == "background"]
-        report["totals"] = {"planned": len(plan), "scored": len(rows), "passed": sum(r["passed"] for r in rows),
-                            "background_scored": len(background), "background_completion": sum(r["multiplayer"]["background_completion"] for r in background)}
+        report["trials"] = journal.read_attempts(out, plan)
+        report["totals"] = journal.totals(plan, report["trials"])
         write_json(out / "summary.json", report)
         print("TOTAL", json.dumps(report["totals"]), flush=True)
-    return 0 if len(rows) == len(plan) else 1
+    return 0 if report["totals"]["remaining"] == 0 else 1
 
 
 if __name__ == "__main__":
