@@ -400,6 +400,55 @@ struct HeldBackgroundMouse {
         }
         return search(window,0)
     }
+    // A row label is often exposed as AXStaticText with no AXPress. Use the
+    // containing table's declared selection attribute for a single row click.
+    func backgroundTableRow(_ element: AXUIElement) -> (table: AXUIElement, row: AXUIElement)? {
+        let rowRoles = [kAXRowRole, kAXCellRole, kAXStaticTextRole]
+        guard let role = attr(element, kAXRoleAttribute) as? String, rowRoles.contains(role) else { return nil }
+        var node: AXUIElement? = element
+        var row: AXUIElement?
+        for _ in 0..<32 {
+            guard let current = node, let role = attr(current, kAXRoleAttribute) as? String else { return nil }
+            if role == kAXWindowRole || role == kAXSheetRole { return nil }
+            if role == kAXRowRole, row == nil { row = current }
+            if role == kAXTableRole || role == kAXOutlineRole {
+                guard let row, children(current, kAXRowsAttribute).contains(where: { CFEqual($0, row) }) else { return nil }
+                var writable = DarwinBoolean(false)
+                guard AXUIElementIsAttributeSettable(current, kAXSelectedRowsAttribute as CFString, &writable) == .success,
+                      writable.boolValue else { return nil }
+                return (current, row)
+            }
+            node = attr(current, kAXParentAttribute).flatMap {
+                CFGetTypeID($0) == AXUIElementGetTypeID() ? ($0 as! AXUIElement) : nil
+            }
+        }
+        return nil
+    }
+
+    func selectBackgroundTableRow(_ selection: (table: AXUIElement, row: AXUIElement), window: AXUIElement,
+                                  observation: BackgroundFocusObservation) async throws -> Object {
+        func attachedSheet() -> Bool {
+            children(window).contains { attr($0, kAXRoleAttribute) as? String == kAXSheetRole }
+        }
+        guard !attachedSheet() else {
+            throw BridgeError("BACKGROUND_SHEET_PRESENT", "Handle the attached dialog before selecting a table row. No selection was sent.")
+        }
+        try axCheck(AXUIElementSetAttributeValue(selection.table, kAXSelectedRowsAttribute as CFString, [selection.row] as CFArray),
+                    "Background table row selection")
+        for _ in 0..<15 {
+            try await Task.sleep(nanoseconds: 20_000_000)
+            try observation.validate()
+            if attachedSheet() {
+                return ["ok": true, "mode": "background", "method": "AXSelectedRows", "selectionOutcome": "dialogOpened", "verificationRequired": true]
+            }
+            let rows = children(selection.table, kAXSelectedRowsAttribute)
+            if rows.count == 1, CFEqual(rows[0], selection.row) {
+                return ["ok": true, "mode": "background", "method": "AXSelectedRows", "selectionOutcome": "rowSelected", "verificationRequired": true]
+            }
+        }
+        throw BridgeError("TABLE_SELECTION_UNVERIFIED", "The table did not report the requested selection or a dialog. Observe the window before retrying.")
+    }
+
     func backgroundWindowOrder() -> [(id:Int,pid:pid_t)] {
         let rows = CGWindowListCopyWindowInfo([.optionOnScreenOnly,.excludeDesktopElements],kCGNullWindowID) as? [Object] ?? []
         return rows.compactMap { row in
@@ -479,7 +528,19 @@ struct HeldBackgroundMouse {
                 result = ["ok":true,"mode":"background","method":"AXPress","verificationRequired":true]
                 break
             }
-            guard strategy != "ax" else {throw BridgeError("BACKGROUND_CLICK_UNSUPPORTED","No AXPress equivalent at this target; no event was sent")}
+            if !extended, strategy != "event", button == .left, count == 1, p["elementId"] != nil,
+               let selection = backgroundTableRow(try ref(p).element) {
+                try await agentCursor.move(pid:pid,windowID:wid,frame:frame,point:point,activity:"click")
+                try inputObservation.validate()
+                try assertBackgroundIsolation(pid,wid,orderBefore,foregroundBefore)
+                guard let current = backgroundTableRow(try ref(p).element),
+                      CFEqual(current.table, selection.table), CFEqual(current.row, selection.row) else {
+                    throw BridgeError("STALE_ELEMENT", "The table row changed during cursor approach. Observe it before selecting.")
+                }
+                result = try await selectBackgroundTableRow(current, window: try axWindow(pid, frame), observation: inputObservation)
+                break
+            }
+            guard strategy != "ax" else {throw BridgeError("BACKGROUND_CLICK_UNSUPPORTED","No semantic click equivalent at this target; no event was sent")}
             try await agentCursor.move(pid:pid,windowID:wid,frame:frame,point:point,activity:"click")
             pointerDelivery=try BackgroundPointerDelivery(pid:pid,windowID:wid)
             appKitSession=try await prepareScopedAppKitFocus(pid,wid,frame,pointerDelivery!,inputObservation)

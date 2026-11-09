@@ -69,6 +69,8 @@ A confirmed call returns a **new object plus a full initial AX observation**, in
 | ocr({emit?,maxDimension?}) | local Vision OCR; rectangles are logical points in the window |
 | move([x,y]) | moves only the independent overlay cursor, produces no mouse input |
 
+Plain background element clicks use the table’s writable `AXSelectedRows` when the observed element is a row or its text and has no `AXPress`. `selectionOutcome:"dialogOpened"` means a sheet appeared. Read the new AX tree before choosing its buttons.
+
 Modifier-click example: `await app.click([200,400],{key:'super+shift',durationMs:250})`. `key` accepts only cmd/command/meta/super, shift, ctrl/control and alt/option joined with `+`, and works with coordinates and the newest element index. A modifier or duration option forces background events, `strategy:'ax'` is rejected, and auto chooses event. A genuinely requested Command flag is preserved for the target; a Command added only for routing is removed when it was not requested.
 
 `durationMs` for click/pressKey is 0..5000 ms and controls the interval between each down/up pair; an explicit key duration (including 0) disables the AX substitute for CMD+A. System auto-repeat is not simulated and no global modifier down/up events are generated. Cancellation, reset and target movement attempt to release held keys or buttons only toward the original target; app exit or a forced hard kill cannot guarantee reception. The experimental AppKit route's local notices cover the requested hold interval, and long holds have no new human IME concurrent-use acceptance.
