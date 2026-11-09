@@ -174,7 +174,7 @@ def prepare_app_profile(pack, app, option, workspace_variable):
     return profile
 
 
-def prepare_pack_apps(pack):
+def prepare_pack_apps(pack, login_home):
     for app in pack.apps():
         if app["kind"] == "spreadsheet" and Path(app["command"][0]).name == "soffice":
             # The throwaway profile otherwise opens a first-use modal over the workbook.
@@ -191,6 +191,12 @@ def prepare_pack_apps(pack):
                 '</item>\n</oor:items>\n', "utf-8")
         elif app["kind"] == "browser" and workspace_profile(app, "--user-data-dir", "workspace"):
             prepare_app_profile(pack, app, "--user-data-dir", "workspace")
+            if Path(app["command"][0]).name == "Google Chrome":
+                # A synthetic HOME prevented loopback pages from loading on macOS.
+                # Chrome's profile remains the fresh --user-data-dir verified above.
+                app["env"] = dict(app.get("env") or {}, HOME=login_home)
+                # Keep the temporary instance from starting the machine's updater.
+                app["command"][1:1] = ["--disable-updater-scheduler"]
         elif app["kind"] == "service":
             # The pinned adapter waits on `http`, whereas the
             # descriptor can use `url`. Wait before opening GUI apps.
@@ -333,6 +339,7 @@ def run_agent(pi, auth, catalog, targets, prompt, artifacts, turns, seconds, des
             "Use only the GUI to open task-specified workspace documents, logs and local URLs. "
             "Direct filesystem and network APIs, shell, imports and clipboard access are prohibited. "
             "The move method only moves a visual overlay. Verify each navigation, edit and save from fresh GUI output. "
+            "For navigation that loads asynchronously, observe the page again in a separate call before deciding whether it succeeded. "
             "If a documented operation fails, report which required app or document you could not use and the observed error."
         )
         if allow_foreground_hover:
@@ -436,7 +443,7 @@ def run_trial(entry, condition, out, task, spec, bundle_ids, login, modules):
                         (artifacts / f"reset-{step}.log").write_text(result.stdout + result.stderr, "utf-8")
                         result.check_returncode()
                     brief = pack.brief()
-                    prepare_pack_apps(pack)
+                    prepare_pack_apps(pack, old_home)
                     pack.start_apps(force_accessibility=True)
                     for app, proc in zip(pack.apps(), pack.procs, strict=True):
                         if app["kind"] == "service":

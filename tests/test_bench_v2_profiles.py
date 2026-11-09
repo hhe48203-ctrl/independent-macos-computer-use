@@ -7,7 +7,7 @@ from unittest.mock import patch
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "scripts/bench-v2"))
 with patch.dict("os.environ", {"CU_BENCH_NODE": "node"}):
-    from run import prepare_app_profile, workspace_profile
+    from run import prepare_app_profile, prepare_pack_apps, workspace_profile
 
 
 class BenchmarkProfileTest(unittest.TestCase):
@@ -42,3 +42,13 @@ class BenchmarkProfileTest(unittest.TestCase):
             profile.symlink_to(Path(temp) / "other", target_is_directory=True)
             with self.assertRaisesRegex(RuntimeError, "fresh trial-local"):
                 prepare()
+
+    def test_login_home_is_used_only_for_chrome_with_an_explicit_isolated_profile(self):
+        with tempfile.TemporaryDirectory() as temp:
+            browser = {"id": "browser", "kind": "browser", "command": ["/Applications/Google Chrome", "--user-data-dir=${workspace}/.runtime/chrome"]}
+            default_browser = {"id": "default", "kind": "browser", "command": ["/Applications/Google Chrome"]}
+            pack = SimpleNamespace(workspace=Path(temp), apps=lambda: [browser, default_browser])
+            prepare_pack_apps(pack, "/Users/example")
+            self.assertEqual(browser["env"], {"HOME": "/Users/example"})
+            self.assertIn("--disable-updater-scheduler", browser["command"])
+            self.assertNotIn("env", default_browser)

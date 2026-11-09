@@ -24,6 +24,8 @@ Use `--run-index 0` through `--run-index 4` instead of `--runs` to reproduce one
 
 `--tasks v2` includes CDB-G02, G03 and G04. Those workflows require LibreOffice, GnuCash, Chrome and the taskpack's locked Electron apps. Install each Electron project's dependencies with `npm ci` in its pinned `taskpack/tasks/shared/cdb-s0{2,3,4}/apps/` project directory, then run `--doctor --tasks v2` to check the exact prerequisites. Use a dedicated desktop and pass `--allow-multi-app` for the live run. The runner refuses concurrent benchmark apps and stock apps that require an exclusive launch. Chrome can coexist with an already-running instance when the pinned command declares a fresh trial-local `--user-data-dir`. MCP access is limited to PIDs from the process groups the runner starts. The temporary LibreOffice profile disables welcome and tip dialogs before launch. Missing prerequisites stop the suite before any trials run.
 
+The isolated Chrome process keeps the login session's `HOME` for macOS loopback navigation. It uses the fresh trial profile and disables its updater scheduler for that launch. Pi and the other fixtures retain their isolated homes. [Chromium process switches](https://chromium.googlesource.com/chromium/src/+/refs/heads/main/chrome/common/chrome_switches.h)
+
 ```sh
 npm run bench:v2 -- --tasks v2 --condition both --runs 5
 npm run bench:v2 -- --doctor --tasks v2
