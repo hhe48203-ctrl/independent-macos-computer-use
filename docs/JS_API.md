@@ -58,7 +58,7 @@ A confirmed call returns a **new object plus a full initial AX observation**, in
 | Method | Description |
 |---|---|
 | click(index or [x,y], options?) | mouseButton, clickCount, strategy:auto/ax/event, key, durationMs; plain clicks prefer AXPress |
-| typeText(text,{strategy?}) | auto/ax is verified AX insertion, event is real process-directed Unicode |
+| typeText(text,{strategy?,target?}) | verified AX insertion or real process-directed Unicode. Optional target is the current editable AX index in this bound window |
 | pressKey('CMD+A',{strategy?,durationMs?}) | auto may use AX selection; event forces real key packets |
 | drag(from,to,{duration?}) | duration 0.1..2 s, default 0.4; background real events |
 | scroll(index or point,direction,pages?,{distanceMode?}) | up/down/left/right, pages default 1 with range >0..10; calibrated by default, legacy optional |

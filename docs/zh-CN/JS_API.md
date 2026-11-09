@@ -58,7 +58,7 @@ let replacement=await app.reconnect({pid:789,windowId:1011});
 | 方法 | 说明 |
 |---|---|
 | click(index或[x,y],options?) | mouseButton、clickCount、strategy:auto/ax/event、key、durationMs；普通点击默认 AXPress 优先 |
-| typeText(text,{strategy?}) | auto/ax 为验证后的 AX 插入，event 为真实进程定向 Unicode |
+| typeText(text,{strategy?,target?}) | 支持验证后的 AX 插入或真实进程定向 Unicode。target 可指定当前窗口的可编辑 AX 索引 |
 | pressKey('CMD+A',{strategy?,durationMs?}) | auto 可用 AX 选择；event 强制真实键包 |
 | drag(from,to,{duration?}) | duration0.1..2秒，默认0.4；后台真实事件 |
 | scroll(index或point,direction,pages?,{distanceMode?}) | up/down/left/right，pages默认1、范围>0..10；calibrated默认，legacy可选 |

@@ -19,6 +19,9 @@ test('app binding, AX diffs and screenshot coordinate mappings fail closed on am
   const screenshot=await app.getScreenshot();assert.ok(Buffer.isBuffer(screenshot));assert.equal(outputs.at(-1).type,'image');
   await app.click([100,80]);assert.deepEqual(calls.find(c=>c.method==='click').args,{pid:12,windowId:20,x:50,y:40,button:'left',count:1,strategy:'auto',mode:'background'});
   await app.click(0);assert.ok(calls.filter(c=>c.method==='click').at(-1).args.snapshotId);
+  await app.typeText('value',{target:0});
+  assert.deepEqual(calls.find(c=>c.method==='type_text').args,{pid:12,windowId:20,text:'value',strategy:'auto',mode:'background',snapshotId:'aaaaaa00-aaaa-4aaa-8aaa-aaaaaaaaaaaa',elementId:'e0'});
+  await assert.rejects(app.typeText('value',{target:99}),{code:'INVALID_ELEMENT'});
   await app.getScreenshot({emit:false});width=500;
   await assert.rejects(app.click([100,80]),{code:'STALE_GEOMETRY'});
   await assert.rejects(app.click(99),{code:'INVALID_ELEMENT'});

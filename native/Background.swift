@@ -139,6 +139,45 @@ struct HeldBackgroundMouse {
         }
         return false
     }
+    // Some WebKit windows expose DOM focus on the AX text node while the
+    // inactive application reports no AXFocusedUIElement. Read the bound
+    // window only and require a unique focused field in a complete search.
+    func windowFocusedEditable(_ window: AXUIElement) -> AXUIElement? {
+        let editableRoles = [kAXTextFieldRole, kAXTextAreaRole, kAXComboBoxRole]
+        let deadline = ProcessInfo.processInfo.systemUptime + 0.75
+        var pending = children(window)
+        var visited: [CFHashCode: [AXUIElement]] = [:]
+        var result: AXUIElement?
+        var remaining = 1000
+        while let current = pending.popLast() {
+            guard remaining > 0, ProcessInfo.processInfo.systemUptime < deadline else { return nil }
+            remaining -= 1
+            let hash = CFHash(current)
+            if visited[hash, default: []].contains(where: { CFEqual($0, current) }) { continue }
+            visited[hash, default: []].append(current)
+            let role = attr(current, kAXRoleAttribute) as? String
+            if role == kAXWindowRole { continue }
+            if let role, editableRoles.contains(role), attr(current, kAXFocusedAttribute) as? Bool == true {
+                guard result == nil else { return nil }
+                result = current
+            }
+            if attr(current, kAXSubroleAttribute) as? String != kAXSecureTextFieldSubrole {
+                pending.append(contentsOf: children(current))
+            }
+        }
+        return result
+    }
+    func belongsToWebArea(_ element: AXUIElement) -> Bool {
+        var node: AXUIElement? = element
+        for _ in 0..<64 {
+            guard let current = node else { return false }
+            let role = attr(current, kAXRoleAttribute) as? String
+            if role == "AXWebArea" { return true }
+            if role == kAXWindowRole { return false }
+            node = attr(current, kAXParentAttribute).flatMap { CFGetTypeID($0) == AXUIElementGetTypeID() ? ($0 as! AXUIElement) : nil }
+        }
+        return false
+    }
     func backgroundTextElement(_ p: Object, _ pid: pid_t, _ wid: CGWindowID, _ frame: CGRect) throws -> AXUIElement {
         let window = try axWindow(pid, frame)
         let element: AXUIElement
@@ -146,16 +185,26 @@ struct HeldBackgroundMouse {
             let r = try ref(p)
             guard r.pid == pid, r.windowID == wid, r.scope == "window" else { throw BridgeError("TARGET_MISMATCH", "Text element is not in the requested window") }
             element = r.element
-        } else {
-            guard let value = attr(AXUIElementCreateApplication(pid), kAXFocusedUIElementAttribute), CFGetTypeID(value) == AXUIElementGetTypeID() else { throw BridgeError("BACKGROUND_TEXT_TARGET_REQUIRED", "Provide a snapshotId+elementId for an editable element or focus it with cu_ax_action first") }
+        } else if let value = attr(AXUIElementCreateApplication(pid), kAXFocusedUIElementAttribute), CFGetTypeID(value) == AXUIElementGetTypeID() {
             element = value as! AXUIElement
+        } else if p["strategy"] as? String != "event", let focused = windowFocusedEditable(window) {
+            element = focused
+        } else {
+            throw BridgeError("BACKGROUND_TEXT_TARGET_REQUIRED", "No unique focused text field in the bound window. Observe the current tree and pass typeText(text,{target:index}) for the exact editable element. Event strategy still requires the application's existing input focus.")
         }
         guard belongsToWindow(element, window) else { throw BridgeError("BACKGROUND_TEXT_TARGET_REQUIRED", "The application's internal text focus belongs to another window. Provide an exact observed text element.") }
         guard attr(element, kAXSubroleAttribute) as? String != kAXSecureTextFieldSubrole else { throw BridgeError("SECURE_INPUT", "Secure fields are excluded") }
         return element
     }
-    func insertBackgroundText(_ p: Object, _ pid: pid_t, _ wid: CGWindowID, _ frame: CGRect) async throws -> Object {
+    func insertBackgroundText(_ p: Object, _ pid: pid_t, _ wid: CGWindowID, _ frame: CGRect, expectedElement: AXUIElement) async throws -> Object {
         let element = try backgroundTextElement(p, pid, wid, frame)
+        guard CFEqual(element, expectedElement) else {
+            throw BridgeError("STALE_TEXT_FOCUS", "Text focus changed during cursor approach. Observe the target before typing.")
+        }
+        let webField = belongsToWebArea(element)
+        if webField, attr(element, kAXFocusedAttribute) as? Bool != true {
+            throw BridgeError("BACKGROUND_WEB_TEXT_FOCUS_REQUIRED", "Click the current editable field and verify its AX node says focused:true, then re-observe and use typeText. If a dialog appears, handle it and refresh the field index. No text was sent.")
+        }
         let text = p["text"] as? String ?? ""
         guard let original = attr(element, kAXValueAttribute) as? String else { throw BridgeError("BACKGROUND_TEXT_UNSUPPORTED", "Element has no readable AX text value; no global input fallback was attempted") }
         let ns = original as NSString
@@ -168,13 +217,16 @@ struct HeldBackgroundMouse {
         let expected = ns.replacingCharacters(in: NSRange(location: selection.location, length: selection.length), with: text)
         var selectedSettable: DarwinBoolean = false
         _ = AXUIElementIsAttributeSettable(element, kAXSelectedTextAttribute as CFString, &selectedSettable)
+        var valueSettable: DarwinBoolean = false
+        _ = AXUIElementIsAttributeSettable(element, kAXValueAttribute as CFString, &valueSettable)
         let mechanism: String
-        if selectedSettable.boolValue {
+        // Focused web inputs can advertise AXSelectedText and acknowledge its
+        // setter without changing the page. Prefer writable AXValue there,
+        // using the same observed UTF-16 range and exact readback.
+        if selectedSettable.boolValue && !(webField && valueSettable.boolValue) {
             mechanism = "AXSelectedText insertion"
             try axCheck(AXUIElementSetAttributeValue(element, kAXSelectedTextAttribute as CFString, text as CFString), "Background text insertion")
         } else {
-            var valueSettable: DarwinBoolean = false
-            _ = AXUIElementIsAttributeSettable(element, kAXValueAttribute as CFString, &valueSettable)
             guard valueSettable.boolValue else { throw BridgeError("BACKGROUND_TEXT_UNSUPPORTED", "Neither AXSelectedText nor AXValue is writable; use an app-specific integration. No foreground fallback was attempted.") }
             mechanism = "AXValue insertion"
             try axCheck(AXUIElementSetAttributeValue(element, kAXValueAttribute as CFString, expected as CFString), "Background text insertion")
@@ -187,7 +239,7 @@ struct HeldBackgroundMouse {
             }
             try await Task.sleep(nanoseconds: 20_000_000)
         }
-        throw BridgeError("TEXT_VERIFICATION_FAILED", "AX insertion did not produce the expected readable value. It may have partly completed; refresh state before retrying.")
+        throw BridgeError("TEXT_VERIFICATION_FAILED", "\(mechanism) did not produce the expected readable value. It may have partly completed; refresh state before retrying.")
     }
     func insertBackgroundEventText(_ p:Object,_ pid:pid_t,_ wid:CGWindowID,_ frame:CGRect,_ observation:BackgroundFocusObservation) async throws -> Object {
         let root=AXUIElementCreateApplication(pid)
@@ -483,7 +535,7 @@ struct HeldBackgroundMouse {
                 if let selectionBefore,let after=attr(element,kAXSelectedTextRangeAttribute),!CFEqual(selectionBefore,after){throw BridgeError("STALE_SELECTION","App-local focus preparation changed the text selection; no text event was sent")}
             }
             try inputObservation.validate();try assertBackgroundIsolation(pid,wid,orderBefore,foregroundBefore)
-            result=strategy == "event" ? try await insertBackgroundEventText(p,pid,wid,frame,inputObservation):try await insertBackgroundText(p,pid,wid,frame)
+            result=strategy == "event" ? try await insertBackgroundEventText(p,pid,wid,frame,inputObservation):try await insertBackgroundText(p,pid,wid,frame,expectedElement:textElement)
         case "key":
             let normalized=(p["key"] as? String ?? "").lowercased().replacingOccurrences(of:" ",with:"")
             let semanticSelectAll=p["durationMs"] == nil && p["strategy"] as? String != "event" && ["cmd+a","command+a","meta+a","super+a"].contains(normalized)
