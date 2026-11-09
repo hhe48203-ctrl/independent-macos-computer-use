@@ -32,9 +32,11 @@ G04 随后暴露了两个独立控件问题。`AXSelectedText` 只改变地址�
 
 Chromium 控件防护探针核对了两个 Cases 下拉框。打开菜单的动作都在投递前被拒绝，随后通过应用内焦点和普通按键成功选择状态和链接，哨兵无干扰。见 `artifacts/cdb-g04-select-guard-phFOuM/report.json`。
 
+G03 的 GnuCash 截图暴露了另一个边界缺陷。ScreenCaptureKit 把启动提示拼进普通账本截图，缩小了账本内容，接口仍按账本尺寸报告比例。`a2b0361` 排除隐式子窗口。同一 800 × 632 逻辑点账本现在完整填充 1600 × 1264 像素截图，比例为 2×。前后截图见 `artifacts/cdb-g03-control-inventory-bbmq5U/` 和 `artifacts/cdb-g03-viewport-8CDoMk/`。显式前台悬停仍可截取其临时窗口，MB-10/11 在 `artifacts/bench-v2-pi-20261109T203944095385Z/summary.json` 中再次得 1.0。
+
 | 待办 | 已有逐轮证据 |
 | --- | --- |
 | MB-09 `790113` | `drag_begin` 比第一次哨兵失焦采样早约 45 毫秒。同种子的 1 点短拖动只引发目标升层，未触发拖放会话或键焦点丢失。长拖动开启 AppKit 会话、夺走键焦点且未完成投放。保留全程 Command 标志仍复现。见 `artifacts/mb09-drag-threshold-34DwfW/report.json` 和 `artifacts/mb09-command-drag-igkzdF/report.json` |
 | IR-01 `147201`、`517139` 和 IR-02 `487371` | 无视觉光标时直接通过 AX 按 Next，仍复现了原生 sheet 让目标越过另一后台窗口，哨兵始终保持键焦点。此前打开菜单则单独造成过失焦。在应用内聚焦的 AppKit 下拉框发送普通按键，选值未改变，见 `artifacts/ir-popup-typeahead-TLnRd8/report.json`。原生选项选择与 sheet 堆叠仍待解决 |
 | CDB-G02 `909557` | 邮件按钮接受 AXPress，详情仍是占位内容。进程定向事件打开了邮件，同时使目标窗口升到哨兵上方。AX 聚焦 setter 返回成功，按钮却未取得应用内焦点。两个鼠标包都保留 Command 后隔离正常，但详情仍未打开。见 `artifacts/cdb-control-probe-DX5zse/report.json`、`artifacts/cdb-alternate-gui-PS60Ru/report.json` 和 `artifacts/cdb-modifier-gui-h1L7t6/report.json` |
-| CDB-G03 `99589` | 首轮截图显示 LibreOffice 首次启动欢迎弹窗。`fa27402` 在临时 profile 关闭欢迎与提示。原单元格仍读到旧值，AX 也把其坐标报在窗口外。使用截图坐标点击时，Calc 升到哨兵上方。见 `artifacts/cdb-g03-value-readback-fhsa01/report.json` 与 `artifacts/cdb-alternate-gui-PS60Ru/report.json`。模型未执行必要的 GnuCash 台账编辑，其编辑能力仍待验证 |
+| CDB-G03 `99589` | 临时 Calc profile 已消除欢迎弹窗。原单元格仍读到旧值，AX 也把坐标报在窗口外。按正确截图坐标点击时，Calc 升到哨兵上方。GnuCash 的 AX 只暴露窗框。启动提示可安全关闭，但点击账户展开控件会成为前台并夺走键焦点，探针在编辑前停止。见 `artifacts/cdb-g03-value-readback-fhsa01/report.json`、`artifacts/cdb-alternate-gui-PS60Ru/report.json` 和 `artifacts/cdb-g03-ledger-navigation-Bk04Al/report.json` |
