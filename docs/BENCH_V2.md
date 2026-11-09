@@ -20,6 +20,8 @@ Use an unlocked Apple silicon Mac on macOS 26 or later, with Python 3.10+, Node 
 
 The default `benchlab` selection runs MB-09–11 and IR-01–04. Use `--tasks IR-02,MB-09` for a small run. Without `--run`, the command prints the plan. `--condition` accepts `background` (default), `foreground` or `both`. In the foreground condition the upstream witness replaces the typing window. This arm still uses the independent backend's background input path. `--runs 1` through `--runs 5` controls repetitions and `--seed` controls task ordering. Each trial has at most 360 seconds and 45 turns.
 
+Use `--run-index 0` through `--run-index 4` instead of `--runs` to reproduce one upstream replicate. The printed plan includes the actual task seed. To continue a new run after an interruption, use `npm run bench:v2 -- --run --resume artifacts/bench-v2-pi-…/summary.json`. The runner recovers each completed row from its trial directory, skips all scored results, and keeps infrastructure retries in separate attempt directories. It checks the source and executable hashes, fixture binaries, provider/model, task plan and environment before continuing. Older summaries can be used to look up a replicate index for a new comparison. A `STOP` file must be removed before resuming.
+
 `--tasks v2` includes CDB-G02, G03 and G04. Those workflows require LibreOffice, GnuCash, Chrome and the taskpack's locked Electron apps. Install each Electron project's dependencies with `npm ci` in its pinned `taskpack/tasks/shared/cdb-s0{2,3,4}/apps/` project directory, then run `--doctor --tasks v2` to check the exact prerequisites. Use a dedicated desktop with the stock apps closed and pass `--allow-multi-app` for the live run. The runner uses per-trial workspaces and profiles and admits only windows from process groups it started. It refuses to start a suite with missing prerequisites rather than quietly dropping tasks.
 
 ```sh
@@ -30,9 +32,13 @@ npm run bench:v2 -- --run --tasks v2 --condition both --runs 5 --allow-multi-app
 
 ## Read results
 
+The baseline and targeted repair results are tracked separately. [Bench v2 failure reproduction](BENCH_V2_REMEDIATION.md)
+
 `artifacts/bench-v2-pi-*/summary.json` contains the plan, observed provider and model, token usage, real turn counts, wall times, checker results and A22 criteria. Each trial also retains Pi's JSONL, native fixture state/events, the sentinel log and checker output. An infrastructure error stops the schedule and stays out of the scored denominator. A checker failure or a recorded interference can be a valid benchmark result. Exit zero means all planned trials were scored. Use the recorded task and background completion counts to assess performance.
 
 Pi gets only the two MCP tools. A benchmark JS gate blocks OS, file and network operations, and native requests are scoped by bundle, owned PID and observed snapshot. Capture is limited to the owned windows. Real pointer hover is not part of the current MCP, and `app.move` moves the visual overlay only. MB-10 and MB-11 can expose this gap. The harness preserves such failures and measures all eight A22 criteria through the upstream sentinel.
+
+During a trial the idle guard checks HID event counters separately from IOKit idle time. A counter change or unexplained idle reset interrupts the run. It can continue after a fresh WindowServer tickle only when the executable, MCP scope and Pi ancestry identify the trial's own helper and the HID counters stayed unchanged. This affects runner interruption handling only. The upstream sentinel and A22 retain their original measurements and scoring.
 
 This is a local Pi arm using the pinned task set. Report the display, selected tasks, repetitions and backend policy alongside results. The upstream comparison uses different agents, desktop setup and trial schedules. [Upstream method](https://github.com/trycua/cua/blob/22a67eacd15dc71811e330ed88951dd615bb395d/libs/cua-driver-bench/METHOD.md)
 

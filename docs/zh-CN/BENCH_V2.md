@@ -20,6 +20,8 @@ npm run bench:v2 -- --run --tasks benchlab
 
 默认 `benchlab` 选择 MB-09–11 和 IR-01–04。快速验证可用 `--tasks IR-02,MB-09`。省略 `--run` 只输出计划。`--condition` 可选 `background`（默认）、`foreground` 或 `both`。前台条件使用上游的见证窗口，工具层仍采用本项目的后台输入。用 `--runs 1` 至 `--runs 5` 控制每项重复次数，`--seed` 控制任务顺序。每轮最多 360 秒和 45 回合。
 
+用 `--run-index 0` 至 `--run-index 4` 代替 `--runs`，可只复现一次上游重复。计划会列出实际任务种子。中断后可用 `npm run bench:v2 -- --run --resume artifacts/bench-v2-pi-…/summary.json` 继续新版记录。运行器从逐轮目录恢复结果，跳过已计分轮次，把基础设施重试写入独立目录。续跑前核对源码与可执行文件哈希、测试应用、提供方和模型、任务计划及环境。旧汇总可用于查找重复索引，再开一轮对照。若留有 `STOP` 文件，需先移除才能续跑。
+
 `--tasks v2` 还包含 CDB-G02、G03、G04。它们需要 LibreOffice、GnuCash、Chrome 和 taskpack 中锁定的 Electron 应用。在锁定源码的 `taskpack/tasks/shared/cdb-s0{2,3,4}/apps/` 下各项目目录执行 `npm ci`，再用 `--doctor --tasks v2` 检查确切依赖。全量实跑应在专用桌面进行，先关闭已有的这些应用，然后加 `--allow-multi-app`。运行器为每轮新建工作区和应用配置，只允许自己启动的进程组内的窗口。选中的任务缺依赖时会明确终止预检。
 
 ```sh
@@ -30,9 +32,13 @@ npm run bench:v2 -- --run --tasks v2 --condition both --runs 5 --allow-multi-app
 
 ## 读取结果
 
+原矩阵和针对性修复对照分别记录。[Bench v2 失败复现记录](BENCH_V2_REMEDIATION.md)
+
 `artifacts/bench-v2-pi-*/summary.json` 记录计划、实测提供方和模型、token 用量、实际回合数、用时、检查器结果和 A22 判据。各轮保留 Pi JSONL、测试应用状态和事件、哨兵记录与检查器输出。基础设施错误会终止后续计划，不进入已计分分母。任务未完成或发生干扰也会保留为有效成绩。退出码零表示计划内各轮均完成计分。任务成功率与后台完成率请读取报告中的独立计数。
 
 Pi 只获得两个 MCP 工具。benchmark 的 JS 限制阻止系统、文件和网络调用，原生操作按 bundle、受控 PID 和已观察快照限定范围。截图只覆盖测试窗口。当前 `app.move` 只移动视觉光标，尚未投递真实悬停事件，MB-10、MB-11 可以检出这个缺口。测试保留能力失败，用上游哨兵测量 A22 的八项判据。
+
+试验期间分别观测实体 HID 事件计数和 IOKit 空闲时长。HID 计数变化或无法归因的空闲计时回落会中断本轮。只有核实可执行文件、MCP scope 和 Pi 父进程链都指向本轮 helper，并且 HID 计数保持不变时，才允许带着新的 WindowServer 活动记录继续。上游哨兵的测量和 A22 计分保持原规则。
 
 这是使用锁定任务集的本地 Pi 实验组。解读成绩时请注明显示器、任务、重复数和工具策略。上游横评使用不同的 agent、桌面和运行计划。[上游方法](https://github.com/trycua/cua/blob/22a67eacd15dc71811e330ed88951dd615bb395d/libs/cua-driver-bench/METHOD.md)
 
