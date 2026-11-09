@@ -298,6 +298,8 @@ struct Snapshot {
         config.height = max(1, Int((capturedFrame.height*scale).rounded()))
         config.showsCursor = p["showCursor"] as? Bool ?? false
         config.ignoreShadowsSingleWindow = true
+        // Child windows can extend the image's bounds and invalidate the bound window's scale.
+        if kind == "window" { config.includeChildWindows = false }
         config.captureResolution = .best
         let image = try await SCScreenshotManager.captureImage(contentFilter: filter, configuration: config)
         return (image, capturedFrame, kind)

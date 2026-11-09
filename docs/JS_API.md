@@ -31,6 +31,8 @@ await app.getAXStateAndScreenshot();
 
 `getScreenshot` returns a PNG Buffer, and `getAXStateAndScreenshot` returns `{state,coordinates,screenshot?}`. Both display as MCP image blocks by default; `emit:false` only returns them. `nodeRepl.write(value)` emits text and `nodeRepl.emitImage(PNG or JPEG bytes)` emits an image. Ending a call with `undefined` avoids a redundant value inspection.
 
+An ordinary window screenshot captures the bound window alone. A separate child window can otherwise expand the captured image and invalidate its coordinate scale. Bind a separate dialog by its own PID and window ID when it appears in `listWindows`. The explicit hover capture can include owned transient windows within the bound frame.
+
 ## Coordinates and actions
 
 AX node frames and OCR rectangles are always logical points inside the window with a top-left origin. Every full or diff AX result carries a `Coordinates` JSON value: `unit`, `scaleX/Y` (pixels per logical point), `range` (upper bound exclusive), `origin` and `axFrameUnit`. `getCoordinateInfo({emit:false})` returns the current mapping; after a size change the old mapping is rejected. Never add screen offsets yourself or scale twice.

@@ -31,6 +31,8 @@ getAXState 返回文字，后续默认按树行索引输出差分；加 disableD
 
 getScreenshot 返回 PNG Buffer，getAXStateAndScreenshot 返回 {state,coordinates,screenshot?}。默认以 MCP image 块显示；emit:false 只返回。可用 nodeRepl.write(value) 输出文本，nodeRepl.emitImage(PNG或JPEG字节) 输出图像。以 undefined 结束调用可避免重复检查返回值。
 
+普通窗口截图只截取绑定窗口。单独的子窗口可能扩大合成图像，导致坐标比例失效。若独立弹窗出现在 `listWindows` 中，可用它自己的 PID 和窗口 ID 绑定。显式悬停截图可以包含绑定范围内的同进程临时窗口。
+
 ## 坐标和操作
 
 AX 节点 frame 和 OCR 矩形始终为窗口内逻辑点、左上原点。每次 AX 全量/差分均带 `Coordinates` JSON：`unit`、`scaleX/Y`（每逻辑点的像素数）、`range`（上界不含）、`origin` 和 `axFrameUnit`。`getCoordinateInfo({emit:false})` 返回当前映射；尺寸变化后会拒绝旧映射。不要自己叠加屏幕位置或二次缩放。
