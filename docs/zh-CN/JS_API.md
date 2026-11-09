@@ -68,6 +68,7 @@ let replacement=await app.reconnect({pid:789,windowId:1011});
 | paste(text,{format:'text'}) | 纯文本 AX 插入，不用剪贴板 |
 | ocr({emit?,maxDimension?}) | 本机 Vision OCR，矩形为窗口内逻辑点 |
 | move([x,y]) | 只移动独立覆盖光标，不产生鼠标输入 |
+| hover([x,y],{durationMs?,screenshot?}) | 显式前台悬停，移动系统鼠标 |
 
 普通后台元素点击在目标是可观察的表格行或行文本、没有 `AXPress` 时，可用表格可写的 `AXSelectedRows`。`selectionOutcome:"dialogOpened"` 表示出现了附属弹窗，应读取新的 AX 树后再操作弹窗按钮。
 
@@ -80,6 +81,8 @@ click/pressKey 的 `durationMs` 为0..5000毫秒，控制每个 down/up 对之�
 富文本 paste 和浏览器 API 未实现，显式报错。纯后台菜单操作受限。真实事件需要应用支持；event 文本要求已经存在的可读、非安全文本焦点和选择范围，不因传了索引而自动设置焦点。
 
 ## 光标和截图
+
+`app.hover([x,y],{durationMs:1500,screenshot:true})` 要求服务以 `CU_ENABLE_FOREGROUND=1` 启动。它会聚焦绑定窗口并移动系统鼠标。停留时间默认 1000 毫秒，范围 0–5000 毫秒。可选截图裁剪到单块显示器内的绑定窗口，包含同进程与其重叠的临时窗口，并提供该图的坐标比例。悬停后若截图失败，结果会返回 `screenshotError`。
 
 光标是独立 NSPanel，跨目标位置以约60Hz缓入缓出，真实输入等待到位。拖动显示实际包进度。不可成为 key/main、穿透点击、不移动系统鼠标。文字/语义操作指向元素中心，不是测量的插入点。
 

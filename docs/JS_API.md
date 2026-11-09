@@ -68,6 +68,7 @@ A confirmed call returns a **new object plus a full initial AX observation**, in
 | paste(text,{format:'text'}) | plain-text AX insertion, no clipboard |
 | ocr({emit?,maxDimension?}) | local Vision OCR; rectangles are logical points in the window |
 | move([x,y]) | moves only the independent overlay cursor, produces no mouse input |
+| hover([x,y],{durationMs?,screenshot?}) | explicit foreground hover with the real pointer |
 
 Plain background element clicks use the table’s writable `AXSelectedRows` when the observed element is a row or its text and has no `AXPress`. `selectionOutcome:"dialogOpened"` means a sheet appeared. Read the new AX tree before choosing its buttons.
 
@@ -80,6 +81,8 @@ The default vertical distance is calibrated to `round(windowHeight*pages)`, cons
 Rich-text paste and browser APIs are not implemented and fail explicitly. Background menu operation is limited. Real events require app support; `event` text needs a pre-existing, readable, non-secure text focus and selection range and never sets focus just because an index was passed.
 
 ## Cursor and screenshots
+
+`app.hover([x,y],{durationMs:1500,screenshot:true})` requires `CU_ENABLE_FOREGROUND=1` at server startup. It focuses the bound window and moves the system pointer. The dwell defaults to 1000 ms and accepts 0–5000 ms. The optional capture is cropped to the bound window on one display and includes overlapping transient windows from the same process. The image carries its own coordinate scale. If capture fails after hovering, the result includes `screenshotError`.
 
 The cursor is an independent NSPanel that eases in and out at about 60 Hz between target positions, and real input waits for arrival. Drags show actual packet progress. It can never become key/main, is click-through and never moves the system pointer. Text and semantic actions point at an element center, not a measured insertion point.
 
