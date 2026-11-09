@@ -18,6 +18,7 @@ import sys
 import tempfile
 import time
 
+import activity
 import journal
 
 HERE = Path(__file__).resolve().parent
@@ -29,6 +30,7 @@ RESEARCH = ROOT / ".research"
 SOURCE = RESEARCH / f"cdb-pinned-{REVISION}"
 BUILD = ROOT / ".build" / f"cdb-v2-{REVISION[:12]}"
 APPS = BUILD / "apps"
+NATIVE = ROOT / ".build/Local Computer Use.app/Contents/MacOS/computer-use-bridge"
 NODE = os.environ["CU_BENCH_NODE"]
 PROVIDER = "openai-codex"
 MODEL = "gpt-6.1-terra"
@@ -234,6 +236,8 @@ def run_agent(pi, auth, catalog, targets, prompt, artifacts, turns, seconds, des
         started = time.monotonic()
         timed_out = False
         interrupted = None
+        read_counters = activity.hid_counter_reader()
+        previous_counters = read_counters()
         previous_idle = idle_seconds()
         with (artifacts / "pi.jsonl").open("wb") as log, (artifacts / "pi.stderr").open("wb") as stderr:
             proc = sp.Popen(command, cwd=temp, env=env, stdout=log, stderr=stderr,
@@ -248,10 +252,18 @@ def run_agent(pi, auth, catalog, targets, prompt, artifacts, turns, seconds, des
                         proc.wait(timeout=min(1, remaining))
                     except sp.TimeoutExpired:
                         now_idle = idle_seconds()
-                        if stop_file.exists() or now_idle + 0.75 < previous_idle:
-                            interrupted = "STOP file or hardware activity interrupted the trial"
+                        now_counters = read_counters()
+                        decision, changed, tickle_pid = activity.activity_decision(
+                            previous_idle, now_idle, previous_counters, now_counters,
+                            lambda max_age: activity.owned_tickle(NATIVE, HERE / "mcp.mjs", scope, proc.pid, max_age),
+                        )
+                        if decision != "idle":
+                            activity.log_activity(artifacts / "idle-guard.jsonl", decision, previous_idle, now_idle, changed, tickle_pid)
+                        if stop_file.exists() or decision not in ("idle", "owned_tickle"):
+                            interrupted = "STOP file created" if stop_file.exists() else decision
                             break
                         previous_idle = now_idle
+                        previous_counters = now_counters
             finally:
                 owned_stop(desktop, proc)
         return {"exit_code": proc.returncode, "seconds": round(time.monotonic() - started, 2),
@@ -472,8 +484,7 @@ def main():
             with socket.socket() as listener:
                 listener.bind(("127.0.0.1", 4184))
     build_fixtures(bench)
-    native = ROOT / ".build/Local Computer Use.app/Contents/MacOS/computer-use-bridge"
-    identity = {"code_sha256": code_identity(), "native_sha256": hashlib.sha256(native.read_bytes()).hexdigest(),
+    identity = {"code_sha256": code_identity(), "native_sha256": hashlib.sha256(NATIVE.read_bytes()).hexdigest(),
                 "fixture_sha256": {name: hashlib.sha256((APPS / f"{name}.app/Contents/MacOS/{name}").read_bytes()).hexdigest()
                                    for name in ("BenchLab", "BenchSentinel")},
                 "node": capture(NODE, "--version"), "pi_version": capture(login[0], "--version"),
