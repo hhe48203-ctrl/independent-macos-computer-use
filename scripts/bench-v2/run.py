@@ -4,7 +4,9 @@
 import argparse
 from contextlib import ExitStack
 import datetime as dt
+from functools import partial
 import hashlib
+import http.client
 import json
 import os
 from pathlib import Path
@@ -17,6 +19,7 @@ import subprocess as sp
 import sys
 import tempfile
 import time
+from urllib.parse import urlsplit
 
 import activity
 import journal
@@ -148,21 +151,65 @@ def wait_targets(pids, bundle_ids):
 
 def pack_requirements(cdb, spec):
     descriptor = cdb._descriptor(spec)
-    bundles, missing = set(), []
+    bundles, missing, services = set(), [], []
     for app in descriptor["apps"]:
         if app["kind"] == "electron":
             bundle = cdb.pack_tasks_root() / spec["pack_task"]
             cwd = Path(app["cwd"].replace("${bundle}", str(bundle)))
-            if not (cwd / "node_modules/electron/dist/Electron.app").is_dir():
+            electron = cwd / "node_modules/electron/dist/Electron.app"
+            lock = json.loads((cwd / "package-lock.json").read_text("utf-8"))
+            expected = lock.get("packages", {}).get("node_modules/electron", {}).get("version")
+            if (not expected or not (electron / "Contents/MacOS/Electron").is_file() or
+                bundle_info(electron).get("CFBundleShortVersionString") != expected):
                 missing.append(f"locked Electron installation in {cwd}")
             bundles.add(cdb.electron_bundle_id(cdb.app_display_name(app)))
         for command in app["command"]:
             if command.startswith("/Applications/") and ".app/" in command:
-                if not Path(command).is_file():
+                if not Path(command).is_file() or not os.access(command, os.X_OK):
                     missing.append(command)
                 else:
                     bundles.add(bundle_info(Path(command.split(".app/")[0] + ".app"))["CFBundleIdentifier"])
-    return bundles, missing
+        if app["kind"] == "service":
+            endpoint = service_endpoint(app.get("ready") or {})
+            if endpoint is None:
+                missing.append(f"loopback readiness URL for {app['id']}")
+            else:
+                services.append(endpoint)
+    return bundles, missing, services
+
+
+def service_endpoint(ready):
+    url = ready.get("url") or ready.get("http")
+    if not url:
+        return None
+    endpoint = urlsplit(url)
+    if endpoint.scheme != "http" or endpoint.hostname != "127.0.0.1" or not endpoint.port or endpoint.username:
+        raise ValueError("Only explicit loopback HTTP readiness URLs are supported")
+    return endpoint
+
+
+def wait_service(app, proc, ready):
+    endpoint = service_endpoint(ready)
+    if endpoint is None:
+        raise RuntimeError(f"Owned service {app} has no readiness endpoint")
+    deadline = time.monotonic() + min(60, float(ready.get("timeout_seconds", 15)))
+    while time.monotonic() < deadline:
+        if proc.poll() is not None:
+            raise RuntimeError(f"Owned service {app} exited ({proc.returncode}) before readiness. See app-{app}.log")
+        connection = http.client.HTTPConnection(endpoint.hostname, endpoint.port, timeout=1)
+        try:
+            path = endpoint.path or "/"
+            if endpoint.query:
+                path += "?" + endpoint.query
+            connection.request("GET", path)
+            if connection.getresponse().status == 200 and proc.poll() is None:
+                return
+        except (OSError, http.client.HTTPException):
+            pass
+        finally:
+            connection.close()
+        time.sleep(0.2)
+    raise RuntimeError(f"Owned service {app} did not become ready. See app-{app}.log")
 
 
 def pi_auth():
@@ -321,7 +368,15 @@ def run_trial(entry, condition, out, task, spec, bundle_ids, login, modules):
                         (artifacts / f"reset-{step}.log").write_text(result.stdout + result.stderr, "utf-8")
                         result.check_returncode()
                     brief = pack.brief()
+                    for app in pack.apps():
+                        if app["kind"] == "service":
+                            # The pinned adapter waits on `http`, whereas the
+                            # descriptor can use `url`. Wait before opening GUI apps.
+                            app["ready"]["http"] = service_endpoint(app["ready"]).geturl()
                     pack.start_apps(force_accessibility=True)
+                    for app, proc in zip(pack.apps(), pack.procs, strict=True):
+                        if app["kind"] == "service":
+                            wait_service(app["id"], proc, app["ready"])
                     pids = [proc.pid for app, proc in zip(pack.apps(), pack.procs) if app["kind"] != "service"]
                 else:
                     brief, paths = pilot.prepare_probe(task, seed, trial, APPS / "BenchLab.app")
@@ -414,6 +469,11 @@ def main():
     import desktop_runtime as desktop
     import cdb_adapter as cdb
 
+    # The pinned pack defaults to Homebrew's PATH and /usr/local/bin/node.
+    # Use the same resolved executable for fixtures, the evaluator and MCP.
+    cdb.APP_PATH = str(Path(NODE).resolve().parent) + ":" + cdb.APP_PATH
+    cdb.node_facts = partial(cdb.node_facts, NODE)
+
     tasks = runner.load_tasks(bench / "probes")
     saved = None
     if args.resume:
@@ -458,21 +518,31 @@ def main():
     if not (args.run or args.doctor):
         print(json.dumps(report, indent=2))
         return 0
-    bundles, missing = {}, []
+    bundles, missing, services = {}, [], []
+    node_version = capture(NODE, "--version")
+    if int(node_version.lstrip("v").split(".")[0]) < 22:
+        raise RuntimeError("The benchmark requires Node 22 or later")
     for tid, spec in specs.items():
         if spec.get("kind") == "cdb":
-            bundles[tid], deps = pack_requirements(cdb, spec)
+            bundles[tid], deps, endpoints = pack_requirements(cdb, spec)
             missing.extend(deps)
+            services.extend(endpoints)
         else:
             bundles[tid] = {"ai.cua.benchlab"}
     if missing:
         raise RuntimeError("Missing benchmark prerequisites:\n  " + "\n  ".join(sorted(set(missing))))
+    for host, port in sorted({(endpoint.hostname, endpoint.port) for endpoint in services}):
+        try:
+            with socket.socket() as listener:
+                listener.bind((host, port))
+        except OSError as error:
+            raise RuntimeError(f"Benchmark service port {host}:{port} is unavailable: {error}") from error
     login = pi_auth()
     status = inspect_bridge(set())
     if not all(status["permissions"].get(p) for p in ("accessibility", "screenRecording")):
         raise RuntimeError("Grant the existing native helper Accessibility and Screen Recording through macOS Settings")
     if args.doctor:
-        print(json.dumps(dict(report, prerequisites="ready", pi_version=capture(login[0], "--version"), displays=status["displays"]), indent=2))
+        print(json.dumps(dict(report, prerequisites="ready", node=node_version, pi_version=capture(login[0], "--version"), displays=status["displays"]), indent=2))
         return 0
     running_apps = inspect_bridge({"ai.cua.benchlab", "ai.cua.benchsentinel"} | set().union(*bundles.values()))["apps"]
     if running_apps:
@@ -480,14 +550,11 @@ def main():
     if any(spec.get("kind") == "cdb" for spec in specs.values()):
         if not args.allow_multi_app:
             parser.error("Use --allow-multi-app on a dedicated desktop for the stock-app workloads")
-        if "CDB-G04" in ids:
-            with socket.socket() as listener:
-                listener.bind(("127.0.0.1", 4184))
     build_fixtures(bench)
     identity = {"code_sha256": code_identity(), "native_sha256": hashlib.sha256(NATIVE.read_bytes()).hexdigest(),
                 "fixture_sha256": {name: hashlib.sha256((APPS / f"{name}.app/Contents/MacOS/{name}").read_bytes()).hexdigest()
                                    for name in ("BenchLab", "BenchSentinel")},
-                "node": capture(NODE, "--version"), "pi_version": capture(login[0], "--version"),
+                "node": node_version, "pi_version": capture(login[0], "--version"),
                 "macos": platform.mac_ver()[0], "displays": status["displays"]}
     report.update(identity)
     if saved is None:
