@@ -402,15 +402,24 @@ struct HeldBackgroundMouse {
     }
 
     func checkBackgroundPopup(_ element: AXUIElement) throws {
-        // Closed native popups can offer only menu tracking, with no direct selection endpoint.
+        // AppKit and Chromium can present a native menu even for an AX press.
         guard attr(element, kAXRoleAttribute) as? String == kAXPopUpButtonRole else { return }
         var actions: CFArray?
+        guard AXUIElementCopyActionNames(element, &actions) == .success, let names = actions as? [String] else { return }
+        let actionSet = Set(names)
+        let items = children(element)
         var writable = DarwinBoolean(false)
-        guard AXUIElementCopyActionNames(element, &actions) == .success,
-              let names = actions as? [String], Set(names) == [kAXPressAction, kAXShowMenuAction],
-              AXUIElementIsAttributeSettable(element, kAXValueAttribute as CFString, &writable) == .success,
-              !writable.boolValue, children(element).isEmpty else { return }
-        throw BridgeError("BACKGROUND_POPUP_UNSUPPORTED", "This closed popup only exposes native menu tracking, which can take the user's keyboard focus. No input was sent.")
+        let nativePopup = actionSet == [kAXPressAction, kAXShowMenuAction] && items.isEmpty &&
+            AXUIElementIsAttributeSettable(element, kAXValueAttribute as CFString, &writable) == .success && !writable.boolValue
+        let webPopup = actionSet == [kAXPressAction, kAXShowMenuAction, "AXScrollToVisible"] &&
+            items.count <= 1 && items.allSatisfy { attr($0, kAXRoleAttribute) as? String == kAXMenuItemRole } &&
+            belongsToWebArea(element)
+        guard nativePopup || webPopup else { return }
+        let message = "This closed popup can open a native menu and take the user's keyboard focus. No input was sent."
+        if webPopup {
+            throw BridgeError("BACKGROUND_POPUP_UNSUPPORTED", message + " Try app-local AX focus and a printable key matching the option's prefix, then verify the selected value.")
+        }
+        throw BridgeError("BACKGROUND_POPUP_UNSUPPORTED", message)
     }
 
     // A row label is often exposed as AXStaticText with no AXPress. Use the

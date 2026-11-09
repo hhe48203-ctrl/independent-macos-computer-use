@@ -80,6 +80,10 @@ The default vertical distance is calibrated to `round(windowHeight*pages)`, cons
 
 For a readable string `AXValue`, `setValue` reports `valueVerified` when the returned value exactly matches the request. If a requested change leaves the previous value in place, it reports `AX_VALUE_UNCHANGED`. Observe normalized or unreadable values before proceeding. Closed popups with read-only values, no children and only native menu actions report `BACKGROUND_POPUP_UNSUPPORTED` for background opens. Real events require app support. The `event` text strategy requires a pre-existing, readable, non-secure text focus and selection range.
 
+In the tested Chrome address bar, `typeText` updated the displayed value without preparing the address for submission. For navigation, focus the current address field, call `setValue(index,address)`, press Enter, and verify the loaded page in a fresh observation.
+
+Some Chromium web selects appear as `AXPopUpButton` and open a native menu. Use `performSecondaryAction(index,'focus')`, verify the control reports `focused:true`, then use `pressKey(key,{strategy:'event'})` with a printable key matching the intended option's unique prefix. Verify the selected value before committing the form. This path depends on the app's type-ahead behavior.
+
 ## Cursor and screenshots
 
 `app.hover([x,y],{durationMs:1500,screenshot:true})` requires `CU_ENABLE_FOREGROUND=1` at server startup. It focuses the bound window and moves the system pointer. The dwell defaults to 1000 ms and accepts 0–5000 ms. The optional capture is cropped to the bound window on one display and includes overlapping transient windows from the same process. The image carries its own coordinate scale. If capture fails after hovering, the result includes `screenshotError`.

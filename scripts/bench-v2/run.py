@@ -339,6 +339,11 @@ def run_agent(pi, auth, catalog, targets, prompt, artifacts, turns, seconds, des
             "Use only the GUI to open task-specified workspace documents, logs and local URLs. "
             "Direct filesystem and network APIs, shell, imports and clipboard access are prohibited. "
             "The move method only moves a visual overlay. Verify each navigation, edit and save from fresh GUI output. "
+            "To replace a browser address, focus the current address field, use setValue(index, address), then press Enter. "
+            "The text insertion method may update the displayed address without preparing it for submission. "
+            "For a Chromium web select that exposes AXPopUpButton, use performSecondaryAction(index, 'focus'), "
+            "verify focused:true, then send a printable key matching the option's unique prefix with pressKey(key, {strategy:'event'}). "
+            "Verify the selected value before committing any form. Opening a native dropdown can steal keyboard focus. "
             "For navigation that loads asynchronously, observe the page again in a separate call before deciding whether it succeeded. "
             "If a documented operation fails, report which required app or document you could not use and the observed error."
         )

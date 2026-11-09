@@ -80,6 +80,10 @@ click/pressKey 的 `durationMs` 为0..5000毫秒，控制每个 down/up 对之�
 
 字符串 `AXValue` 可读时，`setValue` 用 `valueVerified` 报告回读是否与请求完全一致。请求修改后仍读到原值会报 `AX_VALUE_UNCHANGED`。应用格式化了结果或回读不可用时，应重新观察。后台打开值只读、没有子节点且只暴露原生菜单动作的关闭下拉框时，会报 `BACKGROUND_POPUP_UNSUPPORTED`。真实事件需要应用支持。`event` 文本要求控件已经具有可读的非安全文本焦点和选择范围。
 
+在实测的 Chrome 地址栏中，`typeText` 会改变显示值，但地址未进入可提交状态。导航时先聚焦当前地址栏，调用 `setValue(index,address)`，再按 Enter，并通过新的观察核对已加载的页面。
+
+部分 Chromium 网页下拉框显示为 `AXPopUpButton`，会打开原生菜单。先调用 `performSecondaryAction(index,'focus')`，核对控件显示 `focused:true`，再用 `pressKey(key,{strategy:'event'})` 发送能唯一匹配所需选项前缀的可打印按键。提交表单前核对已选值。这条路径取决于应用是否支持按键匹配选项。
+
 ## 光标和截图
 
 `app.hover([x,y],{durationMs:1500,screenshot:true})` 要求服务以 `CU_ENABLE_FOREGROUND=1` 启动。它会聚焦绑定窗口并移动系统鼠标。停留时间默认 1000 毫秒，范围 0–5000 毫秒。可选截图裁剪到单块显示器内的绑定窗口，包含同进程与其重叠的临时窗口，并提供该图的坐标比例。悬停后若截图失败，结果会返回 `screenshotError`。
