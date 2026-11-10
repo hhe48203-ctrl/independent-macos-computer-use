@@ -26,6 +26,10 @@ CDB-G02/03 工作流复现见 `artifacts/bench-v2-pi-20261109T064232356505Z/summ
 
 用本机 Codex Computer Use 服务（构建 `1001824`）单独对照 MB-09 种子 `790113`。原版 `cua_repl.drag` 对同一行启动了原生拖放，但无投放事件，顺序未变。哨兵的 419 次采样没有观察到键焦点丢失、激活变化、鼠标移动或打字干扰。这是一次未计分的原版对照。静态检查确认了 `NSEvent` 鼠标构造、事件子类型及窗口字段、PID 投递封装，以及此前调查记录的独立焦点通知机制。本轮仍未证实原版由哪条分支保护焦点。见 `artifacts/mb09-original-compare-DDSKEi/report.json` 和 `artifacts/original-drag-path-WrKjJE/`。
 
+第二轮使用同一种子 `790113`，独立于哨兵采样系统实际接收键盘输入的进程，并记录自有目标进程的鼠标包元数据。原版和独立版启动原生拖放后，接收进程都切到 BenchLab，哨兵始终位于前台，两边都未完成投放。原版这一轮的哨兵仍报告零次失焦，因此只看其窗口内指标会漏掉系统路由变化。见 `artifacts/mb09-packet-compare-Cy8DjZ/{original,independent}/report.json`。
+
+若目标不在前台却已持有键焦点，后台预检现在会拒绝后续写操作。直接探针复现拖放夺焦后仍能读取状态和快照，随后的 AX 按下在投递前被拒绝。首次夺焦仍会发生。同一种子 `790113` 的 Pi 复测得 0.05，A22 的键焦点和打字两项失败。见 `artifacts/mb09-focus-preflight-EhPtgV/report.json` 和 `artifacts/bench-v2-pi-20261110T004218190442Z/summary.json`。
+
 G04 的启动对照分离出了环境故障。使用合成的 `HOME` 时，Chrome 能打开本地文件，loopback 档案页却保持无标题或停在上一页。只改用 macOS 的常规临时目录仍失败。仅让测试 Chrome 进程沿用登录会话的 `HOME` 后，初始档案页及本地文件和档案页之间的双向导航都恢复。Chrome 仍使用全新的 profile，MCP 仍按本轮精确 PID 隔离。环境对照见 `artifacts/cdb-g04-exact-launch-tZWULq/report.json`、`artifacts/cdb-g04-canonical-temp-O3xGBK/report.json` 和 `artifacts/cdb-g04-browser-home-jjDzxX/report.json`。
 
 G04 随后暴露了两个独立控件问题。`AXSelectedText` 只改变地址显示，同一窗口通过 `AXValue` 和 Enter 成功加载目标。打开 Cases 状态菜单造成一次真实失焦及升层。关闭状态的下拉框取得应用内焦点后，可以用普通按键选择。定点对照见 `artifacts/cdb-g04-entry-method-WqeBwF/report.json` 和 `artifacts/cdb-g04-select-control-pWNEfA/report.json`。中间的 Pi 轮次见 `artifacts/bench-v2-pi-20261109T201958876608Z/summary.json`、`artifacts/bench-v2-pi-20261109T202723280877Z/summary.json` 和 `artifacts/bench-v2-pi-20261109T203014679951Z/summary.json`。通过的一轮见 `artifacts/bench-v2-pi-20261109T203407641140Z/summary.json`。

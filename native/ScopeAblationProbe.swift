@@ -10,9 +10,10 @@ import ApplicationServices
   let desktop=Desktop();let params:Object=["pid":Int(pid),"windowId":Int(wid)]
   Task{@MainActor in
    var result:Object=["mask":mask,"status":"observed","startedEpoch":Date().timeIntervalSince1970]
-   let observation=BackgroundFocusObservation(targetPID:pid)
-   var session:ScopedAppKitFocus?;var delivery:BackgroundPointerDelivery?
+   var session:ScopedAppKitFocus?;var delivery:BackgroundPointerDelivery?;var focusObservation:BackgroundFocusObservation?
    do{
+    let observation=try BackgroundFocusObservation(targetPID:pid)
+    focusObservation=observation
     let (_,_,frame)=try desktop.target(params)
     guard SystemInputFocus.observe().foregroundPID != pid else{throw BridgeError("TARGET_FOREGROUND","Owned target must be in background")}
     let window=try desktop.axWindow(pid,frame)
@@ -40,7 +41,7 @@ import ApplicationServices
     try observation.validate()
    }catch let e as BridgeError{result["status"]="failed";result["error"]=["code":e.code,"message":e.message]}
     catch{result["status"]="failed";result["error"]=error.localizedDescription}
-   session?.finish();desktop.releaseInput();delivery?.stop();observation.stop()
+   session?.finish();desktop.releaseInput();delivery?.stop();focusObservation?.stop()
    result["endedEpoch"]=Date().timeIntervalSince1970
    if let data=try? JSONSerialization.data(withJSONObject:result,options:[.sortedKeys]){try? data.write(to:URL(fileURLWithPath:args[4]),options:.atomic)}
    application.terminate(nil)

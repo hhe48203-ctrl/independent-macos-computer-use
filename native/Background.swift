@@ -20,8 +20,11 @@ import ApplicationServices
     var lastSampleTime:Double=0
     var transitions:[[String:Any]]=[]
     var timer:Timer?
-    init(targetPID:pid_t) {
+    init(targetPID:pid_t) throws {
         self.targetPID=targetPID;after=before
+        guard !before.hasKeyboardFocusWithoutForeground(targetPID) else {
+            throw BridgeError("BACKGROUND_KEYBOARD_FOCUS_ALREADY_TARGET", "The target already receives system keyboard input while another app is foreground. Background input was stopped before delivery. Observe the current state before continuing.")
+        }
         sample()
         timer=Timer.scheduledTimer(withTimeInterval:0.005,repeats:true) { [weak self] _ in
             MainActor.assumeIsolated {self?.sample()}
@@ -512,7 +515,7 @@ struct HeldBackgroundMouse {
         }
         let orderBefore = backgroundWindowOrder()
         let foregroundBefore = NSWorkspace.shared.frontmostApplication?.processIdentifier
-        let inputObservation=BackgroundFocusObservation(targetPID:pid)
+        let inputObservation=try BackgroundFocusObservation(targetPID:pid)
         defer {inputObservation.stop()}
         var pointerDelivery:BackgroundPointerDelivery?
         var appKitSession:ScopedAppKitFocus?

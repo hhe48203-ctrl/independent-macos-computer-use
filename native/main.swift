@@ -478,7 +478,7 @@ struct Snapshot {
             let semanticOrder = backgroundMode ? backgroundWindowOrder() : []
             let semanticFront = NSWorkspace.shared.frontmostApplication?.processIdentifier
             let r = try ref(p)
-            let inputObservation=backgroundMode ? BackgroundFocusObservation(targetPID:r.pid):nil
+            let inputObservation=backgroundMode ? try BackgroundFocusObservation(targetPID:r.pid):nil
             defer {inputObservation?.stop()}
             guard r.scope == "window", let value = attr(r.element, kAXValueAttribute) as? String else { throw BridgeError("NOT_TEXT", "Element has no editable text value") }
             let text = try string(p, "text")
@@ -500,7 +500,10 @@ struct Snapshot {
             if backgroundMode,let at=axFrame(r.element) {
                 let (_,_,frame)=try target(["pid":Int(r.pid),"windowId":Int(r.windowID)])
                 try await agentCursor.move(pid:r.pid,windowID:r.windowID,frame:frame,point:CGPoint(x:at.midX,y:at.midY),activity:"select")
-                try inputObservation?.validate();try assertBackgroundIsolation(r.pid,r.windowID,semanticOrder,semanticFront)
+            }
+            if let inputObservation {
+                try inputObservation.validate()
+                try assertBackgroundIsolation(r.pid,r.windowID,semanticOrder,semanticFront)
             }
             try axCheck(AXUIElementSetAttributeValue(r.element, kAXFocusedAttribute as CFString, kCFBooleanTrue), "Focus text element")
             guard let encoded = AXValueCreate(.cfRange, &range) else { throw BridgeError("AX_ERROR", "Could not encode text range") }
@@ -517,7 +520,7 @@ struct Snapshot {
             let semanticOrder = backgroundMode ? backgroundWindowOrder() : []
             let semanticFront = NSWorkspace.shared.frontmostApplication?.processIdentifier
             let r = try ref(p); let action = try string(p, "action")
-            let inputObservation=backgroundMode ? BackgroundFocusObservation(targetPID:r.pid):nil
+            let inputObservation=backgroundMode ? try BackgroundFocusObservation(targetPID:r.pid):nil
             var valueWrite: (before: String, requested: String)?
             defer {inputObservation?.stop()}
             if r.scope == "menu", backgroundMode { throw BridgeError("BACKGROUND_MENU_UNSUPPORTED", "Global application menus can interfere with the foreground session. Use explicit foreground mode only when authorized.") }
@@ -526,7 +529,10 @@ struct Snapshot {
             if backgroundMode,let at=axFrame(r.element) {
                 let (_,_,frame)=try target(["pid":Int(r.pid),"windowId":Int(r.windowID)])
                 try await agentCursor.move(pid:r.pid,windowID:r.windowID,frame:frame,point:CGPoint(x:at.midX,y:at.midY),activity:action)
-                try inputObservation?.validate();try assertBackgroundIsolation(r.pid,r.windowID,semanticOrder,semanticFront)
+            }
+            if let inputObservation {
+                try inputObservation.validate()
+                try assertBackgroundIsolation(r.pid,r.windowID,semanticOrder,semanticFront)
             }
             if action == "setValue" {
                 guard let value = p["value"] as? String else { throw BridgeError("INVALID_ARGUMENT", "setValue requires value") }

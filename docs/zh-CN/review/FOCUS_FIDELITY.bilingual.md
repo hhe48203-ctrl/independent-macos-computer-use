@@ -196,13 +196,23 @@ If the target gains system keyboard focus during a background operation, `BACKGR
 
 **English**
 
+If the target already receives system keystrokes while another app is foreground, a new background input request returns `BACKGROUND_KEYBOARD_FOCUS_ALREADY_TARGET` before delivery. Read-only observations remain available. This contains follow-up input after an interrupted native drag, and the preceding focus change remains in the trace.
+
+**中文原文**
+
+若另一应用仍在前台，而目标已接收系统键盘输入，新的后台输入请求会在投递前报 `BACKGROUND_KEYBOARD_FOCUS_ALREADY_TARGET`。只读观察仍可用。这能拦截原生拖放中断后的后续输入，已经发生的焦点变化仍会保留在记录中。
+
+## [20] paragraph
+
+**English**
+
 This is sampled observation, not a focus-steal prevention implementation, and it cannot prove there was no transient within a sampling gap. Actual gaps vary with blocking system calls and the report keeps the maximum; 5 ms is the request rate, not a guarantee.
 
 **中文原文**
 
 这是采样观测，不是防抢焦点实现，也不能证明采样间隔内没有瞬态变化。实际间隔随阻塞的系统调用变化，报告保留最大间隔；5ms 是请求频率，不是保证。
 
-## [20] paragraph
+## [21] paragraph
 
 **English**
 
@@ -212,7 +222,7 @@ This is sampled observation, not a focus-steal prevention implementation, and it
 
 `native/FocusTrace.swift` 是独立只读测试观察器：采样真实焦点、指针及窗口顺序；只监听全局进程通知，不记录其他应用键盘文字。进程事件 tap 限于自建测试应用、计算器和明确指定的 TextEdit 测试进程；TextEdit 只记录带已知测试标记的键盘事件，不记录用户键盘文字。记录目标/源 PID、键码和标志。退出会先保存记录。测试应用只记录自身接收的测试事件。
 
-## [21] heading
+## [22] heading
 
 **English**
 
@@ -222,7 +232,7 @@ This is sampled observation, not a focus-steal prevention implementation, and it
 
 ## 当前真实结果
 
-## [22] table
+## [23] table
 
 | # | English | 中文原文 |
 | --- | --- | --- |
@@ -234,7 +244,7 @@ This is sampled observation, not a focus-steal prevention implementation, and it
 | 5 | Old owned AppKit text-field keyboard test (including the original comparison) · **contaminated by a harness defect**: the recorder raised on reading `NSEvent.subtype` for keyboard events, dropping the input. It cannot be used to judge original or AppKit compatibility; the raw records are retained. · `artifacts/original-focus-1792299693111`, `artifacts/original-regular-1792299909304`, `artifacts/field-editor-1792300729041`; correction below | 旧自建 AppKit 文本框键盘测试（含原版对照） · **受测试器缺陷污染**：记录器对键盘事件读取 `NSEvent.subtype` 抛出异常，导致输入被丢弃。不能据此判断原版或 AppKit 的兼容性；原始记录保留。 · `artifacts/original-focus-1792299693111`、`artifacts/original-regular-1792299909304`、`artifacts/field-editor-1792300729041`；下文更正 |
 | 6 | Old independent-notice combination experiments · the same recorder defect affected text results. Focus and window sampling can keep their raw observations; text failures cannot be attributed to a system routing limitation. · `artifacts/notification-probe-*`, `notification-combined-*`, `notification-click-*`, `notification-timestamp-*` | 旧独立通知组合试验 · 同一记录器缺陷影响文字效果。焦点和窗口采样可保留原始观测，文字失败不能归因为系统路由限制。 · `artifacts/notification-probe-*`、`notification-combined-*`、`notification-click-*`、`notification-timestamp-*` |
 
-## [23] paragraph
+## [24] paragraph
 
 **English**
 
@@ -244,7 +254,7 @@ These early results cannot be extrapolated to arbitrary apps. This checkpoint ha
 
 这些早期结果不能外推到任意应用。该检查点尚无新的逐字符真人结论，后续完整文档并用验证另列在本页末尾。此前 180 字符仅留 17 字符的旧原型失败保留，不能倒改为成功。
 
-## [24] heading
+## [25] heading
 
 **English**
 
@@ -254,7 +264,7 @@ These early results cannot be extrapolated to arbitrary apps. This checkpoint ha
 
 ### 新的独立真实输入证据
 
-## [25] list
+## [26] list
 
 **English**
 
@@ -274,7 +284,7 @@ These early results cannot be extrapolated to arbitrary apps. This checkpoint ha
 - `artifacts/raw-stock-pointer-textedit-1792303754031/report.json`：长 Unicode 突发丢字，失败后只读快照保留。新版将换行、回车和 Tab 单独成包，并对每包执行精确 UTF-16 读回屏障，不重试输入。
 - `artifacts/raw-stock-pointer-textedit-1792303899275/report.json`：上述修正后长文本操作通过精确校验，随后 TextEdit 拖动升层，整轮仍失败。
 
-## [26] heading
+## [27] heading
 
 **English**
 
@@ -284,7 +294,7 @@ These early results cannot be extrapolated to arbitrary apps. This checkpoint ha
 
 ### 独立鼠标投递替代方案
 
-## [27] paragraph
+## [28] paragraph
 
 **English**
 
@@ -294,7 +304,7 @@ The new code does not copy the original focus-notice filter. It uses the system'
 
 新代码并未复制原版焦点通知过滤器。它利用 Command 背景点击的系统路由，在目标进程的事件 tap 中、AppKit 接收之前去掉临时 Command 标志。过滤条件同时限定 helper 源 PID、目标 PID、窗口号和每操作标记；不发送全局修饰键按下/释放，不改用户硬件事件、不伪造激活通知、不恢复前台。每个包必须被观察并去掉标志，否则报错，部分效果不自动重试。
 
-## [28] paragraph
+## [29] paragraph
 
 **English**
 
@@ -304,7 +314,7 @@ Local testing found that a second `CGEventSetIntegerValueField(eventSourceUserDa
 
 本机试验发现 `CGEventSetIntegerValueField(eventSourceUserData)` 的第二次写入保留第一次值；因此标记只赋值一次，并在发送前读回确认。最初怀疑高位截断，后被未投递事件的本地试验排除。
 
-## [29] paragraph
+## [30] paragraph
 
 **English**
 
@@ -314,7 +324,7 @@ The owned EventPad's success does not prove AppKit controls or all stock apps wi
 
 自建 EventPad 的成功不能证明 AppKit 控件和所有系统应用都不会升层。真实应用的上述失败驱动后续调查：原版同一次点击的 down/up 使用相同事件号，生产试验已改为每手势一致的有界事件号与持久事件源，结果须以新报告为准。
 
-## [30] heading
+## [31] heading
 
 **English**
 
@@ -324,7 +334,7 @@ The owned EventPad's success does not prove AppKit controls or all stock apps wi
 
 ## 测试布置修正
 
-## [31] paragraph
+## [32] paragraph
 
 **English**
 
@@ -334,7 +344,7 @@ The user confirmed TextEdit and the Background Automation window had come forwar
 
 用户确认 TextEdit 和 Background Automation 曾来到前面；旧交互测试布置存在主动激活，已加显式开关。进一步实验发现直接启动 `.regular` AppKit 进程即使不显式调用 activate，也可能自动成为前台：本轮一次捕捉到约 3.9 秒。该轮列为布置失败，停止其窗口，直接 regular 启动继续受交互开关限制。
 
-## [32] paragraph
+## [33] paragraph
 
 **English**
 
@@ -344,7 +354,7 @@ The new ordinary-app comparison uses Launch Services `open -g`, with the app sti
 
 新的普通应用对照使用 Launch Services 的 `open -g`，应用仍执行 orderBack 和相对遮挡排序，观测从启动前开始。默认回归仍使用 accessory 应用。每次编译前检查旧测试进程，拒绝覆盖正在使用的 Mach-O；观察器使用每轮独立的可执行文件。
 
-## [33] paragraph
+## [34] paragraph
 
 **English**
 
@@ -354,7 +364,7 @@ Reproducing the existing-Calculator real-event check:
 
 复现已存在的计算器真实事件验证：
 
-## [34] code
+## [35] code
 
 English:
 
@@ -375,7 +385,7 @@ node scripts/raw-calculator-test.mjs CALCULATOR_PID WINDOW_ID EXISTING_COVER_ID
 ```
 
 
-## [35] paragraph
+## [36] paragraph
 
 **English**
 
@@ -385,7 +395,7 @@ The last command only uses a caller-specified, already fully covered Calculator 
 
 最后一条只使用调用者明确指定、已完全遮挡的计算器窗口和现有遮挡窗口；不启动应用、不激活、不布置窗口。它会清除计算器当前表达式并计算 12×3。测试报告单独说明其范围。
 
-## [36] heading
+## [37] heading
 
 **English**
 
@@ -395,7 +405,7 @@ The last command only uses a caller-specified, already fully covered Calculator 
 
 ## 验收状态与剩余边界
 
-## [37] list
+## [38] list
 
 **English**
 
@@ -413,7 +423,7 @@ The last command only uses a caller-specified, already fully covered Calculator 
 - 新观察器已记录完整约定前台短句、实际接收进程和真实指针移动；仅代表一次当前 OS 自建文档场景，采样间隔与手动改字保留。
 - 交付包的实际外部解压验证另列于 validation-index.json。AX 语义路径与真实事件路径保持独立证据。
 
-## [38] heading
+## [39] heading
 
 **English**
 
@@ -423,7 +433,7 @@ The last command only uses a caller-specified, already fully covered Calculator 
 
 ## 后续定向分析与取消验证
 
-## [39] list
+## [40] list
 
 **English**
 
@@ -439,7 +449,7 @@ The last command only uses a caller-specified, already fully covered Calculator 
 - `artifacts/raw-pointer-cancel-1792304060897/report.json`：收到 3 个拖动后取消，目标按下/松开各 1 次，AppKit 鼠标 flags 全零，没有窗口升层。更新为每手势持久事件源后，`artifacts/raw-pointer-1792304572543/report.json` 的点击/滚动/拖动回归也通过。
 - 静态指令验证了当前 OS `SLPSGetTypingFocusProcess` 包装器不使用输入参数，返回一个 32-bit 回复值。独立只读原型返回 79595，与当时 Codex PID 一致；把它当作 PSN 转换返回 -600。其值可能是 typing PID，仍需更多调用点/跨进程状态验证，暂不进入生产实现。
 
-## [40] paragraph
+## [41] paragraph
 
 **English**
 
@@ -449,7 +459,7 @@ The last command only uses a caller-specified, already fully covered Calculator 
 
 `CPSGetKeyFocusProcess` 返回的是 registry key focus；它与 hardware typing-focus 分开。生产 API 现明确给出查询来源与 `keyFocusPID`，保留 `keyboardPID` 兼容字段。真实前台逐字符完整性须靠明确测试文字的读回及真人并用验证，不能只凭任何一个 PID 查询证明。
 
-## [41] paragraph
+## [42] paragraph
 
 **English**
 
@@ -459,7 +469,7 @@ Launching real TextEdit with `open -g -n` can still place the new window above t
 
 真实 TextEdit 的 `open -g -n` 启动仍可能把新窗口排在当前前台窗口上方，即使从未改变前台 PID。已保留两轮启动阶段失败，`fresh-stock-test.mjs` 因此要求 `CU_TEST_ALLOW_FOREGROUND_SETUP=1` 的显式交互布置；它不是默认静默回归。所有本任务启动的旧计算器/TextEdit 实例已在保存测试状态后清理。
 
-## [42] heading
+## [43] heading
 
 **English**
 
@@ -469,7 +479,7 @@ Launching real TextEdit with `open -g -n` can still place the new window above t
 
 ### 激活点语义更正
 
-## [43] paragraph
+## [44] paragraph
 
 **English**
 
@@ -479,7 +489,7 @@ Tracing the static property at `0x1015397a0` and initialization at `0x1007a2c64`
 
 继续追踪 `0x1015397a0` 的静态属性及 `0x1007a2c64` 初始化，确认原版读取的是 `UIElementAttribute.activationPoint`，不是 `titleUIElement`。此前对“标题点击”的描述属于过早推断。原版构造器在获得窗口 `AXActivationPoint` 和 frame 后构造该点的鼠标包；无该点时退回仅 AppKit 通知路径。新的独立实验实现只使用观测到的有效 `AXActivationPoint`，缺失时在发包前失败，不猜标题坐标。
 
-## [44] heading
+## [45] heading
 
 **English**
 
@@ -489,7 +499,7 @@ Tracing the static property at `0x1015397a0` and initialization at `0x1007a2c64`
 
 ### 标准控件与内部焦点实验
 
-## [45] paragraph
+## [46] paragraph
 
 **English**
 
@@ -499,7 +509,7 @@ Tracing the static property at `0x1015397a0` and initialization at `0x1007a2c64`
 
 `artifacts/raw-controls-1792304690142/report.json`：默认真实事件路径完成 6 次 NSButton 点击，但非活动 NSTextView 的拖动未产生选择，整轮失败。`artifacts/raw-controls-1792304790062/report.json`：外部自建原型临时建立内部 active/key 状态后，同样 6 次按钮点击和拖动选中 31 个 UTF-16 单元通过；1567 次 key-focus 查询均为 Codex，最大间隔约 20.1ms。此原型仍使用手工选定点；生产实验正在改为准确的 AXActivationPoint，并增加作用域清理与可观测性。不可把原型通过当成生产集成通过。
 
-## [46] paragraph
+## [47] paragraph
 
 **English**
 
@@ -509,7 +519,7 @@ Tracing the static property at `0x1015397a0` and initialization at `0x1007a2c64`
 
 `CU_EXPERIMENTAL_APPKIT_FOCUS=1` 是待验收的开发开关，默认关闭。它为真实鼠标点击/拖动、Unicode 和非语义按键尝试局部通知，不增加全局激活/修饰键事件，不执行前台恢复，不移植未知的 ViewBridge 键盘转送规则。文字仍要求开始前已存在的精确内部编辑焦点，准备期间选择范围变化则拒绝发文字。目前 typing-focus 原始回复诊断的 ABI 仅在本轮 macOS 26.6.2 arm64 核对，实验路径因此限定该 OS；它仍不能代替前台逐字符验证。
 
-## [47] heading
+## [48] heading
 
 **English**
 
@@ -519,7 +529,7 @@ Tracing the static property at `0x1015397a0` and initialization at `0x1007a2c64`
 
 ### 集成实验与真人观测（后续）
 
-## [48] list
+## [49] list
 
 **English**
 
@@ -535,7 +545,7 @@ Tracing the static property at `0x1015397a0` and initialization at `0x1007a2c64`
 - `artifacts/human-raw-1792305405366/measurement-review.json`：参与者确实操作 Codex；69 次真实后台鼠标 MCP 操作、操作窗口内 36 个指针位置、已录制窗口层级无违规。观察器记录了逐步增长且匹配的前 26 个字符，计时结束后完整 45 字符精确读回。保留原始未通过报告，不能把完整行的事后读回算作全部发生在 30 秒内。
 - `artifacts/human-raw-1792305609342`：参与者输入的第二行 15 字符也事后精确读回，旧持续观察器没有捕捉。原始未确认报告保留，没有倒改为成功。观察器此前只跟随 AXFocusedUIElement，而 Codex 的该对象可落在 WebArea；现增加启动时只缓存输入字段的定位，再对已知标记进行限定范围比较。`artifacts/human-observer-readonly-1792305800/locator-check.json` 验证新定位能找到现存完整短句；它只是定位检查，不是新真人并用测试。
 
-## [49] paragraph
+## [50] paragraph
 
 **English**
 
@@ -545,7 +555,7 @@ The participant is not being asked to repeat input for now. A new complete concu
 
 暂不要求参与者继续重复输入。仍须在修正后的观察器下完成新的完整并用验收，实验机制依旧默认关闭。
 
-## [50] heading
+## [51] heading
 
 **English**
 
@@ -555,7 +565,7 @@ The participant is not being asked to repeat input for now. A new complete concu
 
 ### 键盘记录器缺陷的定位与更正
 
-## [51] paragraph
+## [52] paragraph
 
 **English**
 
@@ -565,7 +575,7 @@ The owned-process diagnostic in `artifacts/raw-document-1792307688920` wrapped t
 
 `artifacts/raw-document-1792307688920` 的自有进程诊断逐个包装了该测试应用自己的事件观察回调，保持每个原回调只调用一次。NSRemoteView、NSSpellChecker 和 TextInputUI 的回调均返回原键盘事件；进入我们自己的记录回调后没有正常返回。因此此前对 ViewBridge 提前接管的怀疑未获支持。独立、不投递输入的 Objective-C 试验确认：键盘 NSEvent 的 `subtype` getter 抛出 `NSInternalInconsistencyException`。AppKit 的事件循环捕获该异常后，该次按键没有继续分发。
 
-## [52] paragraph
+## [53] paragraph
 
 **English**
 
@@ -575,7 +585,7 @@ The recorder now reads properties according to event type. `tests/native-fixture
 
 记录器现按事件类型读取属性。`tests/native-fixture-record.test.mjs` 构造真实 NSEvent keyDown/keyUp 和有效通知，只调用实际记录函数，不启动窗口、不投递输入；旧的不加区分读取会使该回归进程失败。默认静默测试也验证记录器不会破坏正常鼠标/滚动处理。原版进程及其回调没有被修改；所有内部观察原型仅在忽略的研究目录及自有测试进程中运行，不进入交付包。
 
-## [53] paragraph
+## [54] paragraph
 
 **English**
 
@@ -585,7 +595,7 @@ The recorder now reads properties according to event type. `tests/native-fixture
 
 `artifacts/raw-document-1792307835777/report.json`：正常构建的独立 helper、标准 MCP stdio、显式实验开关，在全新且完全遮挡的 AppKit 文档中通过 7 次真实操作：从已知开头移动到末尾、中文/emoji/组合符/ZWJ/换行精确插入、真实 CMD+A 全选、CMD+Up、拖动选择、滚动、按钮点击。121 个录制层级比较无违规，2088 次 key-focus 查询保持 Codex PID 79595，最大间隔约 16.3ms。进程 tap 验证 8 个 keyDown 的目标与 helper 源 PID。文档初始光标现固定为 0，避免“原已在末尾”造成导航键假阳性。
 
-## [54] paragraph
+## [55] paragraph
 
 **English**
 
@@ -595,7 +605,7 @@ This pass does not cover new mouse verification on system TextEdit/Calculator or
 
 这项通过不覆盖系统 TextEdit/Calculator 的新鼠标验证或前台真人文字完整性，也没有证明原版 ViewBridge 抑制/转送状态机已经移植。旧的系统应用升层失败、真人观测未确认记录继续保留。
 
-## [55] heading
+## [56] heading
 
 **English**
 
@@ -605,7 +615,7 @@ This pass does not cover new mouse verification on system TextEdit/Calculator or
 
 ### 完整文档路径的真人并用验证
 
-## [56] paragraph
+## [57] paragraph
 
 **English**
 
@@ -615,7 +625,7 @@ This pass does not cover new mouse verification on system TextEdit/Calculator or
 
 `artifacts/human-raw-1792308602084/report.json`：参与者确认准备后开始，前缀出现后测量约 31.3 秒；后台实际共运行约 58.4 秒、19 轮、133 次真实事件操作，含 19 次中文/emoji 文字插入，以及导航/全选按键、点击、选择拖动和滚动。前台 Codex 中的新短句 `CUH-9470-abcdef` 完整 15 个 UTF-16 单元在操作结束前被精确读回 11 次。观察到 8～15 的增长过程；中途第 10 字符不同，参与者随后明确确认“改过，也退格过”，保留于 `participant-feedback.json`。
 
-## [57] paragraph
+## [58] paragraph
 
 **English**
 
@@ -625,7 +635,7 @@ A read-only keyboard tap on the Codex process recorded 32 keyDowns and 32 keyUps
 
 只读 Codex 进程键盘 tap 在约定期间记录到 32 次 keyDown、32 次 keyUp，原始源 PID 均为 0、目标字段均为 Codex PID 79595；没有读取键码、修饰符或键盘文字，也没有把后台 helper 的事件当成人工输入。测量段有 1759 个不同指针位置。3370 条已存记录的窗口顺序比较无违规（窗口列表每 50ms 刷新），15226 次 key-focus 查询均为 Codex，最大查询间隔约 154.9ms；间隔不是连续无瞬态干扰的保证。
 
-## [58] paragraph
+## [59] paragraph
 
 **English**
 

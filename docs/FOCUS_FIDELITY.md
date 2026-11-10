@@ -46,6 +46,8 @@ The `Focus` enum's `regularApp`/`viewService` branches and the `suppression` fie
 
 If the target gains system keyboard focus during a background operation, `BACKGROUND_KEYBOARD_FOCUS_CHANGED` is reported. If the foreground app is unchanged but the process actually receiving keys changes, `BACKGROUND_KEYBOARD_ROUTE_CHANGED` is reported; the observation itself attributes this to no process, and normal user activity such as switching input methods can also make isolation unconfirmable. Foreground switching and unknown queries are handled separately. Detection never reclaims focus or reorders windows.
 
+If the target already receives system keystrokes while another app is foreground, a new background input request returns `BACKGROUND_KEYBOARD_FOCUS_ALREADY_TARGET` before delivery. Read-only observations remain available. This contains follow-up input after an interrupted native drag, and the preceding focus change remains in the trace.
+
 This is sampled observation, not a focus-steal prevention implementation, and it cannot prove there was no transient within a sampling gap. Actual gaps vary with blocking system calls and the report keeps the maximum; 5 ms is the request rate, not a guarantee.
 
 `native/FocusTrace.swift` is an independent read-only test observer: it samples real focus, pointer and window order; it only listens to global process notices and never records other apps' keyboard text. Process event taps are limited to owned test apps, Calculator and an explicitly named TextEdit test process; TextEdit only records keyboard events carrying the known test marker and never user keyboard text. Target/source PID, key code and flags are recorded. Records are saved before exit. Test apps only record the test events they receive.

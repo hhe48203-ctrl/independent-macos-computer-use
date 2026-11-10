@@ -22,6 +22,10 @@ struct InputFocusObservation {
          "systemFlag":systemFlag as Any? ?? NSNull()]
     }
     enum Change:String {case unresolved,stable,foregroundTransition,targetGainedFocus,unexpectedRecipient}
+    func hasKeyboardFocusWithoutForeground(_ pid: pid_t) -> Bool {
+        guard let foregroundPID else { return false }
+        return keyboardPID == pid && foregroundPID != pid
+    }
     func change(from before:InputFocusObservation,targetPID:pid_t)->Change {
         guard let previous=before.keyboardPID,let current=keyboardPID else{return .unresolved}
         if current == targetPID,previous != targetPID {return .targetGainedFocus}
