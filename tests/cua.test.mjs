@@ -18,6 +18,16 @@ test('app binding, AX diffs and screenshot coordinate mappings fail closed on am
   cua.bootstrap();const app=await cua.getApp('io.test');
   assert.match(outputs.at(-1).text,/AX tree/);
   assert.match(await app.getAXState({emit:false}),/no changes/);
+  await app.getAXStateAndScreenshot({emit:false,maxNodes:1600,maxDepth:5});
+  const limited=calls.filter(c=>c.method==='snapshot').at(-1).args;
+  assert.equal(limited.maxNodes,1600);
+  assert.equal(limited.maxDepth,5);
+  await assert.rejects(app.getAXState({maxNodes:2001}));
+  await assert.rejects(app.getAXState({maxDepth:0}));
+  await app.getAXState({emit:false});
+  const defaults=calls.filter(c=>c.method==='snapshot').at(-1).args;
+  assert.equal(defaults.maxNodes,500);
+  assert.equal(defaults.maxDepth,16);
   const screenshot=await app.getScreenshot();assert.ok(Buffer.isBuffer(screenshot));assert.equal(outputs.at(-1).type,'image');
   await app.click([100,80]);assert.deepEqual(calls.find(c=>c.method==='click').args,{pid:12,windowId:20,x:50,y:40,button:'left',count:1,strategy:'auto',mode:'background'});
   await app.getScreenshot({emit:false});

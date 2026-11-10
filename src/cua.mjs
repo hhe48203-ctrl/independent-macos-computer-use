@@ -75,10 +75,13 @@ export function createCua({request, emit}) {
       return {x,y};
     }
     async #observe(screenshot, opts={}) {
-      options(opts,['emit','disableDiffing','maxDimension']);
+      options(opts,['emit','disableDiffing','maxDimension','maxNodes','maxDepth']);
       const w=await this.#live();
       const establish=this.#coordinateMode==='original'&&(opts.maxDimension!==undefined&&opts.maxDimension!==this.#maxDimension||!this.#dimensions||w.frame.width!==this.#dimensions.width||w.frame.height!==this.#dimensions.height);
-      const snap=await native('snapshot',{...this.#target,screenshot:screenshot||establish,maxDimension:opts.maxDimension??this.#maxDimension});
+      const snap=await native('snapshot',{
+        ...this.#target,screenshot:screenshot||establish,maxDimension:opts.maxDimension??this.#maxDimension,
+        maxNodes:opts.maxNodes,maxDepth:opts.maxDepth
+      });
       if(establish&&!snap.screenshot) {
         this.#snapshot=undefined;this.#dimensions=undefined;this.#lines=undefined;
         throw error('COORDINATES_UNAVAILABLE',snap.screenshotError??'Screenshot scale unavailable; no coordinate fallback was applied');

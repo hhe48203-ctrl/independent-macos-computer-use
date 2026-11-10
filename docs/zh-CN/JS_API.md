@@ -29,6 +29,8 @@ getApp(reference,{coordinateMode:"adaptive"|"original",maxDimension:1600}) 发�
 
 getAXState 返回文字，后续默认按树行索引输出差分；加 disableDiffing:true 返回完整树。索引对应最新观察，不是跨观察稳定身份。AX 可能截断，文本值当前最多4000字符；快照120秒过期、原生最多保留16份。不要因为部分树缺失就认定元素不存在。动作完成后自动观察失败会显示提示，但不会重试已经完成的动作。
 
+`getAXState` 和 `getAXStateAndScreenshot` 支持单次观察指定 `maxNodes`（1–2000，默认 500）和 `maxDepth`（1–30，默认 16）。树很大时可传 `emit:false`，筛选返回文字后再显示相关行。
+
 getScreenshot 返回 PNG Buffer，getAXStateAndScreenshot 返回 {state,coordinates,screenshot?}。默认以 MCP image 块显示；emit:false 只返回。可用 nodeRepl.write(value) 输出文本，nodeRepl.emitImage(PNG或JPEG字节) 输出图像。以 undefined 结束调用可避免重复检查返回值。
 
 普通窗口截图只截取绑定窗口。单独的子窗口可能扩大合成图像，导致坐标比例失效。若独立弹窗出现在 `listWindows` 中，可用它自己的 PID 和窗口 ID 绑定。显式悬停截图可以包含绑定范围内的同进程临时窗口。

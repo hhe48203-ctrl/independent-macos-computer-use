@@ -29,6 +29,8 @@ await app.getAXStateAndScreenshot();
 
 `getAXState` returns text and subsequent calls emit a diff against tree-line indices by default; `disableDiffing:true` returns the full tree. Indices refer to the latest observation and are not stable identities across observations. AX can be truncated, and text values are currently capped at 4000 characters; snapshots expire after 120 seconds and at most 16 are kept natively. A missing subtree is not proof the element does not exist. If the automatic observation after an action fails, a notice is shown but the completed action is not retried.
 
+`getAXState` and `getAXStateAndScreenshot` accept `maxNodes` (1–2000, default 500) and `maxDepth` (1–30, default 16) for a single observation. Use `emit:false` to filter the returned text before displaying relevant lines from a large tree.
+
 `getScreenshot` returns a PNG Buffer, and `getAXStateAndScreenshot` returns `{state,coordinates,screenshot?}`. Both display as MCP image blocks by default; `emit:false` only returns them. `nodeRepl.write(value)` emits text and `nodeRepl.emitImage(PNG or JPEG bytes)` emits an image. Ending a call with `undefined` avoids a redundant value inspection.
 
 An ordinary window screenshot captures the bound window alone. A separate child window can otherwise expand the captured image and invalidate its coordinate scale. Bind a separate dialog by its own PID and window ID when it appears in `listWindows`. The explicit hover capture can include owned transient windows within the bound frame.
