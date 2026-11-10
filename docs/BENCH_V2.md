@@ -28,6 +28,8 @@ The runner passes `--disable-backgrounding-occluded-windows` to the Electron fix
 
 For trials with multiple owned target processes, the runner's system instructions ask Pi to track pending work across windows and verify saves by reopening the edited item if the UI provides no confirmation.
 
+When a trial includes LibreOffice Calc, the runner also describes the verified GUI path through cell selection, the Formula editor, Accept and the toolbar Save control. Use a fresh AX observation between those steps and read the actual cell after committing.
+
 The isolated Chrome process keeps the login session's `HOME` for macOS loopback navigation. It uses the fresh trial profile and disables its updater scheduler for that launch. Pi and the other fixtures retain their isolated homes. [Chromium process switches](https://chromium.googlesource.com/chromium/src/+/refs/heads/main/chrome/common/chrome_switches.h)
 
 ```sh

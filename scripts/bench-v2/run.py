@@ -359,6 +359,16 @@ def run_agent(pi, auth, catalog, targets, prompt, artifacts, turns, seconds, des
                 "If a save has no visible confirmation, reopen the item and read its saved fields before retrying. "
                 "Before ending, verify every required destination or state which step blocked it."
             )
+        if any(target["bundleId"] == "org.libreoffice.script" for target in targets):
+            instructions += (
+                " In LibreOffice Calc, use the observed cell index with performSecondaryAction(index, 'focus') "
+                "and verify the selected address in the Name Box. The cell's AXValue setter may leave it unchanged. "
+                "For toolbar controls and the editor, use getAXState({maxNodes:2000,maxDepth:5,disableDiffing:true,emit:false}) "
+                "and print just the relevant lines. Use performSecondaryAction on the Formula button with action 'press'. "
+                "Re-observe the unique focused AXTextArea and its current selection, then use typeText(text, {target:index}) "
+                "and verify the editor value. Use performSecondaryAction on the Accept button with action 'press' "
+                "and verify the actual cell value. Use the toolbar Save control's AX press to save the workbook."
+            )
         if allow_foreground_hover:
             instructions += (" This foreground trial permits app.hover([x,y], {durationMs:1500,screenshot:true}) "
                              "when the task needs real mouse hover. It activates the bound window and captures its own transient UI.")

@@ -28,6 +28,8 @@ npm run bench:v2 -- --run --tasks benchlab
 
 当一轮包含多个受控目标进程时，运行器的系统提示会让 Pi 追踪各窗口的待办步骤。若界面未显示保存确认，则重新打开编辑项并核对保存结果。
 
+若一轮包含 LibreOffice Calc，运行器还会说明已验证的 GUI 路径，包括选择单元格、打开 Formula 编辑器、按 Accept 提交及使用工具栏 Save。每步之间重新读取 AX，提交后核对单元格的实际值。
+
 测试 Chrome 进程沿用登录会话的 `HOME`，以便在 macOS 上打开 loopback 页面。它仍使用本轮新建的 profile，并仅为本次启动关闭其更新调度器。Pi 和其他测试进程继续使用隔离的 home。[Chromium 启动参数](https://chromium.googlesource.com/chromium/src/+/refs/heads/main/chrome/common/chrome_switches.h)
 
 ```sh

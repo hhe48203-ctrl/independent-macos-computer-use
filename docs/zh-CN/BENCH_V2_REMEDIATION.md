@@ -52,6 +52,8 @@ G03 种子 `99589` 的 Calc 探针确认，AX 聚焦会把名称框中的选区�
 
 扩大 AX 观察范围后，找到 F2 打开的聚焦单元格编辑器。JS 观察接口现已提供原生节点数和深度限制。对该编辑器精确调用 `typeText`，缓冲区可读回且未测得干扰。工具栏 Accept、Enter 和 Tab 均未把文字提交到单元格。见 `artifacts/cdb-calc-ax-editor-0rcvyP/report.json` 和 `artifacts/cdb-calc-js-editor-kjQ7si/report.json`。
 
+改用 Calc 工具栏的 Formula 按钮打开编辑器后，可提交到单元格。种子 `99589` 中，向精确绑定的聚焦编辑器输入测试值，再按 Accept，可在目标单元格读回。较长的探针也完成了覆盖和清空，但后续动作报告窗口重排。另一次单次编辑对照通过工具栏 Save 保存，独立只读检查在临时 ODS 中找到了测试值，哨兵未记录干扰。运行器已加入该 Calc 路径的提示。见 `artifacts/cdb-calc-formula-commit-yYGIJK/report.json`、`artifacts/cdb-calc-formula-save-RYcZAg/report.json` 和 `artifacts/cdb-calc-save-once-Zupy3c/report.json`。
+
 当前 G03 的 Pi 同种子复测得 0.45。模型读取了邮件和工作簿，关闭 GnuCash 启动提示，随后展开账户时收到 `BACKGROUND_KEYBOARD_FOCUS_CHANGED` 并停止。哨兵同时记录到升层、激活变化和打字中断。同种子对照在两个鼠标包上保留 Command，仍记录到升层、激活变化和失焦。见 `artifacts/bench-v2-pi-20261110T010224956905Z/summary.json` 和 `artifacts/cdb-g03-command-disclosure-0OONBK/report.json`。
 
 | 待办 | 已有逐轮证据 |
@@ -59,4 +61,4 @@ G03 种子 `99589` 的 Calc 探针确认，AX 聚焦会把名称框中的选区�
 | MB-09 `790113` | 投递前拦截消除了已验证表格行拖动路径上的干扰，后台原生列表重排仍缺少可验证的投递方式。加入预检前，手势全程保留 Command 也会失败。见 `artifacts/mb09-drag-threshold-34DwfW/report.json` 和 `artifacts/mb09-command-drag-igkzdF/report.json` |
 | IR-01 `147201`、`517139` 和 IR-02 `487371` | 无视觉光标时直接通过 AX 按 Next，仍复现了原生 sheet 让目标越过另一后台窗口，哨兵始终保持键焦点。此前打开菜单则单独造成过失焦。在应用内聚焦的 AppKit 下拉框发送普通按键，选值未改变，见 `artifacts/ir-popup-typeahead-TLnRd8/report.json`。原生选项选择与 sheet 堆叠仍待解决 |
 | CDB-G02 `909557` | Electron 默认启动时，邮件按钮接受 AXPress，详情却仍是占位内容。进程定向点击打开了邮件，同时使窗口升层。只加入运行器的 Electron 遮挡开关就恢复了 AXPress，未测得干扰，见 `artifacts/cdb-g02-occlusion-only-2JL8PF/report.json`。同种子的 Pi 复测读了邮件和聊天记录，移除一条日历事件，八次工具调用均成功。模型未尝试工作簿或阻塞记录便结束。A22 八项通过，检查器仍得 0.20。见 `artifacts/bench-v2-pi-20261110T004720779485Z/summary.json` |
-| CDB-G03 `99589` | 临时 Calc profile 已消除欢迎弹窗。原单元格仍读到旧值，AX 也把坐标报在窗口外。按正确截图坐标点击时，Calc 升到哨兵上方。GnuCash 的 AX 只暴露窗框。启动提示可安全关闭，但点击账户展开控件会成为前台并夺走键焦点，探针在编辑前停止。见 `artifacts/cdb-g03-value-readback-fhsa01/report.json`、`artifacts/cdb-alternate-gui-PS60Ru/report.json` 和 `artifacts/cdb-g03-ledger-navigation-Bk04Al/report.json` |
+| CDB-G03 `99589` | Calc 已验证通过工具栏编辑并保存测试单元格。GnuCash 启动提示可安全关闭。针对账户展开控件和同一行的应用范围 AX 命中检测只返回 `AXWindow` 和 `AXRaise`。进程定向点击仍会激活 GnuCash 并夺走键焦点。见 `artifacts/cdb-calc-save-once-Zupy3c/report.json`、`artifacts/cdb-gnucash-ax-hit-kCc9wv/report.json` 和 `artifacts/cdb-g03-ledger-navigation-Bk04Al/report.json` |
