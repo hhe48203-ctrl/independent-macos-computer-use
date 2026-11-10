@@ -361,6 +361,8 @@ def run_agent(pi, auth, catalog, targets, prompt, artifacts, turns, seconds, des
             instructions += (
                 " Bind selected windows with cua.getApp({pid,windowId}, {emit:false}) to suppress automatic AX output. "
                 "Inspect current state with getAXState({disableDiffing:true,emit:false}) and use nodeRepl.write to show the relevant lines. "
+                "Use await app.getScreenshot(); undefined; to emit a screenshot without echoing its byte array. "
+                "Let tool errors end the call. Use the next call to observe the new state. "
                 " Track the required source reads, updates and save checks across all task windows. "
                 "If one step is blocked, continue the independent steps that you can verify. "
                 "If a save has no visible confirmation, reopen the item and read its saved fields before retrying. "
@@ -393,7 +395,10 @@ def run_agent(pi, auth, catalog, targets, prompt, artifacts, turns, seconds, des
                     " Scoped cmd+pagedown and cmd+pageup switch sheets. Verify the new Sheet title. "
                     "Use scoped forwarddelete after verifying the selected cell when the task requires clearing it. "
                     "Time values can display with seconds and AM/PM. Compare the logical time on readback. "
-                    "Scoped cmd+s also saves the workbook after leaving the editor."
+                    "Scoped cmd+s also saves the workbook after leaving the editor. "
+                    "For repeated verified cell edits, use one JS call per cell. Read fresh AX state within the call "
+                    "and use if checks to proceed only when the Name Box shows the intended address and the editor is unique and focused. "
+                    "Print the final cell value or the failed check. Save finished groups before moving to another app."
                 )
         if "org.gnucash.Gnucash" in scoped_key_bundles:
             instructions += (
@@ -408,7 +413,10 @@ def run_agent(pi, auth, catalog, targets, prompt, artifacts, turns, seconds, des
                 "Re-observe, then use another scoped click in the Memo column of the observed split row. "
                 "If AX omits the editor, use small batches of scoped printable keys, using 'space' for a space "
                 "and Shift chords for capitals and shifted punctuation. Verify the memo on the intended row, "
-                "commit with scoped Enter, save with scoped Command-S and verify from a fresh screenshot."
+                "commit with scoped Enter, save with scoped Command-S and verify from a fresh screenshot. "
+                "The register's R column toggles uncleared and cleared. Reconciled status requires the Reconcile workflow. "
+                "If the Reconcile command returns BACKGROUND_WINDOW_REORDERED, observe the new state, leave that "
+                "workflow pending and verify any independent workbook and ledger edits."
             )
         if scoped_key_bundles or scoped_click_bundles:
             instructions += " Use the remaining turns to attempt required edits when you have an observed, supported GUI route."
