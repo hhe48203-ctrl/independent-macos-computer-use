@@ -46,6 +46,8 @@ Chromium 控件防护探针核对了两个 Cases 下拉框。打开菜单的动�
 
 加入通用的跨应用进度和保存核对提示后，G04 `482045` 得 1.0。G02 `909557` 再次打开邮件，模型在六次 GUI 调用成功后主动结束，没有尝试编辑目标应用，仍得 0.20。两轮均满足 GUI-only 和 A22 八项。见 `artifacts/bench-v2-pi-20261110T005715281285Z/summary.json`。
 
+下一轮 G02 因 Pi 报告 Codex 用量达到上限而中断。日志把该次尝试记为基础设施错误。续跑仅重试 `909557`，跳过已有计分的 G03。G02 随后得 0.45，A22 八项通过。检查器确认阻塞记录已保存，保留项检查也通过。模型在十二次 GUI 调用成功后结束，仍有日历更新和工作簿未完成。见 `artifacts/bench-v2-pi-20261110T012051583955Z/summary.json`。
+
 G03 的 GnuCash 截图暴露了另一个边界缺陷。ScreenCaptureKit 把启动提示拼进普通账本截图，缩小了账本内容，接口仍按账本尺寸报告比例。`a2b0361` 排除隐式子窗口。同一 800 × 632 逻辑点账本现在完整填充 1600 × 1264 像素截图，比例为 2×。前后截图见 `artifacts/cdb-g03-control-inventory-bbmq5U/` 和 `artifacts/cdb-g03-viewport-8CDoMk/`。显式前台悬停仍可截取其临时窗口，MB-10/11 在 `artifacts/bench-v2-pi-20261109T203944095385Z/summary.json` 中再次得 1.0。
 
 G03 种子 `99589` 的 Calc 探针确认，AX 聚焦会把名称框中的选区移到指定单元格，单元格本身仍报告 `AXFocused=false`。F2 能进入编辑模式，字符串 AXValue 写入和普通字符加 Enter 都没有写入内容。未测得干扰。已安装版本 LibreOffice 的[单元格聚焦实现](https://github.com/LibreOffice/core/blob/libreoffice-26.8.2.2/sc/source/ui/Accessibility/AccessibleCell.cxx#L133-L146)会移动表格光标，[文本 AXValue setter](https://github.com/LibreOffice/core/blob/libreoffice-26.8.2.2/vcl/osx/a11ytextwrapper.mm#L48-L53)是空实现。单独尝试定制 Unicode 事件后，读回前返回 `APP_GONE`。该事件未验证写入成功，也未加入服务。见 `artifacts/cdb-calc-focused-cell-7Q5uI6/report.json` 和 `artifacts/cdb-calc-editor-unicode-nkJhaN/report.json`。
@@ -54,7 +56,13 @@ G03 种子 `99589` 的 Calc 探针确认，AX 聚焦会把名称框中的选区�
 
 改用 Calc 工具栏的 Formula 按钮打开编辑器后，可提交到单元格。种子 `99589` 中，向精确绑定的聚焦编辑器输入测试值，再按 Accept，可在目标单元格读回。较长的探针也完成了覆盖和清空，但后续动作报告窗口重排。另一次单次编辑对照通过工具栏 Save 保存，独立只读检查在临时 ODS 中找到了测试值，哨兵未记录干扰。运行器已加入该 Calc 路径的提示。见 `artifacts/cdb-calc-formula-commit-yYGIJK/report.json`、`artifacts/cdb-calc-formula-save-RYcZAg/report.json` 和 `artifacts/cdb-calc-save-once-Zupy3c/report.json`。
 
+在 G02 工作簿（`909557`）中，顺序探针确认聚焦单元格、打开 Formula 和写入都保持层级。按 Accept 时 Calc 越过了与其重叠的 Daymark Calendar 窗口，哨兵始终在两者前面。驱动停止，未继续保存。见 `artifacts/cdb-g02-calc-stacking-7R4C9w/report.json`。
+
+在同一工作簿中，默认进程定向 Enter 保持了层级，但未提交单元格。启用实验性应用内焦点路由后，Enter 提交成功，工具栏 Save 将值写入了文件。顺序探针未记录越层，哨兵未记录干扰。这两轮为隔离探针，实验路径尚无真人并用验证。见 `artifacts/cdb-g02-calc-key-commit-bCEal3/report.json` 和 `artifacts/cdb-g02-calc-scoped-commit-a8uzPG/report.json`。
+
 当前 G03 的 Pi 同种子复测得 0.45。模型读取了邮件和工作簿，关闭 GnuCash 启动提示，随后展开账户时收到 `BACKGROUND_KEYBOARD_FOCUS_CHANGED` 并停止。哨兵同时记录到升层、激活变化和打字中断。同种子对照在两个鼠标包上保留 Command，仍记录到升层、激活变化和失焦。见 `artifacts/bench-v2-pi-20261110T010224956905Z/summary.json` 和 `artifacts/cdb-g03-command-disclosure-0OONBK/report.json`。
+
+加入 Calc 提示后的 G03 仍得 0.45，在 GnuCash 账户点击处停止。本机 GDK 二进制在应用不活跃时调用 `activateIgnoringOtherApps:`，与 [GTK Quartz 鼠标按下处理](https://github.com/GNOME/gtk/blob/bac4a949b151eedada8bc60a97429d2176b0b28b/gdk/quartz/gdkevents-quartz.c#L1622-L1650)一致。实验性应用内焦点路由可以投递点击且未测到干扰，但账户仍折叠。在该路由下，依次发送 `+`、Down、Enter 打开了 Checking Account 账簿，哨兵未记录失焦、升层或打字中断。默认路由的 `+` 没有展开账户，两组省去准备点击的对照也未能展开。这验证了隔离实验中的账簿导航。账簿编辑及该路径下的真人并用仍待验证。见 `artifacts/bench-v2-pi-20261110T012051583955Z/summary.json`、`artifacts/cdb-gnucash-register-keys-s90EgT/report.json`、`artifacts/cdb-gnucash-default-key-zZ0Unj/report.json` 和 `artifacts/cdb-gnucash-notice-ablation-{iKEFFW,tM5Nrv}/report.json`。
 
 | 待办 | 已有逐轮证据 |
 | --- | --- |
