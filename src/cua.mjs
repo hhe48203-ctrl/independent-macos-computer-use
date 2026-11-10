@@ -24,10 +24,17 @@ export function createCua({request, emit}) {
   }
   class App {
     #target; #identity; #snapshot; #lines; #scale={x:1,y:1}; #dimensions; #coordinateMode; #maxDimension; #unit='logical points';
+    #emitAutomaticAX;
     constructor(target, identity, opts={}) {
       this.#target=Object.freeze({pid:target.pid,windowId:target.windowId});this.#identity=identity;
       this.#coordinateMode=opts.coordinateMode??'adaptive';this.#maxDimension=opts.maxDimension??1600;
+      this.#emitAutomaticAX=opts.emit!==false;
       this.pid=target.pid;this.windowId=target.windowId;this.coordinateMode=this.#coordinateMode;Object.freeze(this);
+    }
+    static async bind(target, identity, opts) {
+      const app=new App(target,identity,opts);
+      await app.#observe(false,{disableDiffing:true},app.#emitAutomaticAX);
+      return app;
     }
     #coordinates() {
       const f=this.#dimensions;if(!f)throw error('COORDINATES_UNAVAILABLE','Observe the window before using coordinates');
@@ -50,8 +57,7 @@ export function createCua({request, emit}) {
       if(!Number.isInteger(selection.pid)||!Number.isInteger(selection.windowId))throw error('INVALID_ARGUMENT','Reconnect requires explicit {pid,windowId} from the candidate list');
       const w=candidates.find(w=>w.pid===selection.pid&&w.windowId===selection.windowId);
       if(!w)throw error('RECONNECT_TARGET_MISMATCH','Selected window is absent or belongs to a different bundle/path. No binding changed.');
-      const app=new App(w,this.#identity,{coordinateMode:this.#coordinateMode,maxDimension:this.#maxDimension});
-      await app.getAXState({disableDiffing:true});return app;
+      return App.bind(w,this.#identity,{coordinateMode:this.#coordinateMode,maxDimension:this.#maxDimension,emit:this.#emitAutomaticAX});
     }
     async #live() {
       const {windows}=await native('windows',{pid:this.pid});
@@ -74,7 +80,7 @@ export function createCua({request, emit}) {
       if(x>=w.frame.width||y>=w.frame.height) throw error('INVALID_COORDINATE','Point lies outside the bound window');
       return {x,y};
     }
-    async #observe(screenshot, opts={}) {
+    async #observe(screenshot, opts={}, render=true) {
       options(opts,['emit','disableDiffing','maxDimension','maxNodes','maxDepth']);
       const w=await this.#live();
       const establish=this.#coordinateMode==='original'&&(opts.maxDimension!==undefined&&opts.maxDimension!==this.#maxDimension||!this.#dimensions||w.frame.width!==this.#dimensions.width||w.frame.height!==this.#dimensions.height);
@@ -92,6 +98,7 @@ export function createCua({request, emit}) {
       this.#snapshot=snap; this.#dimensions=snap.window.frame;
       if(snap.screenshot){this.#unit='screenshot pixels';this.#scale={x:snap.screenshot.scaleX,y:snap.screenshot.scaleY};this.#maxDimension=opts.maxDimension??this.#maxDimension;}
       else if(this.#coordinateMode==='adaptive'){this.#scale={x:1,y:1};this.#unit='logical points';}
+      if(!render) return;
       const coordinates=this.#coordinates();
       const lines=snap.nodes.map(n=>{const {id,depth,parent,...rest}=n;return `${'  '.repeat(depth)}[${id.slice(1)}] ${JSON.stringify(rest)}`;});
       const header=`Window ${this.windowId} pid ${this.pid} ${JSON.stringify(snap.window.title??'')} (${snap.window.frame.width}x${snap.window.frame.height} logical points)${snap.truncated?' [TRUNCATED]':''}\nCoordinates ${JSON.stringify(coordinates)}`;
@@ -122,7 +129,7 @@ export function createCua({request, emit}) {
     async #action(method,args) {
       await this.#live();
       const result=await native(method,args);
-      try {await this.getAXState();} catch(e) {emit({type:'text',text:`Action completed, observation failed: ${e.code??e.name}: ${e.message}. Observe before retrying.`});}
+      try {await this.#observe(false,{},this.#emitAutomaticAX);} catch(e) {emit({type:'text',text:`Action completed, observation failed: ${e.code??e.name}: ${e.message}. Observe before retrying.`});}
       return result;
     }
     async click(target,opts={}) {
@@ -186,9 +193,10 @@ export function createCua({request, emit}) {
     async requestPermissions(opts) {return display(await native('request_permissions',opts));},
     async launchApp(bundleId,opts={}) {options(opts,['allowVisibleWindows']);return display(await native('launch',{bundleId,allowVisibleWindows:opts.allowVisibleWindows??false}));},
     async getApp(reference,opts={}) {
-      options(opts,['coordinateMode','maxDimension']);
+      options(opts,['coordinateMode','maxDimension','emit']);
       if(opts.coordinateMode!==undefined&&!['adaptive','original'].includes(opts.coordinateMode))throw error('INVALID_ARGUMENT','coordinateMode must be adaptive or original');
       if(opts.maxDimension!==undefined&&(!Number.isInteger(opts.maxDimension)||opts.maxDimension<320||opts.maxDimension>4096))throw error('INVALID_ARGUMENT','maxDimension must be an integer from 320 to 4096');
+      if(opts.emit!==undefined&&typeof opts.emit!=='boolean')throw error('INVALID_ARGUMENT','emit must be a boolean');
       const {windows,apps}=await inventory();let matches;
       if(typeof reference==='string') {
         const needle=reference.toLowerCase();const pids=apps.filter(a=>[a.id,a.bundleId,a.name,a.displayName,a.path].some(v=>v?.toLowerCase()===needle)).map(a=>a.pid);
@@ -196,7 +204,8 @@ export function createCua({request, emit}) {
       } else if(reference&&Number.isInteger(reference.windowId)&&Object.keys(reference).every(k=>['windowId','pid'].includes(k)))matches=windows.filter(w=>w.windowId===reference.windowId&&(reference.pid===undefined||w.pid===reference.pid));
       else throw error('INVALID_ARGUMENT','Use an exact app name/bundle/path or {windowId,pid?}');
       if(matches.length!==1)throw error(matches.length?'AMBIGUOUS_APP':'APP_NOT_FOUND',`Expected one window, found ${matches.length}; inspect cua.listWindows() and select {windowId,pid}. No app was launched.`);
-      doc(appDocumentation);const w=matches[0],a=apps.find(a=>a.pid===w.pid);const app=new App(w,Object.freeze({bundleId:a?.bundleId??w.bundleId,path:a?.path??w.path}),opts);await app.getAXState({disableDiffing:true});return app;
+      doc(appDocumentation);const w=matches[0],a=apps.find(a=>a.pid===w.pid);
+      return App.bind(w,Object.freeze({bundleId:a?.bundleId??w.bundleId,path:a?.path??w.path}),opts);
     },
     async cursorState(){return display(await native('cursor_state'));},
     async hideCursor(){return native('cursor_hide');}

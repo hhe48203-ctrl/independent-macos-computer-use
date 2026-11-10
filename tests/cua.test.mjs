@@ -47,6 +47,30 @@ test('app binding, AX diffs and screenshot coordinate mappings fail closed on am
   await assert.rejects(cua.getApp('missing'),{code:'APP_NOT_FOUND'});
 });
 
+test('quiet bindings refresh element references and keep changes visible on explicit AX reads',async()=>{
+  const outputs=[],clicks=[];
+  const window={pid:12,windowId:20,bundleId:'io.test',frame:{width:400,height:300}};
+  const snapshotId=()=>`00000000-0000-4000-8000-${String(clicks.length).padStart(12,'0')}`;
+  const cua=createCua({emit:result=>outputs.push(result),request:async(method,args)=>{
+    if(method==='apps')return {apps:[]};
+    if(method==='windows')return {windows:[window]};
+    if(method==='snapshot')return {snapshotId:snapshotId(),window,nodes:[{id:'e0',depth:0,label:`Clicked ${clicks.length} times`}]};
+    if(method==='click')clicks.push(args.snapshotId);
+    return {ok:true};
+  }});
+  const app=await cua.getApp('io.test',{emit:false});
+  assert.ok(!outputs.some(result=>result.text?.startsWith('Window ')));
+  const initial=await app.getAXState({emit:false});
+  assert.match(initial,/AX tree:[\s\S]*Clicked 0 times/);
+  const before=snapshotId();
+  await app.click(0);
+  const refreshed=snapshotId();
+  await app.click(0);
+  assert.deepEqual(clicks,[before,refreshed]);
+  assert.ok(!outputs.some(result=>result.text?.startsWith('Window ')));
+  assert.match(await app.getAXState(),/AX diff[\s\S]*Clicked 2 times/);
+});
+
 test('original mode preserves measured pixels through AX readbacks, refreshes after resize and fails without scale',async()=>{
   const calls=[],outputs=[];let width=400,failCapture=false;
   const w=()=>({pid:12,windowId:20,bundleId:'io.test',path:'/Example.app',frame:{x:0,y:0,width,height:300}});
