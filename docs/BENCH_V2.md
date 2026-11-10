@@ -30,7 +30,7 @@ For trials with multiple owned target processes, the runner's system instruction
 
 When a trial includes LibreOffice Calc, the runner also describes the verified GUI path through cell selection, the Formula editor, Accept and the toolbar Save control. Use a fresh AX observation between those steps and read the actual cell after committing.
 
-On a reserved desktop, repeat `--appkit-key-bundle BUNDLE_ID` to allow explicit `pressKey` calls with `strategy:'appkit'` for selected apps in a background trial. The runner records the bundle list in the journal and restores it on resume. This opts into experimental app-local focus preparation for those key calls. A22 and GUI-only scoring apply to the trial.
+On a reserved desktop, repeat `--appkit-key-bundle BUNDLE_ID` to allow explicit `pressKey` calls with `strategy:'appkit'` for selected apps in a background trial. Use `--appkit-click-bundle BUNDLE_ID` to separately allow plain left coordinate clicks with that strategy. Both options enable experimental app-local focus preparation for the selected calls. The runner records the two bundle lists in the journal and restores them on resume. A22 and GUI-only scoring apply to the trial.
 
 The isolated Chrome process keeps the login session's `HOME` for macOS loopback navigation. It uses the fresh trial profile and disables its updater scheduler for that launch. Pi and the other fixtures retain their isolated homes. [Chromium process switches](https://chromium.googlesource.com/chromium/src/+/refs/heads/main/chrome/common/chrome_switches.h)
 

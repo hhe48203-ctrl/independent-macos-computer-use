@@ -308,7 +308,7 @@ def owned_stop(desktop, proc):
 
 
 def run_agent(pi, auth, catalog, targets, prompt, artifacts, turns, seconds, desktop, idle_seconds, stop_file,
-              *, allow_foreground_hover=False, appkit_key_bundles=()):
+              *, allow_foreground_hover=False, appkit_key_bundles=(), appkit_click_bundles=()):
     with tempfile.TemporaryDirectory(prefix="cdb-pi-") as temp:
         sandbox = Path(temp)
         agent = sandbox / "agent"
@@ -325,12 +325,14 @@ def run_agent(pi, auth, catalog, targets, prompt, artifacts, turns, seconds, des
         owned_bundles = {t["bundleId"] for t in targets}
         bundles = ",".join(sorted(owned_bundles))
         scoped_key_bundles = owned_bundles.intersection(appkit_key_bundles)
+        scoped_click_bundles = owned_bundles.intersection(appkit_click_bundles)
         mcp = {"autoEnableCodemode": False, "mcpServers": {"cua": {
             "command": "/usr/bin/env", "exposure": "direct", "args": [
                 "-i", f"HOME={home}", f"PATH={BASE_ENV['PATH']}", f"TMPDIR={temp}",
                 f"CU_ALLOWED_BUNDLE_IDS={bundles}", f"CU_ENABLE_FOREGROUND={int(allow_foreground_hover)}",
                 "CU_ENABLE_CLIPBOARD=0", "CU_EXPERIMENTAL_APPKIT_FOCUS=0", "CU_AGENT_CURSOR_VISIBILITY=target",
                 f"CU_EXPERIMENTAL_APPKIT_KEY_BUNDLE_IDS={','.join(sorted(scoped_key_bundles))}",
+                f"CU_EXPERIMENTAL_APPKIT_CLICK_BUNDLE_IDS={','.join(sorted(scoped_click_bundles))}",
                 NODE, str(HERE / "mcp.mjs"), "--serve", str(scope)
             ]
         }}}
@@ -383,7 +385,16 @@ def run_agent(pi, auth, catalog, targets, prompt, artifacts, turns, seconds, des
                 "With the desired parent row selected, use pressKey('shift+=', {strategy:'appkit'}) to expand it. "
                 "Use scoped Down and Enter to select and open the observed child account, verifying the screenshot after each key."
             )
-        if scoped_key_bundles:
+        if "org.gnucash.Gnucash" in scoped_click_bundles and "org.gnucash.Gnucash" in scoped_key_bundles:
+            instructions += (
+                " For an observed GnuCash register row, scoped Up and Down move the current transaction. "
+                "Use a fresh screenshot and app.click([x,y], {strategy:'appkit'}) on the Show Splits toolbar button. "
+                "Re-observe, then use another scoped click in the Memo column of the observed split row. "
+                "If AX omits the editor, use small batches of scoped printable keys, using 'space' for a space "
+                "and Shift chords for capitals and shifted punctuation. Verify the memo on the intended row, "
+                "commit with scoped Enter, save with scoped Command-S and verify from a fresh screenshot."
+            )
+        if scoped_key_bundles or scoped_click_bundles:
             instructions += " Use the remaining turns to attempt required edits when you have an observed, supported GUI route."
         if allow_foreground_hover:
             instructions += (" This foreground trial permits app.hover([x,y], {durationMs:1500,screenshot:true}) "
@@ -458,7 +469,7 @@ def agent_facts(events, guard, v2):
             "provider_error": any(msg.get("stopReason") == "error" for msg in assistant), "usage": usage}
 
 
-def run_trial(entry, condition, out, task, spec, bundle_ids, login, modules, *, appkit_key_bundles=()):
+def run_trial(entry, condition, out, task, spec, bundle_ids, login, modules, *, appkit_key_bundles=(), appkit_click_bundles=()):
     pilot, v2, runner, desktop, cdb = modules
     seed = entry["seed"]
     attempt = journal.next_attempt(out, entry)
@@ -509,7 +520,8 @@ def run_trial(entry, condition, out, task, spec, bundle_ids, login, modules, *, 
                 max_turns = min(45, int(spec.get("max_turns", 45)))
                 row.update(run_agent(*login, targets, prompt, artifacts, max_turns, min(360, task.timeout_s),
                                      desktop, pilot.hid_idle_seconds, out / "STOP",
-                                     allow_foreground_hover=condition == "foreground", appkit_key_bundles=appkit_key_bundles))
+                                     allow_foreground_hover=condition == "foreground", appkit_key_bundles=appkit_key_bundles,
+                                     appkit_click_bundles=appkit_click_bundles))
                 sentinel.toggle_armed()
                 armed = False
                 row["disturbance"] = sentinel.summary()
@@ -563,9 +575,12 @@ def main():
     parser.add_argument("--allow-multi-app", action="store_true", help="Allow stock-app launches on a dedicated benchmark desktop")
     parser.add_argument("--appkit-key-bundle", action="append", metavar="BUNDLE_ID",
                         help="Allow explicit experimental AppKit key preparation for this owned app in background trials")
+    parser.add_argument("--appkit-click-bundle", action="append", metavar="BUNDLE_ID",
+                        help="Allow explicit experimental AppKit click preparation for this owned app in background trials")
     args = parser.parse_args()
-    if args.resume and (not args.run or any(v is not None for v in (args.tasks, args.condition, args.runs, args.run_index, args.seed, args.appkit_key_bundle))):
-        parser.error("--resume requires --run and uses the saved task selection, conditions, seeds and scoped-key configuration")
+    selection = (args.tasks, args.condition, args.runs, args.run_index, args.seed, args.appkit_key_bundle, args.appkit_click_bundle)
+    if args.resume and (not args.run or any(value is not None for value in selection)):
+        parser.error("--resume requires --run and uses the saved task selection, conditions, seeds and scoped input configuration")
     if args.run_index is not None and (args.runs is not None or not 0 <= args.run_index <= 4):
         parser.error("Use --run-index 0–4 without --runs")
     args.tasks = args.tasks or "benchlab"
@@ -627,12 +642,16 @@ def main():
     if not plan or len({(e['task'], e['condition'], e['run_index']) for e in plan}) != len(plan):
         parser.error("Empty or duplicate benchmark trial plan")
     appkit_key_bundles = sorted(set(saved.get("appkit_key_bundles", []) if saved else args.appkit_key_bundle or []))
-    if appkit_key_bundles and any(entry["condition"] != "background" for entry in plan):
-        parser.error("--appkit-key-bundle is available only for background trials")
+    appkit_click_bundles = sorted(set(saved.get("appkit_click_bundles", []) if saved else args.appkit_click_bundle or []))
+    scoped_bundles = set(appkit_key_bundles).union(appkit_click_bundles)
+    if scoped_bundles and any(entry["condition"] != "background" for entry in plan):
+        parser.error("Scoped AppKit key and click options are available only for background trials")
     report = {"journal_schema": journal.SCHEMA, "benchmark_version": 2, "upstream_commit": REVISION, "upstream_tree": tree, "arm": ARM,
               "provider": PROVIDER, "model": MODEL, "thinking": "low", "schedule_seed": args.seed, "plan": plan}
     if appkit_key_bundles:
         report["appkit_key_bundles"] = appkit_key_bundles
+    if appkit_click_bundles:
+        report["appkit_click_bundles"] = appkit_click_bundles
     if args.prepare:
         build_fixtures(bench)
         print(APPS)
@@ -652,9 +671,9 @@ def main():
             services.extend(endpoints)
         else:
             bundles[tid] = {"ai.cua.benchlab"}
-    unknown_scoped_bundles = set(appkit_key_bundles).difference(*bundles.values())
+    unknown_scoped_bundles = scoped_bundles.difference(*bundles.values())
     if unknown_scoped_bundles:
-        parser.error("Scoped-key bundles must be owned by selected trials: " + ", ".join(sorted(unknown_scoped_bundles)))
+        parser.error("Scoped AppKit bundles must be owned by selected trials: " + ", ".join(sorted(unknown_scoped_bundles)))
     if missing:
         raise RuntimeError("Missing benchmark prerequisites:\n  " + "\n  ".join(sorted(set(missing))))
     for host, port in sorted({(endpoint.hostname, endpoint.port) for endpoint in services}):
@@ -708,7 +727,7 @@ def main():
                 break
             row = run_trial(entry, entry["condition"], out, tasks[entry["task"]],
                             specs[entry["task"]], bundles[entry["task"]], login, (pilot, v2, runner, desktop, cdb),
-                            appkit_key_bundles=appkit_key_bundles)
+                            appkit_key_bundles=appkit_key_bundles, appkit_click_bundles=appkit_click_bundles)
             report["trials"].append(row)
             write_json(out / "summary.json", report)
             if row["status"] == "infrastructure_error":
