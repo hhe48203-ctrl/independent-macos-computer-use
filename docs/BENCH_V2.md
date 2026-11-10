@@ -26,9 +26,9 @@ Use `--run-index 0` through `--run-index 4` instead of `--runs` to reproduce one
 
 The runner passes `--disable-backgrounding-occluded-windows` to the Electron fixtures it launches so fully covered renderers can respond to accessibility actions. The pinned task source, GUI-only rules, checkers and A22 criteria remain in effect.
 
-For trials with multiple owned target processes, the runner's system instructions ask Pi to track pending work across windows and verify saves by reopening the edited item if the UI provides no confirmation.
+For trials with multiple owned target processes, the runner asks Pi to bind windows with `getApp(...,{emit:false})`, print selected lines from fresh AX reads, and track pending work across windows. For Daymark Calendar, the instructions describe selecting an existing event, verifying focused field edits, and reopening the saved event to check the result.
 
-When a trial includes LibreOffice Calc, the runner also describes the verified GUI path through cell selection, the Formula editor, Accept and the toolbar Save control. Use a fresh AX observation between those steps and read the actual cell after committing.
+When a trial includes LibreOffice Calc, the runner describes the verified GUI path through cell selection, the Formula editor, Accept and the Save `AXMenuButton`. When scoped keys are enabled for Calc, it describes Enter to commit, Command–Page Down and Command–Page Up to switch sheets, Forward Delete to clear an observed cell and Command-S to save. Use a fresh AX observation between steps and read the actual cell after committing.
 
 On a reserved desktop, repeat `--appkit-key-bundle BUNDLE_ID` to allow explicit `pressKey` calls with `strategy:'appkit'` for selected apps in a background trial. Use `--appkit-click-bundle BUNDLE_ID` to separately allow plain left coordinate clicks with that strategy. Both options enable experimental app-local focus preparation for the selected calls. The runner records the two bundle lists in the journal and restores them on resume. A22 and GUI-only scoring apply to the trial.
 

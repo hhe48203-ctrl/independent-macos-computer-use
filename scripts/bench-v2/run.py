@@ -359,10 +359,19 @@ def run_agent(pi, auth, catalog, targets, prompt, artifacts, turns, seconds, des
         )
         if len(targets) > 1:
             instructions += (
+                " Bind selected windows with cua.getApp({pid,windowId}, {emit:false}) to suppress automatic AX output. "
+                "Inspect current state with getAXState({disableDiffing:true,emit:false}) and use nodeRepl.write to show the relevant lines. "
                 " Track the required source reads, updates and save checks across all task windows. "
                 "If one step is blocked, continue the independent steps that you can verify. "
                 "If a save has no visible confirmation, reopen the item and read its saved fields before retrying. "
                 "Before ending, verify every required destination or state which step blocked it."
+            )
+        if "com.trycua.cdbbench.daymark-calendar" in owned_bundles:
+            instructions += (
+                " In Daymark Calendar, click the observed event button with {strategy:'ax'} and verify its ID in the editor. "
+                "If the editor is offscreen, scroll the current AXWebArea down and observe again. For each visible text field, "
+                "click it, verify focused:true, select its exact current text if nonempty with selectText, then typeText with the current field index. "
+                "Verify the new value, click Update event with {strategy:'ax'}, then reopen the event to verify the saved fields."
             )
         if "org.libreoffice.script" in owned_bundles:
             calc_commit = (
@@ -377,8 +386,15 @@ def run_agent(pi, auth, catalog, targets, prompt, artifacts, turns, seconds, des
                 "and print just the relevant lines. Use performSecondaryAction on the Formula button with action 'press'. "
                 "Re-observe the unique focused AXTextArea and its current selection, then use typeText(text, {target:index}) "
                 "and verify the editor value. " + calc_commit +
-                "Verify the actual cell value. Use the toolbar Save control's AX press to save the workbook."
+                "Verify the actual cell value. Look for the Save AXMenuButton in a shallow AX tree and use its AX press to save."
             )
+            if "org.libreoffice.script" in scoped_key_bundles:
+                instructions += (
+                    " Scoped cmd+pagedown and cmd+pageup switch sheets. Verify the new Sheet title. "
+                    "Use scoped forwarddelete after verifying the selected cell when the task requires clearing it. "
+                    "Time values can display with seconds and AM/PM. Compare the logical time on readback. "
+                    "Scoped cmd+s also saves the workbook after leaving the editor."
+                )
         if "org.gnucash.Gnucash" in scoped_key_bundles:
             instructions += (
                 " In GnuCash, a pointer click in the account tree can activate the app. Read the current selection in the screenshot. "

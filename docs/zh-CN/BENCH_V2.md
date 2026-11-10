@@ -26,9 +26,9 @@ npm run bench:v2 -- --run --tasks benchlab
 
 运行器给自己启动的 Electron 测试应用传入 `--disable-backgrounding-occluded-windows`，使渲染进程在窗口完全被遮挡时仍能响应辅助功能操作。锁定的题目源码、GUI-only 规则、检查器和 A22 判定继续生效。
 
-当一轮包含多个受控目标进程时，运行器的系统提示会让 Pi 追踪各窗口的待办步骤。若界面未显示保存确认，则重新打开编辑项并核对保存结果。
+当一轮包含多个受控目标进程时，运行器提示 Pi 使用 `getApp(...,{emit:false})` 绑定窗口，从新的 AX 观察中打印所需行，并追踪各窗口的待办步骤。对于 Daymark Calendar，提示说明如何选中已有事件、核对字段焦点及写入结果，并重新打开事件确认保存。
 
-若一轮包含 LibreOffice Calc，运行器还会说明已验证的 GUI 路径，包括选择单元格、打开 Formula 编辑器、按 Accept 提交及使用工具栏 Save。每步之间重新读取 AX，提交后核对单元格的实际值。
+若一轮包含 LibreOffice Calc，运行器会说明已验证的 GUI 路径，包括选择单元格、打开 Formula 编辑器、按 Accept 提交及使用 Save `AXMenuButton`。为 Calc 启用显式实验按键时，提示还会说明用 Enter 提交、Command–Page Down 和 Command–Page Up 切换工作表、Forward Delete 清空已核对的单元格，以及 Command-S 保存。每步之间重新读取 AX，提交后核对单元格的实际值。
 
 在专用桌面上运行后台试验时，可重复传入 `--appkit-key-bundle BUNDLE_ID`，允许指定应用的 `pressKey` 显式使用 `strategy:'appkit'`。若要为普通左键坐标点击启用同一策略，可单独传入 `--appkit-click-bundle BUNDLE_ID`。两种选项都为指定调用启用实验性应用内焦点准备。运行器把两份应用列表写入日志，续跑时沿用。试验按 A22 和 GUI-only 计分。
 
