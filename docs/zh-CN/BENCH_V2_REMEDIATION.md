@@ -60,13 +60,25 @@ G03 种子 `99589` 的 Calc 探针确认，AX 聚焦会把名称框中的选区�
 
 在同一工作簿中，默认进程定向 Enter 保持了层级，但未提交单元格。启用实验性应用内焦点路由后，Enter 提交成功，工具栏 Save 将值写入了文件。顺序探针未记录越层，哨兵未记录干扰。这两轮为隔离探针，实验路径尚无真人并用验证。见 `artifacts/cdb-g02-calc-key-commit-bCEal3/report.json` 和 `artifacts/cdb-g02-calc-scoped-commit-a8uzPG/report.json`。
 
-当前 G03 的 Pi 同种子复测得 0.45。模型读取了邮件和工作簿，关闭 GnuCash 启动提示，随后展开账户时收到 `BACKGROUND_KEYBOARD_FOCUS_CHANGED` 并停止。哨兵同时记录到升层、激活变化和打字中断。同种子对照在两个鼠标包上保留 Command，仍记录到升层、激活变化和失焦。见 `artifacts/bench-v2-pi-20261110T010224956905Z/summary.json` 和 `artifacts/cdb-g03-command-disclosure-0OONBK/report.json`。
+关闭旧的全局实验开关后，显式 `appkit` 按键策略复现了 G02 的保存及 G03 的账簿导航。G02 还确认未列入白名单的日历应用会拒绝这类按键。两组探针均未记录干扰。Pi 计分轮在 G02 调用 GUI 九次，在 G03 调用三次，均无工具报错，也都未调用 `appkit` 按键。两轮 A22 八项通过，G02 得 0.20，G03 得 0.45。见 `artifacts/cdb-g02-explicit-scoped-key-84BQ6A/report.json`、`artifacts/cdb-g03-explicit-scoped-key-sPt16T/report.json` 和 `artifacts/bench-v2-pi-20261110T074824391448Z/summary.json`。
 
-加入 Calc 提示后的 G03 仍得 0.45，在 GnuCash 账户点击处停止。本机 GDK 二进制在应用不活跃时调用 `activateIgnoringOtherApps:`，与 [GTK Quartz 鼠标按下处理](https://github.com/GNOME/gtk/blob/bac4a949b151eedada8bc60a97429d2176b0b28b/gdk/quartz/gdkevents-quartz.c#L1622-L1650)一致。实验性应用内焦点路由可以投递点击且未测到干扰，但账户仍折叠。在该路由下，依次发送 `+`、Down、Enter 打开了 Checking Account 账簿，哨兵未记录失焦、升层或打字中断。默认路由的 `+` 没有展开账户，两组省去准备点击的对照也未能展开。这验证了隔离实验中的账簿导航。账簿编辑及该路径下的真人并用仍待验证。见 `artifacts/bench-v2-pi-20261110T012051583955Z/summary.json`、`artifacts/cdb-gnucash-register-keys-s90EgT/report.json`、`artifacts/cdb-gnucash-default-key-zZ0Unj/report.json` 和 `artifacts/cdb-gnucash-notice-ablation-{iKEFFW,tM5Nrv}/report.json`。
+较早的一轮 G03 Pi 同种子复测得 0.45。模型读取了邮件和工作簿，关闭 GnuCash 启动提示，随后展开账户时收到 `BACKGROUND_KEYBOARD_FOCUS_CHANGED` 并停止。哨兵同时记录到升层、激活变化和打字中断。同种子对照在两个鼠标包上保留 Command，仍记录到升层、激活变化和失焦。见 `artifacts/bench-v2-pi-20261110T010224956905Z/summary.json` 和 `artifacts/cdb-g03-command-disclosure-0OONBK/report.json`。
+
+加入 Calc 提示后的 G03 仍得 0.45，在 GnuCash 账户点击处停止。本机 GDK 二进制在应用不活跃时调用 `activateIgnoringOtherApps:`，与 [GTK Quartz 鼠标按下处理](https://github.com/GNOME/gtk/blob/bac4a949b151eedada8bc60a97429d2176b0b28b/gdk/quartz/gdkevents-quartz.c#L1622-L1650)一致。实验性应用内焦点路由可以投递点击且未测到干扰，但账户仍折叠。在该路由下，依次发送 `+`、Down、Enter 打开了 Checking Account 账簿，哨兵未记录失焦、升层或打字中断。默认路由的 `+` 没有展开账户，两组省去准备点击的对照也未能展开。见 `artifacts/bench-v2-pi-20261110T012051583955Z/summary.json`、`artifacts/cdb-gnucash-register-keys-s90EgT/report.json`、`artifacts/cdb-gnucash-default-key-zZ0Unj/report.json` 和 `artifacts/cdb-gnucash-notice-ablation-{iKEFFW,tM5Nrv}/report.json`。
+
+在种子 `99589` 的临时 G03 账簿中，显式按键定位到已有交易，编辑描述栏，经 Enter 提交后用 Command-S 保存。GUI 截图与对保存文件的只读复核均确认了改动。哨兵的 52 个生成字符全部保留，未记录升层或失焦。见 `artifacts/cdb-g03-ledger-write-Ab2faU/report.json`。
+
+另一轮 G03 `99589` 对照用实验点击展开 Show Splits，并聚焦 Checking Account 拆分行的备注格。显式按键输入标记、提交并保存。文件复核确认拆分 ID 不变，拆分字段只有一处备注改动。`f45667d` 让两次点击均可通过 `strategy:'appkit'` 单独选择。关闭旧全局开关后，用公开 JS API 复现了保存，拒绝未列入白名单的 Calc 点击，普通 Escape 按键也未触发焦点准备。哨兵的 13 个生成字符全部保留，未记录升层或失焦。见 `artifacts/cdb-g03-split-memo-s9CIWE/report.json` 和 `artifacts/cdb-g03-explicit-split-memo-KyLdJc/report.json`。
+
+本机 GnuCash 快捷键配置把 Command-R 分配给刷新，账簿的 Reconcile 没有配置快捷键。同种子使用实验路径点击账簿工具栏的溢出菜单后，GnuCash 新开两个窗口，账簿主窗口越过两个既有后台窗口。驱动的窗口顺序保护中止了操作。哨兵保有键盘焦点，生成文字完整，它的升层计数未覆盖这次后台窗口间的换序。探针在选择菜单项前结束。GnuCash 5.17 源码显示，对账命令在起始对话框之后会主动呈现独立窗口。后台安全提交 `y` 状态及实验输入的真人并用仍待验证。见 `artifacts/cdb-g03-reconcile-stacking-cM1GJM/report.json` 和其中的 `CDB-G03/order.jsonl`。[账簿对账命令](https://github.com/Gnucash/gnucash/blob/5.17/gnucash/gnome/gnc-plugin-page-register.cpp#L2794-L2822)、[对账窗口呈现](https://github.com/Gnucash/gnucash/blob/5.17/gnucash/gnome/window-reconcile.cpp#L2244-L2255)。
+
+首次启用显式实验点击的 G03 计分轮得 0.45，模型没有使用 `appkit`。Pi 点击 Ledger Lantern Mail 中没有 `AXPress` 的邮件主题标签。自动选择指针投递后，邮件窗口升层，A22 的窗口层级项失败，其余七项通过。该标签的直接父控件是带 `AXPress` 的 `AXCheckBox`，直接按父控件打开了同一封邮件，未记录干扰。`328dfd7` 允许普通标签点击交给仍有效且包含点击点的直接按钮或复选框父控件。公开接口 `app.click(index)` 的对照通过 `AXPress` 打开了同一封邮件，未投递指针事件，未记录升层或失焦。见 `artifacts/bench-v2-pi-20261110T080231615362Z/summary.json`、`artifacts/cdb-g03-mail-parent-press-TDPtiV/report.json` 和 `artifacts/cdb-g03-mail-label-press-xBeeJD/report.json`。
+
+标签修复后的 Pi 同种子复测得 0.45，A22 八项通过。Pi 在四次读取和绑定调用后结束，工具报错和 GUI-only 违规均为零。这轮未尝试标签点击、显式实验输入或任务写入。上述直接对照覆盖了具体的标签点击回归。见 `artifacts/bench-v2-pi-20261110T080711052019Z/summary.json`。
 
 | 待办 | 已有逐轮证据 |
 | --- | --- |
 | MB-09 `790113` | 投递前拦截消除了已验证表格行拖动路径上的干扰，后台原生列表重排仍缺少可验证的投递方式。加入预检前，手势全程保留 Command 也会失败。见 `artifacts/mb09-drag-threshold-34DwfW/report.json` 和 `artifacts/mb09-command-drag-igkzdF/report.json` |
-| IR-01 `147201`、`517139` 和 IR-02 `487371` | 无视觉光标时直接通过 AX 按 Next，仍复现了原生 sheet 让目标越过另一后台窗口，哨兵始终保持键焦点。此前打开菜单则单独造成过失焦。在应用内聚焦的 AppKit 下拉框发送普通按键，选值未改变，见 `artifacts/ir-popup-typeahead-TLnRd8/report.json`。原生选项选择与 sheet 堆叠仍待解决 |
+| IR-01 `147201`、`517139` 和 IR-02 `487371` | 无视觉光标时直接通过 AX 按 Next，仍复现了原生 sheet 让目标越过另一后台窗口，哨兵始终保持键焦点。此前打开菜单则单独造成过失焦。在应用内聚焦的 AppKit 下拉框发送普通按键，选值未改变，显式 `appkit` 按键准备的对照也是如此。原生选项选择与 sheet 堆叠仍待解决。见 `artifacts/ir-popup-typeahead-TLnRd8/report.json` 和 `artifacts/ir02-popup-scoped-letter-6TMHum/report.json` |
 | CDB-G02 `909557` | Electron 默认启动时，邮件按钮接受 AXPress，详情却仍是占位内容。进程定向点击打开了邮件，同时使窗口升层。只加入运行器的 Electron 遮挡开关就恢复了 AXPress，未测得干扰，见 `artifacts/cdb-g02-occlusion-only-2JL8PF/report.json`。同种子的 Pi 复测读了邮件和聊天记录，移除一条日历事件，八次工具调用均成功。模型未尝试工作簿或阻塞记录便结束。A22 八项通过，检查器仍得 0.20。见 `artifacts/bench-v2-pi-20261110T004720779485Z/summary.json` |
 | CDB-G03 `99589` | Calc 已验证通过工具栏编辑并保存测试单元格。GnuCash 启动提示可安全关闭。针对账户展开控件和同一行的应用范围 AX 命中检测只返回 `AXWindow` 和 `AXRaise`。进程定向点击仍会激活 GnuCash 并夺走键焦点。见 `artifacts/cdb-calc-save-once-Zupy3c/report.json`、`artifacts/cdb-gnucash-ax-hit-kCc9wv/report.json` 和 `artifacts/cdb-g03-ledger-navigation-Bk04Al/report.json` |
