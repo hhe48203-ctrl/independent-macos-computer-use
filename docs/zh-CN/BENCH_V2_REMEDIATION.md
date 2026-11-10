@@ -34,6 +34,8 @@ CDB-G02/03 工作流复现见 `artifacts/bench-v2-pi-20261109T064232356505Z/summ
 
 下一轮同种子探针采样了目标进程的 macOS 拖影窗口。首次采到拖影在 `KeyFocusTaken` 之后约 3.5 毫秒。1 点短拖则使窗口升层，未采到拖影或夺焦通知。新预检会拒绝从绑定窗口的原生表格普通行发起后台拖动。复测中两种手势均未投递鼠标包，未测到干扰。Pi 轮因未改变顺序仍得 0.05，A22 八项通过，哨兵的 11 个字符全部保留。见 `artifacts/mb09-drag-image-timing-vDcIe7/`、`artifacts/mb09-row-drag-guard-qge65F/` 和 `artifacts/bench-v2-pi-20261110T011251429125Z/summary.json`。
 
+相关的光标遮挡回归在改动前和加入预检后都复现了首次点击自定义控件时升层，当时还未发出拖动包。另一轮取消对照中，带预检的版本收到三次拖动和一次鼠标释放，但窗口遮挡断言仍失败。测试运行器现在会在失败时等待清理，串行复测复现了升层，且均释放了测试锁。见 `artifacts/cursor-occlusion-1794273330365/`、`artifacts/cursor-occlusion-1794273336960/`、`artifacts/raw-pointer-cancel-1794273343113/` 和 `artifacts/raw-pointer-1794273352352/`。
+
 G04 的启动对照分离出了环境故障。使用合成的 `HOME` 时，Chrome 能打开本地文件，loopback 档案页却保持无标题或停在上一页。只改用 macOS 的常规临时目录仍失败。仅让测试 Chrome 进程沿用登录会话的 `HOME` 后，初始档案页及本地文件和档案页之间的双向导航都恢复。Chrome 仍使用全新的 profile，MCP 仍按本轮精确 PID 隔离。环境对照见 `artifacts/cdb-g04-exact-launch-tZWULq/report.json`、`artifacts/cdb-g04-canonical-temp-O3xGBK/report.json` 和 `artifacts/cdb-g04-browser-home-jjDzxX/report.json`。
 
 G04 随后暴露了两个独立控件问题。`AXSelectedText` 只改变地址显示，同一窗口通过 `AXValue` 和 Enter 成功加载目标。打开 Cases 状态菜单造成一次真实失焦及升层。关闭状态的下拉框取得应用内焦点后，可以用普通按键选择。定点对照见 `artifacts/cdb-g04-entry-method-WqeBwF/report.json` 和 `artifacts/cdb-g04-select-control-pWNEfA/report.json`。中间的 Pi 轮次见 `artifacts/bench-v2-pi-20261109T201958876608Z/summary.json`、`artifacts/bench-v2-pi-20261109T202723280877Z/summary.json` 和 `artifacts/bench-v2-pi-20261109T203014679951Z/summary.json`。通过的一轮见 `artifacts/bench-v2-pi-20261109T203407641140Z/summary.json`。
