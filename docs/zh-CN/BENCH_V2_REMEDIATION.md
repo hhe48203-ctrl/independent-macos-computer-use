@@ -48,7 +48,7 @@ G03 种子 `99589` 的 Calc 探针确认，AX 聚焦会把名称框中的选区�
 
 扩大 AX 观察范围后，找到 F2 打开的聚焦单元格编辑器。JS 观察接口现已提供原生节点数和深度限制。对该编辑器精确调用 `typeText`，缓冲区可读回且未测得干扰。工具栏 Accept、Enter 和 Tab 均未把文字提交到单元格。见 `artifacts/cdb-calc-ax-editor-0rcvyP/report.json` 和 `artifacts/cdb-calc-js-editor-kjQ7si/report.json`。
 
-当前 G03 的 Pi 同种子复测得 0.45。模型读取了邮件和工作簿，关闭 GnuCash 启动提示，随后展开账户时收到 `BACKGROUND_KEYBOARD_FOCUS_CHANGED` 并停止。哨兵同时记录到升层、激活变化和打字中断。见 `artifacts/bench-v2-pi-20261110T010224956905Z/summary.json`。
+当前 G03 的 Pi 同种子复测得 0.45。模型读取了邮件和工作簿，关闭 GnuCash 启动提示，随后展开账户时收到 `BACKGROUND_KEYBOARD_FOCUS_CHANGED` 并停止。哨兵同时记录到升层、激活变化和打字中断。同种子对照在两个鼠标包上保留 Command，仍记录到升层、激活变化和失焦。见 `artifacts/bench-v2-pi-20261110T010224956905Z/summary.json` 和 `artifacts/cdb-g03-command-disclosure-0OONBK/report.json`。
 
 | 待办 | 已有逐轮证据 |
 | --- | --- |

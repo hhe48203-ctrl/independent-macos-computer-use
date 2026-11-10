@@ -48,7 +48,7 @@ The G03 Calc probe on `99589` verified that an AX focus action selected the inte
 
 A larger AX observation found the focused in-cell editor after F2. The JS observation API now exposes the native node and depth limits. An exact `typeText` target updated the editor buffer with verified AX readback and no disturbance. The toolbar Accept action, Enter and Tab did not commit the text to the cell. See `artifacts/cdb-calc-ax-editor-0rcvyP/report.json` and `artifacts/cdb-calc-js-editor-kjQ7si/report.json`.
 
-The current G03 Pi replay on `99589` scored 0.45. The agent read mail and workbook evidence, closed the GnuCash tip, then stopped when the account expansion click returned `BACKGROUND_KEYBOARD_FOCUS_CHANGED`. The sentinel also recorded a raise, activation change and typing interruption. See `artifacts/bench-v2-pi-20261110T010224956905Z/summary.json`.
+The current G03 Pi replay on `99589` scored 0.45. The agent read mail and workbook evidence, closed the GnuCash tip, then stopped when the account expansion click returned `BACKGROUND_KEYBOARD_FOCUS_CHANGED`. The sentinel also recorded a raise, activation change and typing interruption. A same-seed control retained Command on both mouse packets and still recorded a raise, activation change and key loss. See `artifacts/bench-v2-pi-20261110T010224956905Z/summary.json` and `artifacts/cdb-g03-command-disclosure-0OONBK/report.json`.
 
 | Open work | What the existing rows establish |
 | --- | --- |
