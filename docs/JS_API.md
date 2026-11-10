@@ -76,6 +76,8 @@ A confirmed call returns a **new object plus a full initial AX observation**, in
 
 Plain background element clicks use the table’s writable `AXSelectedRows` when the observed element is a row or its text and has no `AXPress`. `selectionOutcome:"dialogOpened"` means a sheet appeared. Read the new AX tree before choosing its buttons.
 
+`pressKey(key,{strategy:'appkit'})` explicitly requests experimental app-local focus preparation for one background press without a hold. Enable each target bundle at server startup in the comma-separated `CU_EXPERIMENTAL_APPKIT_KEY_BUNDLE_IDS`. The target must be inactive and match the app’s focused AX window. The experimental typing-route query currently requires macOS 26.6.2 on Apple silicon. Preparation uses a target-only activation-point click and can activate the app’s text input context. Use this route on a reserved desktop until concurrent human input is verified.
+
 In an inactive window, `drag` returns `BACKGROUND_NATIVE_ROW_DRAG_UNSUPPORTED` before sending pointer input when the start point resolves to a passive row of a native table with writable `AXSelectedRows`. AppKit drag tracking can take keyboard focus before the drag image appears. Use an exposed row-move control when the app provides one.
 
 Modifier-click example: `await app.click([200,400],{key:'super+shift',durationMs:250})`. `key` accepts only cmd/command/meta/super, shift, ctrl/control and alt/option joined with `+`, and works with coordinates and the newest element index. A modifier or duration option forces background events, `strategy:'ax'` is rejected, and auto chooses event. A genuinely requested Command flag is preserved for the target; a Command added only for routing is removed when it was not requested.

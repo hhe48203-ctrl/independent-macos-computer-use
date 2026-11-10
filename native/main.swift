@@ -429,7 +429,15 @@ struct Snapshot {
             let strategy=p["strategy"] as? String ?? "auto"
             guard ["auto","ax","event"].contains(strategy),backgroundMode || strategy == "auto" else {throw BridgeError("INVALID_ARGUMENT","Text strategy must be auto, ax or event in background mode; foreground accepts auto only")}
         }
-        if method == "key" {let strategy=p["strategy"] as? String ?? "auto";guard ["auto","event"].contains(strategy),backgroundMode || strategy == "auto" else{throw BridgeError("INVALID_ARGUMENT","Key strategy must be auto or event in background; foreground accepts auto only")}}
+        if method == "key" {
+            let strategy = p["strategy"] as? String ?? "auto"
+            guard ["auto", "event", "appkit"].contains(strategy), backgroundMode || strategy == "auto" else {
+                throw BridgeError("INVALID_ARGUMENT", "Key strategy must be auto, event or appkit in background; foreground accepts auto only")
+            }
+            if strategy == "appkit", p["durationMs"] != nil {
+                throw BridgeError("INVALID_ARGUMENT", "The experimental AppKit key strategy supports a single press without a hold.")
+            }
+        }
         if backgroundMode && ["click","type_text","key","scroll","drag"].contains(method) { return try await background(method,p) }
         switch method {
         case "cursor_state": return agentCursor.state

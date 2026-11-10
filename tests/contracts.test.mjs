@@ -60,6 +60,9 @@ test('event key strategy preserves real select-all without a semantic fallback',
  assert.equal(schema('cu_key').parse(args).strategy,'auto');
  assert.equal(schema('cu_key').safeParse({...args,strategy:'event'}).success,true);
  assert.equal(schema('cu_key').safeParse({...args,strategy:'event',mode:'foreground'}).success,false);
+ assert.equal(schema('cu_key').safeParse({...args,strategy:'appkit'}).success,true);
+ assert.equal(schema('cu_key').safeParse({...args,strategy:'appkit',mode:'foreground'}).success,false);
+ assert.equal(schema('cu_key').safeParse({...args,strategy:'appkit',durationMs:0}).success,false);
  assert.equal(schema('cu_key').safeParse({...args,strategy:'event-then-AX'}).success,false);
 });
 

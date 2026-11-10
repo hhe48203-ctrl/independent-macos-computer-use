@@ -7,8 +7,10 @@ import ApplicationServices
 @MainActor enum ExperimentalTypingFocus {
     typealias Query=@convention(c)()->UInt32
     static let query:Query?=dlsym(UnsafeMutableRawPointer(bitPattern:-2),"SLPSGetTypingFocusProcess").map{unsafeBitCast($0,to:Query.self)}
-    static func read()->UInt32? {
-        guard ProcessInfo.processInfo.environment["CU_EXPERIMENTAL_APPKIT_FOCUS"] == "1" else{return nil}
+    static let keyBundleIDs = Set((ProcessInfo.processInfo.environment["CU_EXPERIMENTAL_APPKIT_KEY_BUNDLE_IDS"] ?? "")
+        .split(separator: ",").map { $0.trimmingCharacters(in: .whitespacesAndNewlines) }.filter { !$0.isEmpty })
+    static func read(forScopedKey: Bool = false)->UInt32? {
+        guard forScopedKey || ProcessInfo.processInfo.environment["CU_EXPERIMENTAL_APPKIT_FOCUS"] == "1" else{return nil}
         #if arch(arm64)
         let os=ProcessInfo.processInfo.operatingSystemVersion
         guard os.majorVersion==26,os.minorVersion==6,os.patchVersion==2 else{return nil}
@@ -53,8 +55,9 @@ import ApplicationServices
 
 @MainActor extension Desktop {
     func prepareScopedAppKitFocus(_ pid:pid_t,_ wid:CGWindowID,_ frame:CGRect,_ delivery:BackgroundPointerDelivery,_ observation:BackgroundFocusObservation) async throws -> ScopedAppKitFocus? {
-        guard ProcessInfo.processInfo.environment["CU_EXPERIMENTAL_APPKIT_FOCUS"] == "1" else{return nil}
-        guard let typing=ExperimentalTypingFocus.read(),typing>0 else{throw BridgeError("EXPERIMENTAL_FOCUS_OS_UNVERIFIED","App-local focus is experimental and currently requires the investigated macOS 26.6.2 typing-focus query. No notice was sent")}
+        guard observation.scopedKey || ProcessInfo.processInfo.environment["CU_EXPERIMENTAL_APPKIT_FOCUS"] == "1" else{return nil}
+        guard let typing=ExperimentalTypingFocus.read(forScopedKey: observation.scopedKey),typing>0 else{throw BridgeError("EXPERIMENTAL_FOCUS_OS_UNVERIFIED","App-local focus is experimental and currently requires the investigated macOS 26.6.2 typing-focus query. No notice was sent")}
+        if observation.scopedKey { try observation.validate() }
         let focus=SystemInputFocus.observe()
         guard focus.foregroundPID != pid,focus.keyboardPID != pid else{return nil}
         guard focus.keyboardPID != nil else{throw BridgeError("BACKGROUND_FOCUS_UNRESOLVED","Experimental app-local focus requires a resolved registry baseline")}
@@ -68,6 +71,9 @@ import ApplicationServices
         do {
             try session.send(.appKitDefined,1,[.control,.option],Int(wid))
             try await Task.sleep(nanoseconds:20_000_000);try observation.validate()
+            if observation.scopedKey, (try target(["pid": Int(pid), "windowId": Int(wid)])).2 != frame {
+                throw BridgeError("WINDOW_MOVED", "The target moved during scoped key preparation. No pointer event or key was sent.")
+            }
             try backgroundMouse(.leftMouseDown,point,.left,1,pid,wid,frame,delivery)
             // The activation-point click is an adjacent down/up pair; do not
             // hold the title or consume intervening user pointer movement.

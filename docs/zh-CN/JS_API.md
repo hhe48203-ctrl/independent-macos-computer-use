@@ -76,6 +76,8 @@ let replacement=await app.reconnect({pid:789,windowId:1011});
 
 普通后台元素点击在目标是可观察的表格行或行文本、没有 `AXPress` 时，可用表格可写的 `AXSelectedRows`。`selectionOutcome:"dialogOpened"` 表示出现了附属弹窗，应读取新的 AX 树后再操作弹窗按钮。
 
+`pressKey(key,{strategy:'appkit'})` 为一次无按住时长的后台按键显式请求实验性应用内焦点准备。在服务启动时，用逗号分隔的 `CU_EXPERIMENTAL_APPKIT_KEY_BUNDLE_IDS` 逐个启用目标应用。目标必须不在前台，且与应用的 AX 焦点窗口一致。实验性输入路由查询目前要求 Apple silicon 上的 macOS 26.6.2。准备过程会向目标发送激活点点击，可能激活应用内文本输入上下文。真人并用验证前应在专用桌面使用。
+
 对非前台窗口，若 `drag` 的起点命中具有可写 `AXSelectedRows` 的原生表格普通行，调用会在发送鼠标事件前返回 `BACKGROUND_NATIVE_ROW_DRAG_UNSUPPORTED`。AppKit 拖放跟踪可能在拖影出现前夺取键盘焦点。若应用提供移动行的控件，可通过该控件操作。
 
 修饰键点击示例：`await app.click([200,400],{key:'super+shift',durationMs:250})`。key 仅接受 cmd/command/meta/super、shift、ctrl/control、alt/option，以 `+` 连接；支持坐标和最新元素索引。修饰键或时长选项强制后台事件，`strategy:'ax'` 会拒绝，auto 会选择 event。真实 Command 标志保留给目标，路由临时添加的 Command 仅在未请求时移除。
