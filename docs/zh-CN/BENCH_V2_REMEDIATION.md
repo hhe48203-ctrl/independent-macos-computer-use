@@ -68,6 +68,12 @@ G03 种子 `99589` 的 Calc 探针确认，AX 聚焦会把名称框中的选区�
 
 关闭旧的全局实验开关后，显式 `appkit` 按键策略复现了 G02 的保存及 G03 的账簿导航。G02 还确认未列入白名单的日历应用会拒绝这类按键。两组探针均未记录干扰。Pi 计分轮在 G02 调用 GUI 九次，在 G03 调用三次，均无工具报错，也都未调用 `appkit` 按键。两轮 A22 八项通过，G02 得 0.20，G03 得 0.45。见 `artifacts/cdb-g02-explicit-scoped-key-84BQ6A/report.json`、`artifacts/cdb-g03-explicit-scoped-key-sPt16T/report.json` 和 `artifacts/bench-v2-pi-20261110T074824391448Z/summary.json`。
 
+G02 `909557` 的隔离对照通过取得焦点的 AX 文本字段更新了 Daymark 已有事件，保存并重新打开核对。同一轮中，Calc 用显式 Command–Page Down 和 Command–Page Up 切换 Schedule 与 Controls，用 Forward Delete 清空单元格，写入观察到的时间及工作表对应的状态，再用显式 Command-S 保存。Calc 显示的两个时间含秒和 AM/PM。文件观察器确认 ODS 中归一化的时间与日历一致，两处房间相同，状态各自符合规则，Controls、无关事件和受保护占用均保持原样。哨兵的 32 个生成字符全部保留，未记录失焦、升层或激活变化。这组诊断只编辑了一条事件和对应行。见 `artifacts/cdb-g02-matched-saves-GfypMr/report.json` 和 `artifacts/cdb-g02-scoped-workbook-save-ioCjRW/report.json`。
+
+同一 Calc 对照中，默认绑定的初始自动 AX 文本为 118,046 字节。`getApp(...,{emit:false})` 让绑定和后续动作的自动 AX 输出降为零，显式观察仍可核对每一步。早期 Pi 回复多次达到客户端约 20 KB 的输出上限。运行器现提示多应用任务使用静默绑定并打印相关 AX 行。见 `artifacts/cdb-g02-scoped-workbook-save-ioCjRW/report.json` 和 `artifacts/bench-v2-pi-20261110T012051583955Z/001-CDB-G02-background-attempt-02/artifacts/pi.jsonl`。
+
+使用静默绑定和操作提示后，Pi 同种子复测得 0.35。前两次回复仍接近 20 KB，其余十一条文本回复约 0.5–6.4 KB。Pi 完成一项日历更新并保存阻塞记录，随后在十三次工具调用均成功的情况下结束。检查器发现日历还有三项待改，工作簿仍是原始数据。A22 八项全部通过，GUI-only 违规为零。先前的 0.45 轮完成了另一部分工作。见 `artifacts/bench-v2-pi-20261110T200917173072Z/summary.json`。
+
 较早的一轮 G03 Pi 同种子复测得 0.45。模型读取了邮件和工作簿，关闭 GnuCash 启动提示，随后展开账户时收到 `BACKGROUND_KEYBOARD_FOCUS_CHANGED` 并停止。哨兵同时记录到升层、激活变化和打字中断。同种子对照在两个鼠标包上保留 Command，仍记录到升层、激活变化和失焦。见 `artifacts/bench-v2-pi-20261110T010224956905Z/summary.json` 和 `artifacts/cdb-g03-command-disclosure-0OONBK/report.json`。
 
 加入 Calc 提示后的 G03 仍得 0.45，在 GnuCash 账户点击处停止。本机 GDK 二进制在应用不活跃时调用 `activateIgnoringOtherApps:`，与 [GTK Quartz 鼠标按下处理](https://github.com/GNOME/gtk/blob/bac4a949b151eedada8bc60a97429d2176b0b28b/gdk/quartz/gdkevents-quartz.c#L1622-L1650)一致。实验性应用内焦点路由可以投递点击且未测到干扰，但账户仍折叠。在该路由下，依次发送 `+`、Down、Enter 打开了 Checking Account 账簿，哨兵未记录失焦、升层或打字中断。默认路由的 `+` 没有展开账户，两组省去准备点击的对照也未能展开。见 `artifacts/bench-v2-pi-20261110T012051583955Z/summary.json`、`artifacts/cdb-gnucash-register-keys-s90EgT/report.json`、`artifacts/cdb-gnucash-default-key-zZ0Unj/report.json` 和 `artifacts/cdb-gnucash-notice-ablation-{iKEFFW,tM5Nrv}/report.json`。
