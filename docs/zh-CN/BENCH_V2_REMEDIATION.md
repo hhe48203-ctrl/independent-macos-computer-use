@@ -24,6 +24,12 @@ IR-01/02 计分见 `artifacts/bench-v2-pi-20261109T065349148172Z/summary.json`�
 
 本机原版在 IR-02 `487371` 中打开了菜单，暴露三个选项。系统先发出 `KeyFocusTaken`，随后在 `KeyFocusChanged` 中携带非零请求 ID，约 2.7 毫秒后发出 `KeyFocusReturned`。接收进程采样和哨兵指标均保持稳定。另一轮同种子直接调用 AXPress 也打开了菜单，但观察期间没有归还通知。接收进程切到 BenchLab，哨兵记录到一次升层、一次失焦和一次输入受阻。该结果与静态分析确认的原版释放焦点请求路径吻合，通知本身无法确定调用者。MB-09 的原生拖放则记录到请求 ID 为零。独立版继续拦截原生菜单跟踪。见 `artifacts/ir02-original-menu-GXuhtn/original/` 和 `artifacts/ir02-ax-menu-focus-X93muq/independent/`。
 
+在 IR-01 `147201` 的两个自有后台窗口中，AX 按下、保留 Command 的进程定向点击和显式 AppKit 点击都打开了同一个原生 sheet。三种方式均让目标越过后台覆盖窗。AppKit 点击还让目标越过了前台哨兵，哨兵仍保有键盘焦点。见 `artifacts/ir01-owned-layer-controls-beaMrc/report.json`。
+
+第二次 IR-02 `487371` 原版对照选择了菜单项并读回新值。采样捕捉到 BenchLab 接管键盘，约 8.1 毫秒后归还。哨兵在打开菜单时记录到一次普通窗口升层，早于选择和横幅出现。独立探针对匹配的自有请求调用 `SLPSReleaseKeyFocusWithID`，两次调用均成功，AX 菜单仍可读取。首次从接管到归还约 0.62 毫秒，两次仍各出现一次哨兵失焦和升层。窗口 ID 区分了层级 101 的菜单和层级 0 的既有 BenchLab 主窗口，后者越过了哨兵。关闭状态的 AX 子节点和导航属性均没有暴露选项或可写选择。归还逻辑仅用于诊断探针。见 `artifacts/ir02-original-menu-select-RaVYoH/original/`、`artifacts/ir02-focus-release-only-lCYNpW/independent/`、`artifacts/ir02-focus-release-window-order-vdf6nm/independent/` 和 `artifacts/ir02-closed-menu-ax-controls-H3lFcH/report.json`。
+
+原版服务 `1001824` 中，`0x10074f7d0` 处的调用读取事件字段，确认结果能用 `UInt32` 表示，然后传给 `0x10026ddfc` 的 `ApplicationRegistrySPI.releaseKeyFocus(withID:)`。同一二进制还暴露了单独的菜单关闭抑制函数。调用链与通知记录支持焦点请求释放这一解释。通知记录本身无法确认释放方，也无法确定抑制何时生效。见 `artifacts/original-native-menu-focus-path-dMRT9H/`。
+
 CDB-G02/03 工作流复现见 `artifacts/bench-v2-pi-20261109T064232356505Z/summary.json`。G04 独立 profile 复测见 `artifacts/bench-v2-pi-20261109T064650603373Z/summary.json`，MCP 范围只包含新启动的 Chrome PID。G03 更新临时 profile 后的结果见 `artifacts/bench-v2-pi-20261109T065029893913Z/summary.json`。在这些轮次中，A22 八项均通过，检查器分别得 0.20、0.45、0.15。
 
 用本机 Codex Computer Use 服务（构建 `1001824`）单独对照 MB-09 种子 `790113`。原版 `cua_repl.drag` 对同一行启动了原生拖放，但无投放事件，顺序未变。哨兵的 419 次采样没有观察到键焦点丢失、激活变化、鼠标移动或打字干扰。这是一次未计分的原版对照。静态检查确认了 `NSEvent` 鼠标构造、事件子类型及窗口字段、PID 投递封装，以及此前调查记录的独立焦点通知机制。本轮仍未证实原版由哪条分支保护焦点。见 `artifacts/mb09-original-compare-DDSKEi/report.json` 和 `artifacts/original-drag-path-WrKjJE/`。
