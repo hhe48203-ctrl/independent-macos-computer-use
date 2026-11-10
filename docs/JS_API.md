@@ -84,7 +84,7 @@ A plain background click on a static text label inside its direct button or chec
 
 `click([x,y],{strategy:'appkit'})` uses the same experimental preparation for one plain background left click at a fresh coordinate. Enable target bundles separately with `CU_EXPERIMENTAL_APPKIT_CLICK_BUNDLE_IDS`. This strategy requires coordinates and rejects element indices, modifiers, multiple clicks and holds. Re-observe the target after clicking.
 
-In an inactive window, `drag` returns `BACKGROUND_NATIVE_ROW_DRAG_UNSUPPORTED` before sending pointer input when the start point resolves to a passive row of a native table with writable `AXSelectedRows`. AppKit drag tracking can take keyboard focus before the drag image appears. Use an exposed row-move control when the app provides one.
+In an inactive window, `drag` returns `BACKGROUND_NATIVE_ROW_DRAG_UNSUPPORTED` before sending pointer input when the start point resolves to a passive row of a native table with writable `AXSelectedRows` or the adjacent one-point scroll border. AppKit drag tracking can take keyboard focus before the drag image appears, and a border drag can raise the window. Use an exposed row-move control when the app provides one.
 
 Modifier-click example: `await app.click([200,400],{key:'super+shift',durationMs:250})`. `key` accepts only cmd/command/meta/super, shift, ctrl/control and alt/option joined with `+`, and works with coordinates and the newest element index. A modifier or duration option forces background events, `strategy:'ax'` is rejected, and auto chooses event. A genuinely requested Command flag is preserved for the target; a Command added only for routing is removed when it was not requested.
 

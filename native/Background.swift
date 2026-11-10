@@ -487,16 +487,30 @@ struct HeldBackgroundMouse {
 
     func checkBackgroundRowDrag(_ pid: pid_t, _ frame: CGRect, _ start: CGPoint) throws {
         // AppKit can take system key focus when a passive table row starts a
-        // native drag. The drag image can appear after the focus change.
+        // native drag. A bezel hit beside a row can also raise the window.
         let application = AXUIElementCreateApplication(pid)
         AXUIElementSetMessagingTimeout(application, 1)
         var hit: AXUIElement?
         guard AXUIElementCopyElementAtPosition(application, Float(start.x), Float(start.y), &hit) == .success,
-              let hit, let selection = backgroundTableRow(hit, passiveOnly: true),
+              let hit else { return }
+        var selection = backgroundTableRow(hit, passiveOnly: true)
+        if selection == nil, attr(hit, kAXRoleAttribute) as? String == kAXScrollAreaRole {
+            // A one-point scroll-view bezel sits outside the row frame. Keep
+            // actual scrollbar and other control hits on their existing path.
+            let tables = children(hit).filter { attr($0, kAXRoleAttribute) as? String == kAXTableRole }
+            let rows = tables.flatMap { children($0, kAXVisibleRowsAttribute) }
+            if let adjacent = rows.first(where: { row in
+                guard let bounds = axFrame(row), !bounds.isEmpty else { return false }
+                return bounds.insetBy(dx: -1, dy: 0).contains(start)
+            }) {
+                selection = backgroundTableRow(adjacent, passiveOnly: true)
+            }
+        }
+        guard let selection,
               attr(selection.table, kAXRoleAttribute) as? String == kAXTableRole,
               !belongsToWebArea(selection.table),
               belongsToWindow(selection.table, try axWindow(pid, frame)) else { return }
-        throw BridgeError("BACKGROUND_NATIVE_ROW_DRAG_UNSUPPORTED", "Dragging this passive native table row can start macOS drag tracking and take keyboard focus. No pointer input was sent. Use a row-move control if the app exposes one.")
+        throw BridgeError("BACKGROUND_NATIVE_ROW_DRAG_UNSUPPORTED", "Dragging from this passive native table row or its adjacent border can raise the window or take keyboard focus. No pointer input was sent. Use a row-move control if the app exposes one.")
     }
 
     func selectBackgroundTableRow(_ selection: (table: AXUIElement, row: AXUIElement), window: AXUIElement,

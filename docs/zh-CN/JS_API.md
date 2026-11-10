@@ -84,7 +84,7 @@ let replacement=await app.reconnect({pid:789,windowId:1011});
 
 `click([x,y],{strategy:'appkit'})` 用同一实验准备流程，在刚观测到的坐标执行一次后台左键点击。使用 `CU_EXPERIMENTAL_APPKIT_CLICK_BUNDLE_IDS` 单独启用目标应用。该策略要求传入坐标，拒绝元素索引、修饰键、多次点击和按住时长。点击后重新观测目标。
 
-对非前台窗口，若 `drag` 的起点命中具有可写 `AXSelectedRows` 的原生表格普通行，调用会在发送鼠标事件前返回 `BACKGROUND_NATIVE_ROW_DRAG_UNSUPPORTED`。AppKit 拖放跟踪可能在拖影出现前夺取键盘焦点。若应用提供移动行的控件，可通过该控件操作。
+对非前台窗口，若 `drag` 的起点命中具有可写 `AXSelectedRows` 的原生表格普通行，或命中该行旁一个逻辑点宽的滚动区边框，调用会在发送鼠标事件前返回 `BACKGROUND_NATIVE_ROW_DRAG_UNSUPPORTED`。AppKit 拖放跟踪可能在拖影出现前夺取键盘焦点，从边框开始拖动也可能让窗口升层。若应用提供移动行的控件，可通过该控件操作。
 
 修饰键点击示例：`await app.click([200,400],{key:'super+shift',durationMs:250})`。key 仅接受 cmd/command/meta/super、shift、ctrl/control、alt/option，以 `+` 连接；支持坐标和最新元素索引。修饰键或时长选项强制后台事件，`strategy:'ax'` 会拒绝，auto 会选择 event。真实 Command 标志保留给目标，路由临时添加的 Command 仅在未请求时移除。
 
