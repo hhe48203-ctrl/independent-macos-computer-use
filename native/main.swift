@@ -438,6 +438,13 @@ struct Snapshot {
                 throw BridgeError("INVALID_ARGUMENT", "The experimental AppKit key strategy supports a single press without a hold.")
             }
         }
+        if method == "click", p["strategy"] as? String == "appkit" {
+            guard backgroundMode, p["elementId"] == nil, p["snapshotId"] == nil,
+                  (p["button"] as? String ?? "left") == "left", number(p, "count", 1) == 1,
+                  p["modifiers"] == nil, p["durationMs"] == nil else {
+                throw BridgeError("INVALID_ARGUMENT", "The experimental AppKit click strategy requires a single background left coordinate click without modifiers or a hold.")
+            }
+        }
         if backgroundMode && ["click","type_text","key","scroll","drag"].contains(method) { return try await background(method,p) }
         switch method {
         case "cursor_state": return agentCursor.state

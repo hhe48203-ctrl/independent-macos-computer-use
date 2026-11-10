@@ -73,6 +73,18 @@ test('new app launch requires an explicit visible-window choice',()=>{
  assert.equal(launch.safeParse({bundleId:'com.apple.TextEdit',allowVisibleWindows:'true'}).success,false);
 });
 
+test('scoped AppKit clicks require one plain background coordinate click',()=>{
+ const click={pid:1,windowId:2,x:10,y:20,strategy:'appkit'};
+ const contract=schema('cu_click');
+ assert.equal(contract.safeParse(click).success,true);
+ for(const options of [{mode:'foreground'},{button:'right'},{count:2},{modifiers:'shift'},{durationMs:0}]){
+  assert.equal(contract.safeParse({...click,...options}).success,false);
+ }
+ const ref={snapshotId:'88a4ae8e-11d6-4a29-b2fa-d4785e70d238',elementId:'e1'};
+ assert.equal(contract.safeParse(ref).success,true);
+ assert.equal(contract.safeParse({...ref,strategy:'appkit'}).success,false);
+});
+
 test('modifier clicks and bounded key holds cannot silently become AX or foreground actions',()=>{
  const click={pid:1,windowId:2,x:10,y:20},key={pid:1,windowId:2,key:'CMD+A'};
  for(const modifiers of ['super','CMD+Shift','ctrl+alt','option+shift'])assert.equal(schema('cu_click').safeParse({...click,modifiers,durationMs:250}).success,true);

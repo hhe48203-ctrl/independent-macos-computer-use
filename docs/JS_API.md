@@ -61,7 +61,7 @@ A confirmed call returns a **new object plus a full initial AX observation**, in
 
 | Method | Description |
 |---|---|
-| click(index or [x,y], options?) | mouseButton, clickCount, strategy:auto/ax/event, key, durationMs; plain clicks prefer AXPress |
+| click(index or [x,y], options?) | mouseButton, clickCount, strategy:auto/ax/event/appkit, key, durationMs; plain clicks prefer AXPress |
 | typeText(text,{strategy?,target?}) | verified AX insertion or real process-directed Unicode. Optional target is the current editable AX index in this bound window |
 | pressKey('CMD+A',{strategy?,durationMs?}) | auto may use AX selection; event forces real key packets |
 | drag(from,to,{duration?}) | duration 0.1..2 s, default 0.4; background real events |
@@ -77,6 +77,8 @@ A confirmed call returns a **new object plus a full initial AX observation**, in
 Plain background element clicks use the table’s writable `AXSelectedRows` when the observed element is a row or its text and has no `AXPress`. `selectionOutcome:"dialogOpened"` means a sheet appeared. Read the new AX tree before choosing its buttons.
 
 `pressKey(key,{strategy:'appkit'})` explicitly requests experimental app-local focus preparation for one background press without a hold. Enable each target bundle at server startup in the comma-separated `CU_EXPERIMENTAL_APPKIT_KEY_BUNDLE_IDS`. The target must be inactive and match the app’s focused AX window. The experimental typing-route query currently requires macOS 26.6.2 on Apple silicon. Preparation uses a target-only activation-point click and can activate the app’s text input context. Use this route on a reserved desktop until concurrent human input is verified.
+
+`click([x,y],{strategy:'appkit'})` uses the same experimental preparation for one plain background left click at a fresh coordinate. Enable target bundles separately with `CU_EXPERIMENTAL_APPKIT_CLICK_BUNDLE_IDS`. This strategy requires coordinates and rejects element indices, modifiers, multiple clicks and holds. Re-observe the target after clicking.
 
 In an inactive window, `drag` returns `BACKGROUND_NATIVE_ROW_DRAG_UNSUPPORTED` before sending pointer input when the start point resolves to a passive row of a native table with writable `AXSelectedRows`. AppKit drag tracking can take keyboard focus before the drag image appears. Use an exposed row-move control when the app provides one.
 

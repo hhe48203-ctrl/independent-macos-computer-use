@@ -7,10 +7,14 @@ test('native background-only policy rejects foreground and unknown modes before 
   for(const[method,params]of[['focus',{pid:1,windowId:2}],['click',{pid:1,windowId:2,x:0,y:0,mode:'foreground'}],['launch',{bundleId:'com.apple.TextEdit',mode:'foreground'}],['ax_action',{mode:'foreground'}]])await assert.rejects(bridge.request(method,params),{code:'FOREGROUND_DISABLED'});
   await assert.rejects(bridge.request('click',{pid:1,windowId:2,x:0,y:0,mode:'unknown'}),{code:'INVALID_ARGUMENT'});
   await assert.rejects(bridge.request('key',{pid:1,windowId:2,key:'enter',strategy:'appkit',durationMs:0}),{code:'INVALID_ARGUMENT'});
+  for(const opts of [{button:'right'},{count:2},{modifiers:'shift'},{durationMs:0},{elementId:'e1',snapshotId:'s1'}]){
+   await assert.rejects(bridge.request('click',{pid:1,windowId:2,x:0,y:0,strategy:'appkit',...opts}),{code:'INVALID_ARGUMENT'});
+  }
   await assert.rejects(bridge.request('launch',{bundleId:'io.local.computeruse.uninstalled-policy-test'}),{code:'VISIBLE_LAUNCH_REQUIRED'});
  }finally{bridge.close()}
  const explicit=new Bridge({env:{...process.env,CU_ENABLE_FOREGROUND:'1'}});try{
   assert.equal((await explicit.request('status')).foregroundEnabled,true);
   await assert.rejects(explicit.request('key',{pid:1,windowId:2,key:'enter',strategy:'appkit',mode:'foreground'}),{code:'INVALID_ARGUMENT'});
+  await assert.rejects(explicit.request('click',{pid:1,windowId:2,x:0,y:0,strategy:'appkit',mode:'foreground'}),{code:'INVALID_ARGUMENT'});
  }finally{explicit.close()}
 });

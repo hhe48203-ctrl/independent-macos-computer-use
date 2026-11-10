@@ -61,7 +61,7 @@ let replacement=await app.reconnect({pid:789,windowId:1011});
 
 | 方法 | 说明 |
 |---|---|
-| click(index或[x,y],options?) | mouseButton、clickCount、strategy:auto/ax/event、key、durationMs；普通点击默认 AXPress 优先 |
+| click(index或[x,y],options?) | mouseButton、clickCount、strategy:auto/ax/event/appkit、key、durationMs；普通点击默认 AXPress 优先 |
 | typeText(text,{strategy?,target?}) | 支持验证后的 AX 插入或真实进程定向 Unicode。target 可指定当前窗口的可编辑 AX 索引 |
 | pressKey('CMD+A',{strategy?,durationMs?}) | auto 可用 AX 选择；event 强制真实键包 |
 | drag(from,to,{duration?}) | duration0.1..2秒，默认0.4；后台真实事件 |
@@ -77,6 +77,8 @@ let replacement=await app.reconnect({pid:789,windowId:1011});
 普通后台元素点击在目标是可观察的表格行或行文本、没有 `AXPress` 时，可用表格可写的 `AXSelectedRows`。`selectionOutcome:"dialogOpened"` 表示出现了附属弹窗，应读取新的 AX 树后再操作弹窗按钮。
 
 `pressKey(key,{strategy:'appkit'})` 为一次无按住时长的后台按键显式请求实验性应用内焦点准备。在服务启动时，用逗号分隔的 `CU_EXPERIMENTAL_APPKIT_KEY_BUNDLE_IDS` 逐个启用目标应用。目标必须不在前台，且与应用的 AX 焦点窗口一致。实验性输入路由查询目前要求 Apple silicon 上的 macOS 26.6.2。准备过程会向目标发送激活点点击，可能激活应用内文本输入上下文。真人并用验证前应在专用桌面使用。
+
+`click([x,y],{strategy:'appkit'})` 用同一实验准备流程，在刚观测到的坐标执行一次后台左键点击。使用 `CU_EXPERIMENTAL_APPKIT_CLICK_BUNDLE_IDS` 单独启用目标应用。该策略要求传入坐标，拒绝元素索引、修饰键、多次点击和按住时长。点击后重新观测目标。
 
 对非前台窗口，若 `drag` 的起点命中具有可写 `AXSelectedRows` 的原生表格普通行，调用会在发送鼠标事件前返回 `BACKGROUND_NATIVE_ROW_DRAG_UNSUPPORTED`。AppKit 拖放跟踪可能在拖影出现前夺取键盘焦点。若应用提供移动行的控件，可通过该控件操作。
 

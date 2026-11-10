@@ -6,7 +6,7 @@ import ApplicationServices
 // neither an unresolved query nor a polling gap is evidence of isolation.
 @MainActor final class BackgroundFocusObservation {
     let targetPID:pid_t
-    let scopedKey: Bool
+    let scopedInput: ScopedAppKitInput?
     let before=SystemInputFocus.observe()
     let typingRawBefore: UInt32?
     var typingRawAfter:UInt32?
@@ -17,22 +17,22 @@ import ApplicationServices
     var unresolved=0
     var targetGainedKeyboardFocus=false
     var unexpectedKeyboardRecipient=false
-    var scopedKeyInterrupted=false
+    var scopedInputInterrupted=false
     var maxSampleGap:Double=0
     var lastSampleTime:Double=0
     var transitions:[[String:Any]]=[]
     var timer:Timer?
-    init(targetPID:pid_t, scopedKey: Bool = false) throws {
+    init(targetPID:pid_t, scopedInput: ScopedAppKitInput? = nil) throws {
         self.targetPID=targetPID;after=before
-        self.scopedKey=scopedKey
-        typingRawBefore=ExperimentalTypingFocus.read(forScopedKey: scopedKey)
+        self.scopedInput=scopedInput
+        typingRawBefore=ExperimentalTypingFocus.read(forScopedInput: scopedInput != nil)
         guard !before.hasKeyboardFocusWithoutForeground(targetPID) else {
             throw BridgeError("BACKGROUND_KEYBOARD_FOCUS_ALREADY_TARGET", "The target already receives system keyboard input while another app is foreground. Background input was stopped before delivery. Observe the current state before continuing.")
         }
-        if scopedKey {
+        if let scopedInput {
             guard let foreground=before.foregroundPID, foreground != targetPID, before.keyboardPID != nil,
                   let typingRawBefore, typingRawBefore > 0 else {
-                throw BridgeError("SCOPED_KEY_FOCUS_UNAVAILABLE", "The experimental key route requires an inactive target and resolved foreground, keyboard and typing routes. No input was sent.")
+                throw BridgeError(scopedInput.code("FOCUS_UNAVAILABLE"), "The experimental \(scopedInput.rawValue) route requires an inactive target and resolved foreground, keyboard and typing routes. No input was sent.")
             }
         }
         sample()
@@ -45,9 +45,9 @@ import ApplicationServices
         if samples>0 {maxSampleGap=max(maxSampleGap,now-lastSampleTime)}
         lastSampleTime=now;samples += 1
         let current=SystemInputFocus.observe()
-        typingRawAfter=ExperimentalTypingFocus.read(forScopedKey: scopedKey)
-        if scopedKey && (current.foregroundPID != before.foregroundPID || current.keyboardPID == nil || typingRawAfter == nil || typingRawAfter == 0) {
-            scopedKeyInterrupted=true
+        typingRawAfter=ExperimentalTypingFocus.read(forScopedInput: scopedInput != nil)
+        if scopedInput != nil && (current.foregroundPID != before.foregroundPID || current.keyboardPID == nil || typingRawAfter == nil || typingRawAfter == 0) {
+            scopedInputInterrupted=true
         }
         if let prior=typingRawBefore,let now=typingRawAfter,prior>0,now>0,prior != now,current.foregroundPID==before.foregroundPID {typingRouteChanged=true}
         if current.keyboardPID == nil {unresolved += 1}
@@ -65,7 +65,9 @@ import ApplicationServices
         if typingRouteChanged {throw BridgeError("BACKGROUND_TYPING_ROUTE_CHANGED","The experimental typing-focus reply changed while foreground stayed the same. Isolation could not be confirmed; no route restoration was attempted")}
         if targetGainedKeyboardFocus {throw BridgeError("BACKGROUND_KEYBOARD_FOCUS_CHANGED","The target obtained actual system keyboard focus during the operation. Background isolation failed; no foreground-restoration workaround was attempted.")}
         if unexpectedKeyboardRecipient {throw BridgeError("BACKGROUND_KEYBOARD_ROUTE_CHANGED","The actual keyboard recipient changed while the foreground app stayed the same. Isolation could not be confirmed; no focus restoration was attempted. This observation alone does not identify which process caused the change.")}
-        if scopedKeyInterrupted {throw BridgeError("SCOPED_KEY_FOCUS_INTERRUPTED", "A focus route changed or became unresolved during the scoped key operation. Observe the target before retrying.")}
+        if scopedInputInterrupted, let scopedInput {
+            throw BridgeError(scopedInput.code("FOCUS_INTERRUPTED"), "A focus route changed or became unresolved during the scoped \(scopedInput.rawValue). Observe the target before retrying.")
+        }
     }
     var json:[String:Any] {
         ["before":before.json,"after":after.json,"sampleCount":samples,
@@ -346,9 +348,9 @@ struct HeldBackgroundMouse {
             try await Task.sleep(nanoseconds:UInt64(min(0.02,remaining)*1e9))
         }while true
     }
-    func requireBackgroundKeyTarget(_ pid: pid_t, _ frame: CGRect) throws {
+    func requireBackgroundFocusedTarget(_ pid: pid_t, _ frame: CGRect, mismatchCode: String = "BACKGROUND_KEY_WINDOW_MISMATCH") throws {
         let root = AXUIElementCreateApplication(pid); let window = try axWindow(pid, frame)
-        guard let focused = attr(root, kAXFocusedWindowAttribute), CFGetTypeID(focused) == AXUIElementGetTypeID(), CFEqual(focused, window) else { throw BridgeError("BACKGROUND_KEY_WINDOW_MISMATCH", "The target does not match the application's AX focused window. This does not assert NSApp key-window or text-input-context activation; no focus was performed.") }
+        guard let focused = attr(root, kAXFocusedWindowAttribute), CFGetTypeID(focused) == AXUIElementGetTypeID(), CFEqual(focused, window) else { throw BridgeError(mismatchCode, "The target does not match the application's AX focused window. This does not assert NSApp key-window or text-input-context activation.") }
         try ensureEditableNotSecure(pid)
     }
     func backgroundKeyChord(_ p: Object) throws -> (name: String, flags: CGEventFlags) {
@@ -367,7 +369,7 @@ struct HeldBackgroundMouse {
         return (last, flags)
     }
     func backgroundKey(_ p: Object, _ pid: pid_t, _ wid: CGWindowID, _ frame: CGRect,_ observation:BackgroundFocusObservation) async throws -> Object {
-        try requireBackgroundKeyTarget(pid, frame)
+        try requireBackgroundFocusedTarget(pid, frame)
         let (last, flags) = try backgroundKeyChord(p)
         // AppKit key-equivalent dispatch in inactive apps is inconsistent. Select
         // all has an exact AX equivalent which we can verify without any key event.
@@ -555,15 +557,15 @@ struct HeldBackgroundMouse {
         }
         let orderBefore = backgroundWindowOrder()
         let foregroundBefore = NSWorkspace.shared.frontmostApplication?.processIdentifier
-        let scopedKey = method == "key" && p["strategy"] as? String == "appkit"
-        if scopedKey {
-            guard ExperimentalTypingFocus.keyBundleIDs.contains(application.bundleIdentifier ?? "") else {
-                throw BridgeError("SCOPED_KEY_NOT_ENABLED", "This application is not enabled for the experimental AppKit key strategy. No input was sent.")
+        let scopedInput = p["strategy"] as? String == "appkit" ? ScopedAppKitInput(rawValue: method) : nil
+        if let scopedInput {
+            guard scopedInput.bundleIDs.contains(application.bundleIdentifier ?? "") else {
+                throw BridgeError(scopedInput.code("NOT_ENABLED"), "This application is not enabled for the experimental AppKit \(method) strategy. No input was sent.")
             }
-            _ = try keyCode(backgroundKeyChord(p).name)
-            try requireBackgroundKeyTarget(pid, frame)
+            if scopedInput == .key { _ = try keyCode(backgroundKeyChord(p).name) }
+            try requireBackgroundFocusedTarget(pid, frame, mismatchCode: scopedInput == .key ? "BACKGROUND_KEY_WINDOW_MISMATCH" : "SCOPED_CLICK_WINDOW_MISMATCH")
         }
-        let inputObservation=try BackgroundFocusObservation(targetPID:pid, scopedKey:scopedKey)
+        let inputObservation=try BackgroundFocusObservation(targetPID:pid, scopedInput:scopedInput)
         defer {inputObservation.stop()}
         var pointerDelivery:BackgroundPointerDelivery?
         var appKitSession:ScopedAppKitFocus?
@@ -592,8 +594,8 @@ struct HeldBackgroundMouse {
             let modifiers=try (p["modifiers"] as? String).map{try modifierFlags($0)} ?? []
             let extended=p["modifiers"] != nil || p["durationMs"] != nil
             if extended,strategy == "ax"{throw BridgeError("INVALID_ARGUMENT","Modifier/hold clicks require event delivery")}
-            let semantic = !extended && strategy != "event" && button == .left && count == 1
-            let candidate = semantic ? try backgroundPressTarget(p,pid,frame,point) : try? backgroundPressTarget(p,pid,frame,point)
+            let semantic = !extended && strategy != "event" && scopedInput == nil && button == .left && count == 1
+            let candidate = semantic || scopedInput == .click ? try backgroundPressTarget(p,pid,frame,point) : try? backgroundPressTarget(p,pid,frame,point)
             if let candidate { try checkBackgroundPopup(candidate) }
             if semantic, let element = candidate {
                 try await agentCursor.move(pid:pid,windowID:wid,frame:frame,point:point,activity:"click")
@@ -603,7 +605,7 @@ struct HeldBackgroundMouse {
                 result = ["ok":true,"mode":"background","method":"AXPress","verificationRequired":true]
                 break
             }
-            if !extended, strategy != "event", button == .left, count == 1, p["elementId"] != nil,
+            if semantic, p["elementId"] != nil,
                let selection = backgroundTableRow(try ref(p).element) {
                 try await agentCursor.move(pid:pid,windowID:wid,frame:frame,point:point,activity:"click")
                 try inputObservation.validate()
@@ -619,6 +621,16 @@ struct HeldBackgroundMouse {
             try await agentCursor.move(pid:pid,windowID:wid,frame:frame,point:point,activity:"click")
             pointerDelivery=try BackgroundPointerDelivery(pid:pid,windowID:wid)
             appKitSession=try await prepareScopedAppKitFocus(pid,wid,frame,pointerDelivery!,inputObservation)
+            if scopedInput == .click {
+                guard appKitSession != nil else {
+                    throw BridgeError("SCOPED_CLICK_FOCUS_INTERRUPTED", "The app is no longer eligible for scoped focus preparation. No click at the requested point was sent.")
+                }
+                guard (try target(p)).2 == frame else {
+                    throw BridgeError("WINDOW_MOVED", "The target moved during scoped focus preparation. Observe it before clicking.")
+                }
+                try requireBackgroundFocusedTarget(pid, frame, mismatchCode: "SCOPED_CLICK_WINDOW_MISMATCH")
+                if let candidate = try backgroundPressTarget(p, pid, frame, point) { try checkBackgroundPopup(candidate) }
+            }
             try assertBackgroundIsolation(pid,wid,orderBefore,foregroundBefore)
             cursorTracksPointer=true
             for i in 1...count {
@@ -684,10 +696,10 @@ struct HeldBackgroundMouse {
                 }
                 if let at=axFrame(element) {try await agentCursor.move(pid:pid,windowID:wid,frame:frame,point:CGPoint(x:at.midX,y:at.midY),activity:"key")}
             }
-            if scopedKey || (!semanticSelectAll && ProcessInfo.processInfo.environment["CU_EXPERIMENTAL_APPKIT_FOCUS"] == "1") {
+            if scopedInput == .key || (!semanticSelectAll && ProcessInfo.processInfo.environment["CU_EXPERIMENTAL_APPKIT_FOCUS"] == "1") {
                 pointerDelivery=try BackgroundPointerDelivery(pid:pid,windowID:wid)
                 appKitSession=try await prepareScopedAppKitFocus(pid,wid,frame,pointerDelivery!,inputObservation)
-                if scopedKey && appKitSession == nil {
+                if scopedInput == .key && appKitSession == nil {
                     throw BridgeError("SCOPED_KEY_FOCUS_INTERRUPTED", "The app is no longer eligible for scoped focus preparation. No key was sent.")
                 }
                 try assertBackgroundIsolation(pid,wid,orderBefore,foregroundBefore)
