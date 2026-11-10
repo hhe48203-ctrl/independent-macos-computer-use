@@ -40,6 +40,12 @@ CDB-G02/03 工作流复现见 `artifacts/bench-v2-pi-20261109T064232356505Z/summ
 
 下一轮同种子探针采样了目标进程的 macOS 拖影窗口。首次采到拖影在 `KeyFocusTaken` 之后约 3.5 毫秒。1 点短拖则使窗口升层，未采到拖影或夺焦通知。新预检会拒绝从绑定窗口的原生表格普通行发起后台拖动。复测中两种手势均未投递鼠标包，未测到干扰。Pi 轮因未改变顺序仍得 0.05，A22 八项通过，哨兵的 11 个字符全部保留。见 `artifacts/mb09-drag-image-timing-vDcIe7/`、`artifacts/mb09-row-drag-guard-qge65F/` 和 `artifacts/bench-v2-pi-20261110T011251429125Z/summary.json`。
 
+在 `790113` 的两组诊断中，拖动全程保留 Command，实体鼠标保持静止。一组鼠标在目标窗外，另一组在启动哨兵前移动自有窗口，使实体鼠标落在可见的目标落点。两组都观察到目标收到 38 个包，其中包括鼠标抬起。两组都启动原生拖放，并短暂切换实际键盘接收进程约 26–28 毫秒，请求 ID 均为零，且均未出现重排事件。该行的 AX 自定义动作列表为空，表格也未暴露标准重排动作。见 `artifacts/mb09-hardware-drop-position-W0Gi7G/report.json` 和 `artifacts/mb09-row-surface-compact-naEf1S/row-hit/artifacts/driver.stdout`。
+
+同种子复现了右边框的保护缺口。同一水平线上，AX 命中测试在 x=448 返回表格行，在 x=449 返回滚动区。原保护在投递前拒绝行内起点。边框手势发出了 38 个包，让 BenchLab 升层，哨兵仍保有键盘焦点。`4ee532e` 让滚动区命中时也核对相邻的可见原生行。修复后两个起点均在投递前被拒绝，鼠标包、失焦和升层均为零。见 `artifacts/mb09-edge-drag-guard-mBsBLc/` 和 `artifacts/mb09-edge-drag-fixed-WZUdsB/`。
+
+Pi 在 `790113` 上复测得 0.05，记录了一次 `BACKGROUND_NATIVE_ROW_DRAG_UNSUPPORTED`。A22 八项通过，哨兵的 12 个生成字符全部保留。原生行重排仍需要可在后台投递的路径。见 `artifacts/bench-v2-pi-20261110T201943812933Z/summary.json`。
+
 相关的光标遮挡回归在改动前和加入预检后都复现了首次点击自定义控件时升层，当时还未发出拖动包。另一轮取消对照中，带预检的版本收到三次拖动和一次鼠标释放，但窗口遮挡断言仍失败。测试运行器现在会在失败时等待清理，串行复测复现了升层，且均释放了测试锁。见 `artifacts/cursor-occlusion-1794273330365/`、`artifacts/cursor-occlusion-1794273336960/`、`artifacts/raw-pointer-cancel-1794273343113/` 和 `artifacts/raw-pointer-1794273352352/`。
 
 G04 的启动对照分离出了环境故障。使用合成的 `HOME` 时，Chrome 能打开本地文件，loopback 档案页却保持无标题或停在上一页。只改用 macOS 的常规临时目录仍失败。仅让测试 Chrome 进程沿用登录会话的 `HOME` 后，初始档案页及本地文件和档案页之间的双向导航都恢复。Chrome 仍使用全新的 profile，MCP 仍按本轮精确 PID 隔离。环境对照见 `artifacts/cdb-g04-exact-launch-tZWULq/report.json`、`artifacts/cdb-g04-canonical-temp-O3xGBK/report.json` 和 `artifacts/cdb-g04-browser-home-jjDzxX/report.json`。
