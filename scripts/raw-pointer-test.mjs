@@ -28,4 +28,8 @@ try{
  for(const op of operations.filter(o=>o.method!=='scroll')){assert.equal(op.result.pointerDelivery.postedEvents,op.result.pointerDelivery.observedEvents);assert.equal(op.result.pointerDelivery.postedEvents,op.result.pointerDelivery.rewrittenEvents)}
  report={status:'raw-pointer-checks-passed',recordedWindowOrder:windowOrder,operations,scope:'Raw click, scroll and drag on a covered custom AppKit event pad, with no AX actions. Not a universal app or foreground-text concurrency pass.',deliveredAppKitMouseEvents:delivered,actualRecipientEvidence:received.processEvents.filter(e=>((e.tag>>>0)===0x43554247 || ((e.tag>>>0)&0xffff0000)===0x43420000)),observation:{sampleCount:observation.sampleCount,maxSampleGap:observation.maxSampleGap,keyboardPIDs:[...new Set(observation.samples.map(s=>s.keyboardPID))]}};save();console.log('REPORT',path.join(directory,'report.json'));
 }catch(error){report={status:'failed',error:{code:error.code,message:error.message},operations};save();console.error('REPORT',path.join(directory,'report.json'));throw error}
-finally{bridge.close();events?.close();setup.close();fixture?.close()}
+finally{
+ bridge.close();events?.close();setup.close();
+ await bridge.retiring;
+ await fixture?.closeAndWait();
+}

@@ -14,4 +14,10 @@ try{
  trace.close();await new Promise(r=>trace.child.exitCode!==null?r():trace.child.once('exit',r));const observation=trace.read();const windowOrder=recordedWindowOrder(observation,target.windowId,fixture.apps.cover.windowId);assert.ok(windowOrder.recordsCompared>0&&windowOrder.violations.length===0);assert.ok(observation.samples.every(s=>s.keyboardFocusResolved&&s.keyboardPID!==target.pid&&s.foregroundPID!==target.pid));
  report={status:'cancelled-drag-release-passed',recordedWindowOrder:windowOrder,target,during,after,appKitEvents:events,proof:proof(),observation:{sampleCount:observation.sampleCount,maxSampleGap:observation.maxSampleGap},scope:'Cancellation during a real covered fixture drag; no foreground text integrity measurement'};
 }catch(error){report={...report,status:'failed',error:error.message};process.exitCode=1}
-finally{bridge.close();trace.close();fixture?.close();writeFileSync(path.join(directory,'report.json'),JSON.stringify(report,null,2));console.log('REPORT',path.join(directory,'report.json'))}
+finally{
+ bridge.close();trace.close();
+ writeFileSync(path.join(directory,'report.json'),JSON.stringify(report,null,2));
+ console.log('REPORT',path.join(directory,'report.json'));
+ await bridge.retiring;
+ await fixture?.closeAndWait();
+}
