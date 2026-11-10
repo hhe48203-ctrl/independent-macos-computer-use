@@ -555,7 +555,15 @@ def run_trial(entry, condition, out, task, spec, bundle_ids, login, modules, *, 
         raise
     finally:
         write_json(trial / "trial.json", row)
-    print(f"RESULT {task.id} {row['status']} passed={row.get('passed')} A22={row.get('multiplayer', {}).get('background_completion')}", flush=True)
+    result = f"RESULT {task.id} {row['status']}"
+    if row["status"] == "scored":
+        result += f" score={row['evaluation'].get('score')} task_passed={row['passed']}"
+        if condition == "background":
+            multiplayer = row["multiplayer"]
+            criteria = multiplayer["criteria"]
+            held = sum(value is True for value in criteria.values())
+            result += f" A22_criteria={held}/{len(criteria)} background_completion={multiplayer['background_completion']}"
+    print(result, flush=True)
     return row
 
 
