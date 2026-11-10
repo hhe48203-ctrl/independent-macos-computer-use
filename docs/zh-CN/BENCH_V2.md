@@ -30,6 +30,8 @@ npm run bench:v2 -- --run --tasks benchlab
 
 若一轮包含 LibreOffice Calc，运行器还会说明已验证的 GUI 路径，包括选择单元格、打开 Formula 编辑器、按 Accept 提交及使用工具栏 Save。每步之间重新读取 AX，提交后核对单元格的实际值。
 
+在专用桌面上运行后台试验时，可重复传入 `--appkit-key-bundle BUNDLE_ID`，允许指定应用的 `pressKey` 显式使用 `strategy:'appkit'`。运行器把应用列表写入日志，续跑时沿用。这些按键会进行实验性应用内焦点准备。试验按 A22 和 GUI-only 计分。
+
 测试 Chrome 进程沿用登录会话的 `HOME`，以便在 macOS 上打开 loopback 页面。它仍使用本轮新建的 profile，并仅为本次启动关闭其更新调度器。Pi 和其他测试进程继续使用隔离的 home。[Chromium 启动参数](https://chromium.googlesource.com/chromium/src/+/refs/heads/main/chrome/common/chrome_switches.h)
 
 ```sh
