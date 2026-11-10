@@ -404,7 +404,7 @@ struct HeldBackgroundMouse {
         releaseBackgroundKey()
         return ["ok":true,"mode":"background","method":"CGEvent.postToPid","AXActionsGenerated":false,"verificationRequired":true,"heldDurationMs":(ProcessInfo.processInfo.systemUptime-started)*1000,"repeatEventsGenerated":0,"globalModifierEvents":0]
     }
-    func backgroundPressTarget(_ p:Object,_ pid:pid_t,_ frame:CGRect,_ point:CGPoint) throws -> AXUIElement? {
+    func backgroundPressTarget(_ p:Object,_ pid:pid_t,_ frame:CGRect,_ point:CGPoint, allowLabelParent: Bool = false) throws -> AXUIElement? {
         func pressable(_ element:AXUIElement)->Bool {
             guard attr(element,kAXSubroleAttribute) as? String != kAXSecureTextFieldSubrole else{return false}
             var actions:CFArray?
@@ -412,7 +412,14 @@ struct HeldBackgroundMouse {
         }
         if p["elementId"] != nil {
             let element=try ref(p).element
-            return pressable(element) ? element : nil
+            if pressable(element) { return element }
+            guard allowLabelParent, attr(element, kAXRoleAttribute) as? String == kAXStaticTextRole,
+                  let value = attr(element, kAXParentAttribute), CFGetTypeID(value) == AXUIElementGetTypeID() else { return nil }
+            let parent = value as! AXUIElement
+            let role = attr(parent, kAXRoleAttribute) as? String
+            guard role == kAXButtonRole || role == kAXCheckBoxRole,
+                  let bounds = axFrame(parent), bounds.contains(point), pressable(parent) else { return nil }
+            return parent
         }
         // Scope hit-testing to this window's own AX hierarchy. Global AX hit-test
         // would resolve the foreground cover instead of the occluded target.
@@ -595,11 +602,18 @@ struct HeldBackgroundMouse {
             let extended=p["modifiers"] != nil || p["durationMs"] != nil
             if extended,strategy == "ax"{throw BridgeError("INVALID_ARGUMENT","Modifier/hold clicks require event delivery")}
             let semantic = !extended && strategy != "event" && scopedInput == nil && button == .left && count == 1
-            let candidate = semantic || scopedInput == .click ? try backgroundPressTarget(p,pid,frame,point) : try? backgroundPressTarget(p,pid,frame,point)
+            let candidate = semantic || scopedInput == .click
+                ? try backgroundPressTarget(p, pid, frame, point, allowLabelParent: semantic)
+                : try? backgroundPressTarget(p, pid, frame, point)
             if let candidate { try checkBackgroundPopup(candidate) }
             if semantic, let element = candidate {
                 try await agentCursor.move(pid:pid,windowID:wid,frame:frame,point:point,activity:"click")
                 try inputObservation.validate();try assertBackgroundIsolation(pid,wid,orderBefore,foregroundBefore)
+                if p["elementId"] != nil {
+                    guard let current = try backgroundPressTarget(p, pid, frame, point, allowLabelParent: true), CFEqual(current, element) else {
+                        throw BridgeError("STALE_ELEMENT", "The press target changed during cursor approach. Observe it before clicking.")
+                    }
+                }
                 try axCheck(AXUIElementPerformAction(element,kAXPressAction as CFString),"Background press")
                 agentCursor.update(pid:pid,windowID:wid,frame:frame,point:point,activity:"click",activate:true)
                 result = ["ok":true,"mode":"background","method":"AXPress","verificationRequired":true]

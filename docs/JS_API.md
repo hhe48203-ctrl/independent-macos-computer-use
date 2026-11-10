@@ -76,6 +76,8 @@ A confirmed call returns a **new object plus a full initial AX observation**, in
 
 Plain background element clicks use the table’s writable `AXSelectedRows` when the observed element is a row or its text and has no `AXPress`. `selectionOutcome:"dialogOpened"` means a sheet appeared. Read the new AX tree before choosing its buttons.
 
+A plain background click on a static text label inside its direct button or checkbox parent can use the parent’s `AXPress`. The parent must contain the click point and still match after the cursor approaches. Use `strategy:'event'` to request pointer delivery explicitly.
+
 `pressKey(key,{strategy:'appkit'})` explicitly requests experimental app-local focus preparation for one background press without a hold. Enable each target bundle at server startup in the comma-separated `CU_EXPERIMENTAL_APPKIT_KEY_BUNDLE_IDS`. The target must be inactive and match the app’s focused AX window. The experimental typing-route query currently requires macOS 26.6.2 on Apple silicon. Preparation uses a target-only activation-point click and can activate the app’s text input context. Use this route on a reserved desktop until concurrent human input is verified.
 
 `click([x,y],{strategy:'appkit'})` uses the same experimental preparation for one plain background left click at a fresh coordinate. Enable target bundles separately with `CU_EXPERIMENTAL_APPKIT_CLICK_BUNDLE_IDS`. This strategy requires coordinates and rejects element indices, modifiers, multiple clicks and holds. Re-observe the target after clicking.

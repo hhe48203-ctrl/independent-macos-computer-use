@@ -76,6 +76,8 @@ let replacement=await app.reconnect({pid:789,windowId:1011});
 
 普通后台元素点击在目标是可观察的表格行或行文本、没有 `AXPress` 时，可用表格可写的 `AXSelectedRows`。`selectionOutcome:"dialogOpened"` 表示出现了附属弹窗，应读取新的 AX 树后再操作弹窗按钮。
 
+当静态文字是按钮或复选框的直接子元素时，普通后台点击可以使用父控件的 `AXPress`。父控件必须包含点击位置，光标到达后还会再次核对。`strategy:'event'` 可显式请求指针投递。
+
 `pressKey(key,{strategy:'appkit'})` 为一次无按住时长的后台按键显式请求实验性应用内焦点准备。在服务启动时，用逗号分隔的 `CU_EXPERIMENTAL_APPKIT_KEY_BUNDLE_IDS` 逐个启用目标应用。目标必须不在前台，且与应用的 AX 焦点窗口一致。实验性输入路由查询目前要求 Apple silicon 上的 macOS 26.6.2。准备过程会向目标发送激活点点击，可能激活应用内文本输入上下文。真人并用验证前应在专用桌面使用。
 
 `click([x,y],{strategy:'appkit'})` 用同一实验准备流程，在刚观测到的坐标执行一次后台左键点击。使用 `CU_EXPERIMENTAL_APPKIT_CLICK_BUNDLE_IDS` 单独启用目标应用。该策略要求传入坐标，拒绝元素索引、修饰键、多次点击和按住时长。点击后重新观测目标。
