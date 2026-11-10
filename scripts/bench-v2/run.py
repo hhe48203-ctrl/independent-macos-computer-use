@@ -176,7 +176,12 @@ def prepare_app_profile(pack, app, option, workspace_variable):
 
 def prepare_pack_apps(pack, login_home):
     for app in pack.apps():
-        if app["kind"] == "spreadsheet" and Path(app["command"][0]).name == "soffice":
+        if app["kind"] == "electron":
+            # Keep fully covered benchmark renderers responsive to AX actions.
+            flag = "--disable-backgrounding-occluded-windows"
+            if flag not in app["command"]:
+                app["command"].append(flag)
+        elif app["kind"] == "spreadsheet" and Path(app["command"][0]).name == "soffice":
             # The throwaway profile otherwise opens a first-use modal over the workbook.
             profile = prepare_app_profile(pack, app, "-env:UserInstallation", "workspace_uri")
             config = profile / "user" / "registrymodifications.xcu"

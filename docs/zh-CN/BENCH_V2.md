@@ -24,6 +24,8 @@ npm run bench:v2 -- --run --tasks benchlab
 
 `--tasks v2` 还包含 CDB-G02、G03、G04。它们需要 LibreOffice、GnuCash、Chrome 和 taskpack 中锁定的 Electron 应用。在锁定源码的 `taskpack/tasks/shared/cdb-s0{2,3,4}/apps/` 下各项目目录执行 `npm ci`，再用 `--doctor --tasks v2` 检查确切依赖。实跑在专用桌面进行，并加 `--allow-multi-app`。已有测试应用或需独占运行的桌面应用会拦截预检。锁定命令使用本轮全新的 `--user-data-dir` 时，测试 Chrome 可与已有实例并行运行。MCP 仅可访问运行器启动的进程组内的 PID。临时 LibreOffice profile 会在启动前关闭欢迎与提示对话框。缺少依赖时预检会停止运行。
 
+运行器给自己启动的 Electron 测试应用传入 `--disable-backgrounding-occluded-windows`，使渲染进程在窗口完全被遮挡时仍能响应辅助功能操作。锁定的题目源码、GUI-only 规则、检查器和 A22 判定继续生效。
+
 测试 Chrome 进程沿用登录会话的 `HOME`，以便在 macOS 上打开 loopback 页面。它仍使用本轮新建的 profile，并仅为本次启动关闭其更新调度器。Pi 和其他测试进程继续使用隔离的 home。[Chromium 启动参数](https://chromium.googlesource.com/chromium/src/+/refs/heads/main/chrome/common/chrome_switches.h)
 
 ```sh

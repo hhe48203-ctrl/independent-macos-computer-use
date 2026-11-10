@@ -11,6 +11,16 @@ with patch.dict("os.environ", {"CU_BENCH_NODE": "node"}):
 
 
 class BenchmarkProfileTest(unittest.TestCase):
+    def test_occlusion_flag_is_added_once_only_for_owned_electron_apps(self):
+        flag = "--disable-backgrounding-occluded-windows"
+        electron = {"kind": "electron", "command": ["npm", "exec", "--", "electron", "."]}
+        browser = {"kind": "browser", "command": ["Chrome"]}
+        pack = SimpleNamespace(apps=lambda: [electron, browser])
+        prepare_pack_apps(pack, "/Users/example")
+        prepare_pack_apps(pack, "/Users/example")
+        self.assertEqual(electron["command"], ["npm", "exec", "--", "electron", ".", flag])
+        self.assertEqual(browser["command"], ["Chrome"])
+
     def test_chrome_requires_one_unambiguous_workspace_local_flag(self):
         def profile(*args):
             return workspace_profile({"command": ["Chrome", *args]}, "--user-data-dir", "workspace")
