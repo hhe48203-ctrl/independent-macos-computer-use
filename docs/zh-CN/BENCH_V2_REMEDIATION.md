@@ -22,6 +22,8 @@ IR-03 计分结果见 `artifacts/bench-v2-pi-20261109T063534274109Z/summary.json
 
 IR-01/02 计分见 `artifacts/bench-v2-pi-20261109T065349148172Z/summary.json`。直接 AX、键盘和防护探针见 `artifacts/ir-popup-probe-Wp6YXH/report.json`、`artifacts/ir-popup-key-probe-0w9rOg/report.json`、`artifacts/ir-popup-guard-probe-XAoiNS/report.json`。最后一项覆盖索引点击、坐标点击、AX 按下与打开菜单、应用内聚焦后的方向键。未观察到输入或焦点干扰。
 
+本机原版在 IR-02 `487371` 中打开了菜单，暴露三个选项。系统先发出 `KeyFocusTaken`，随后在 `KeyFocusChanged` 中携带非零请求 ID，约 2.7 毫秒后发出 `KeyFocusReturned`。接收进程采样和哨兵指标均保持稳定。另一轮同种子直接调用 AXPress 也打开了菜单，但观察期间没有归还通知。接收进程切到 BenchLab，哨兵记录到一次升层、一次失焦和一次输入受阻。该结果与静态分析确认的原版释放焦点请求路径吻合，通知本身无法确定调用者。MB-09 的原生拖放则记录到请求 ID 为零。独立版继续拦截原生菜单跟踪。见 `artifacts/ir02-original-menu-GXuhtn/original/` 和 `artifacts/ir02-ax-menu-focus-X93muq/independent/`。
+
 CDB-G02/03 工作流复现见 `artifacts/bench-v2-pi-20261109T064232356505Z/summary.json`。G04 独立 profile 复测见 `artifacts/bench-v2-pi-20261109T064650603373Z/summary.json`，MCP 范围只包含新启动的 Chrome PID。G03 更新临时 profile 后的结果见 `artifacts/bench-v2-pi-20261109T065029893913Z/summary.json`。在这些轮次中，A22 八项均通过，检查器分别得 0.20、0.45、0.15。
 
 用本机 Codex Computer Use 服务（构建 `1001824`）单独对照 MB-09 种子 `790113`。原版 `cua_repl.drag` 对同一行启动了原生拖放，但无投放事件，顺序未变。哨兵的 419 次采样没有观察到键焦点丢失、激活变化、鼠标移动或打字干扰。这是一次未计分的原版对照。静态检查确认了 `NSEvent` 鼠标构造、事件子类型及窗口字段、PID 投递封装，以及此前调查记录的独立焦点通知机制。本轮仍未证实原版由哪条分支保护焦点。见 `artifacts/mb09-original-compare-DDSKEi/report.json` 和 `artifacts/original-drag-path-WrKjJE/`。
@@ -36,7 +38,17 @@ G04 随后暴露了两个独立控件问题。`AXSelectedText` 只改变地址�
 
 Chromium 控件防护探针核对了两个 Cases 下拉框。打开菜单的动作都在投递前被拒绝，随后通过应用内焦点和普通按键成功选择状态和链接，哨兵无干扰。见 `artifacts/cdb-g04-select-guard-phFOuM/report.json`。
 
+加入 Electron 遮挡开关后，G04 `482045` 一轮复测得 0.15，A22 八项通过。模型在保存前读回了两个下拉选值，但未验证处理结果已经持久化。随后用同一种子做有无开关的未计分对照，两种配置均保存了测试用日志引用，重新打开后读回一致，哨兵无干扰。这项定点对照确认两种配置下保存按钮都可以工作。见 `artifacts/bench-v2-pi-20261110T004957668583Z/summary.json`、`artifacts/cdb-g04-save-default-piDXdG/report.json` 和 `artifacts/cdb-g04-save-occlusion-qDfM18/report.json`。
+
+加入通用的跨应用进度和保存核对提示后，G04 `482045` 得 1.0。G02 `909557` 再次打开邮件，模型在六次 GUI 调用成功后主动结束，没有尝试编辑目标应用，仍得 0.20。两轮均满足 GUI-only 和 A22 八项。见 `artifacts/bench-v2-pi-20261110T005715281285Z/summary.json`。
+
 G03 的 GnuCash 截图暴露了另一个边界缺陷。ScreenCaptureKit 把启动提示拼进普通账本截图，缩小了账本内容，接口仍按账本尺寸报告比例。`a2b0361` 排除隐式子窗口。同一 800 × 632 逻辑点账本现在完整填充 1600 × 1264 像素截图，比例为 2×。前后截图见 `artifacts/cdb-g03-control-inventory-bbmq5U/` 和 `artifacts/cdb-g03-viewport-8CDoMk/`。显式前台悬停仍可截取其临时窗口，MB-10/11 在 `artifacts/bench-v2-pi-20261109T203944095385Z/summary.json` 中再次得 1.0。
+
+G03 种子 `99589` 的 Calc 探针确认，AX 聚焦会把名称框中的选区移到指定单元格，单元格本身仍报告 `AXFocused=false`。F2 能进入编辑模式，字符串 AXValue 写入和普通字符加 Enter 都没有写入内容。未测得干扰。已安装版本 LibreOffice 的[单元格聚焦实现](https://github.com/LibreOffice/core/blob/libreoffice-26.8.2.2/sc/source/ui/Accessibility/AccessibleCell.cxx#L133-L146)会移动表格光标，[文本 AXValue setter](https://github.com/LibreOffice/core/blob/libreoffice-26.8.2.2/vcl/osx/a11ytextwrapper.mm#L48-L53)是空实现。单独尝试定制 Unicode 事件后，读回前返回 `APP_GONE`。该事件未验证写入成功，也未加入服务。见 `artifacts/cdb-calc-focused-cell-7Q5uI6/report.json` 和 `artifacts/cdb-calc-editor-unicode-nkJhaN/report.json`。
+
+扩大 AX 观察范围后，找到 F2 打开的聚焦单元格编辑器。JS 观察接口现已提供原生节点数和深度限制。对该编辑器精确调用 `typeText`，缓冲区可读回且未测得干扰。工具栏 Accept、Enter 和 Tab 均未把文字提交到单元格。见 `artifacts/cdb-calc-ax-editor-0rcvyP/report.json` 和 `artifacts/cdb-calc-js-editor-kjQ7si/report.json`。
+
+当前 G03 的 Pi 同种子复测得 0.45。模型读取了邮件和工作簿，关闭 GnuCash 启动提示，随后展开账户时收到 `BACKGROUND_KEYBOARD_FOCUS_CHANGED` 并停止。哨兵同时记录到升层、激活变化和打字中断。见 `artifacts/bench-v2-pi-20261110T010224956905Z/summary.json`。
 
 | 待办 | 已有逐轮证据 |
 | --- | --- |
