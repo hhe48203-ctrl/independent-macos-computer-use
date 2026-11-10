@@ -26,6 +26,8 @@ npm run bench:v2 -- --run --tasks benchlab
 
 运行器给自己启动的 Electron 测试应用传入 `--disable-backgrounding-occluded-windows`，使渲染进程在窗口完全被遮挡时仍能响应辅助功能操作。锁定的题目源码、GUI-only 规则、检查器和 A22 判定继续生效。
 
+当一轮包含多个受控目标进程时，运行器的系统提示会让 Pi 追踪各窗口的待办步骤。若界面未显示保存确认，则重新打开编辑项并核对保存结果。
+
 测试 Chrome 进程沿用登录会话的 `HOME`，以便在 macOS 上打开 loopback 页面。它仍使用本轮新建的 profile，并仅为本次启动关闭其更新调度器。Pi 和其他测试进程继续使用隔离的 home。[Chromium 启动参数](https://chromium.googlesource.com/chromium/src/+/refs/heads/main/chrome/common/chrome_switches.h)
 
 ```sh

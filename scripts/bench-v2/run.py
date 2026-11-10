@@ -352,6 +352,13 @@ def run_agent(pi, auth, catalog, targets, prompt, artifacts, turns, seconds, des
             "For navigation that loads asynchronously, observe the page again in a separate call before deciding whether it succeeded. "
             "If a documented operation fails, report which required app or document you could not use and the observed error."
         )
+        if len(targets) > 1:
+            instructions += (
+                " Track the required source reads, updates and save checks across all task windows. "
+                "If one step is blocked, continue the independent steps that you can verify. "
+                "If a save has no visible confirmation, reopen the item and read its saved fields before retrying. "
+                "Before ending, verify every required destination or state which step blocked it."
+            )
         if allow_foreground_hover:
             instructions += (" This foreground trial permits app.hover([x,y], {durationMs:1500,screenshot:true}) "
                              "when the task needs real mouse hover. It activates the bound window and captures its own transient UI.")

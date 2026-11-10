@@ -26,6 +26,8 @@ Use `--run-index 0` through `--run-index 4` instead of `--runs` to reproduce one
 
 The runner passes `--disable-backgrounding-occluded-windows` to the Electron fixtures it launches so fully covered renderers can respond to accessibility actions. The pinned task source, GUI-only rules, checkers and A22 criteria remain in effect.
 
+For trials with multiple owned target processes, the runner's system instructions ask Pi to track pending work across windows and verify saves by reopening the edited item if the UI provides no confirmation.
+
 The isolated Chrome process keeps the login session's `HOME` for macOS loopback navigation. It uses the fresh trial profile and disables its updater scheduler for that launch. Pi and the other fixtures retain their isolated homes. [Chromium process switches](https://chromium.googlesource.com/chromium/src/+/refs/heads/main/chrome/common/chrome_switches.h)
 
 ```sh
