@@ -427,7 +427,7 @@ struct HeldBackgroundMouse {
 
     // A row label is often exposed as AXStaticText with no AXPress. Use the
     // containing table's declared selection attribute for a single row click.
-    func backgroundTableRow(_ element: AXUIElement) -> (table: AXUIElement, row: AXUIElement)? {
+    func backgroundTableRow(_ element: AXUIElement, passiveOnly: Bool = false) -> (table: AXUIElement, row: AXUIElement)? {
         let rowRoles = [kAXRowRole, kAXCellRole, kAXStaticTextRole]
         guard let role = attr(element, kAXRoleAttribute) as? String, rowRoles.contains(role) else { return nil }
         var node: AXUIElement? = element
@@ -435,6 +435,11 @@ struct HeldBackgroundMouse {
         for _ in 0..<32 {
             guard let current = node, let role = attr(current, kAXRoleAttribute) as? String else { return nil }
             if role == kAXWindowRole || role == kAXSheetRole { return nil }
+            if passiveOnly, row == nil {
+                var actions: CFArray?
+                guard rowRoles.contains(role), AXUIElementCopyActionNames(current, &actions) == .success,
+                      (actions as? [String])?.isEmpty == true else { return nil }
+            }
             if role == kAXRowRole, row == nil { row = current }
             if role == kAXTableRole || role == kAXOutlineRole {
                 guard let row, children(current, kAXRowsAttribute).contains(where: { CFEqual($0, row) }) else { return nil }
@@ -448,6 +453,20 @@ struct HeldBackgroundMouse {
             }
         }
         return nil
+    }
+
+    func checkBackgroundRowDrag(_ pid: pid_t, _ frame: CGRect, _ start: CGPoint) throws {
+        // AppKit can take system key focus when a passive table row starts a
+        // native drag. The drag image can appear after the focus change.
+        let application = AXUIElementCreateApplication(pid)
+        AXUIElementSetMessagingTimeout(application, 1)
+        var hit: AXUIElement?
+        guard AXUIElementCopyElementAtPosition(application, Float(start.x), Float(start.y), &hit) == .success,
+              let hit, let selection = backgroundTableRow(hit, passiveOnly: true),
+              attr(selection.table, kAXRoleAttribute) as? String == kAXTableRole,
+              !belongsToWebArea(selection.table),
+              belongsToWindow(selection.table, try axWindow(pid, frame)) else { return }
+        throw BridgeError("BACKGROUND_NATIVE_ROW_DRAG_UNSUPPORTED", "Dragging this passive native table row can start macOS drag tracking and take keyboard focus. No pointer input was sent. Use a row-move control if the app exposes one.")
     }
 
     func selectBackgroundTableRow(_ selection: (table: AXUIElement, row: AXUIElement), window: AXUIElement,
@@ -591,8 +610,10 @@ struct HeldBackgroundMouse {
             let from = try point(p,frame,"fromX","fromY"); let to = try point(p,frame,"toX","toY")
             let duration = min(2,max(0.1,number(p,"duration",0.4)))
             try await agentCursor.move(pid:pid,windowID:wid,frame:frame,point:from,activity:"drag")
+            if foregroundBefore != pid { try checkBackgroundRowDrag(pid, frame, from) }
             pointerDelivery=try BackgroundPointerDelivery(pid:pid,windowID:wid)
             appKitSession=try await prepareScopedAppKitFocus(pid,wid,frame,pointerDelivery!,inputObservation)
+            try inputObservation.validate()
             try assertBackgroundIsolation(pid,wid,orderBefore,foregroundBefore)
             cursorTracksPointer=true
             try backgroundMouse(.leftMouseDown,from,.left,1,pid,wid,frame,pointerDelivery)
