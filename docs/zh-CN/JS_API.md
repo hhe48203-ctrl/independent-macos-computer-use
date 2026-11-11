@@ -112,10 +112,10 @@ click/pressKey 的 `durationMs` 为0..5000毫秒，控制每个 down/up 对之�
 
 | 样式 | 外观 | 用途 |
 | --- | --- | --- |
-| `ring`（默认） | 琥珀色圆环、十字刻度与中心白点，无发光 | 形状和颜色都不像指针，便于与 Codex 自身光标区分 |
-| `arrow` | 本项目原绘制的浅色描边、半透明小箭头及柔和光晕 | v1 已验证过的历史外观，按需显式选用 |
+| `arrow`（默认） | 标准 macOS 指针：黑色填充、白色描边，尖端位于操作点，按下时有一小块高亮 | 录制里观众跟随的光标 |
+| `ring` | 琥珀色圆环、十字刻度与中心白点，无发光 | 形状和颜色都不像指针，便于与其他应用的光标区分 |
 
-未知取值回落到默认的 `ring`；`cursorState` 的 `style` 与 `styleDescription` 报告实际生效的样式。
+未知取值回落到默认的 `arrow`；`cursorState` 的 `style` 与 `styleDescription` 报告实际生效的样式。
 
 `CU_AGENT_CURSOR_VISIBILITY=target`（默认）在目标点被遮挡时隐藏光标，并将完整图形和光晕裁剪到目标窗口的露出区域；隐藏时连续移动与后台输入继续。`always` 保留旧版置顶进度光标。未知取值回落到 `target`。设置在 helper 启动时读取，修改环境后需重连 MCP 客户端。`cursorState` 增加 `visibilityMode`、`visibilityReason`、全局逻辑点的 `clipRects`、`occluderCount`、`occlusionGeometry`，这些是绘制诊断，不能证明输入成功。详见[可见性规则与验证范围](CURSOR_OCCLUSION.md)。
 

@@ -8,18 +8,18 @@ final class AgentCursorPanel: NSPanel {
     override func constrainFrameRect(_ frameRect: NSRect, to screen: NSScreen?) -> NSRect { frameRect }
 }
 
-// Two visually distinct styles. `ring` is the default: a compact amber reticle
-// whose shape and color do not read as a pointer, so it cannot be mistaken for
-// the Codex cursor. `arrow` retains the original translucent outline with a
-// soft glow and stays selectable for anyone who preferred it.
+// Two visually distinct styles. `arrow` is the default: a standard macOS
+// pointer (black fill, white outline, tip at the same anchor) with a small
+// highlight while pressed. `ring` remains the amber reticle for anyone who
+// wants a glyph that does not read as a pointer.
 enum AgentCursorStyle: String {
     case arrow, ring
     static var configured: AgentCursorStyle {
-        AgentCursorStyle(rawValue:(ProcessInfo.processInfo.environment["CU_AGENT_CURSOR_STYLE"] ?? "").lowercased()) ?? .ring
+        AgentCursorStyle(rawValue:(ProcessInfo.processInfo.environment["CU_AGENT_CURSOR_STYLE"] ?? "").lowercased()) ?? .arrow
     }
     var summary: String {
         switch self {
-        case .arrow: return "translucent light outline with soft glow"
+        case .arrow: return "standard macOS arrow pointer"
         case .ring: return "amber reticle with crosshair ticks"
         }
     }
@@ -62,7 +62,7 @@ enum AgentCursorRegion {
 final class AgentCursorView: NSView {
     var pressed=false
     var activity="move"
-    var style:AgentCursorStyle = .ring
+    var style:AgentCursorStyle = .arrow
     var clipRects:[CGRect]? // nil is the explicit always-visible mode.
     override var isFlipped: Bool {true}
     override func draw(_ dirtyRect: NSRect) {
@@ -82,22 +82,20 @@ final class AgentCursorView: NSView {
         NSGraphicsContext.restoreGraphicsState()
     }
     private func drawArrow() {
+        // Hotspot stays at (24, 24), matching the ring center and panel math.
+        if pressed {
+            let mark=NSBezierPath(ovalIn:NSRect(x:12,y:12,width:24,height:24))
+            NSColor(calibratedRed:0.42,green:0.28,blue:0.95,alpha:0.42).setFill();mark.fill()
+        }
         let arrow=NSBezierPath()
-        arrow.move(to:NSPoint(x:25,y:24))
-        arrow.curve(to:NSPoint(x:27,y:24),controlPoint1:NSPoint(x:25,y:23.5),controlPoint2:NSPoint(x:26,y:23.5))
-        arrow.line(to:NSPoint(x:43,y:30))
-        arrow.curve(to:NSPoint(x:43,y:33),controlPoint1:NSPoint(x:45,y:30.7),controlPoint2:NSPoint(x:45,y:32))
-        arrow.line(to:NSPoint(x:35,y:35));arrow.line(to:NSPoint(x:31,y:43))
-        arrow.curve(to:NSPoint(x:28,y:43),controlPoint1:NSPoint(x:30.2,y:45),controlPoint2:NSPoint(x:28.7,y:45))
-        arrow.line(to:NSPoint(x:24,y:27))
-        arrow.curve(to:NSPoint(x:25,y:24),controlPoint1:NSPoint(x:23.7,y:25.7),controlPoint2:NSPoint(x:23.8,y:24.5));arrow.close()
-        let transform=AffineTransform(translationByX: -24,byY: -24)
-        arrow.transform(using:transform)
-        arrow.transform(using:AffineTransform(scale:pressed ? 0.68:0.76))
-        arrow.transform(using:AffineTransform(translationByX:24,byY:24))
-        let shadow=NSShadow();shadow.shadowColor=NSColor(calibratedRed:0.63,green:0.77,blue:0.96,alpha:0.55);shadow.shadowBlurRadius=12;shadow.shadowOffset = .zero;shadow.set()
-        NSColor(calibratedRed:0.63,green:0.72,blue:0.85,alpha:pressed ? 0.48:0.22).setFill();arrow.fill()
-        NSColor(calibratedWhite:1,alpha:pressed ? 1:0.85).setStroke();arrow.lineWidth=1.6;arrow.lineJoinStyle = .round;arrow.stroke()
+        let tip=NSPoint(x:24,y:24),scale:CGFloat=1.35
+        let raw=[NSPoint(x:0,y:0),NSPoint(x:0,y:16.5),NSPoint(x:4.6,y:12.6),NSPoint(x:7.4,y:19.8),NSPoint(x:10.2,y:18.5),NSPoint(x:7.3,y:11.6),NSPoint(x:12.6,y:11.6)]
+        arrow.move(to:NSPoint(x:tip.x+raw[0].x*scale,y:tip.y+raw[0].y*scale))
+        for point in raw.dropFirst() {arrow.line(to:NSPoint(x:tip.x+point.x*scale,y:tip.y+point.y*scale))}
+        arrow.close()
+        arrow.lineWidth=3.2;arrow.lineJoinStyle = .round;arrow.lineCapStyle = .round
+        NSColor.white.setStroke();arrow.stroke()
+        NSColor.black.setFill();arrow.fill()
     }
     private func drawRing() {
         // Same anchor as the arrow tip, so positioning math is unchanged.
