@@ -5,6 +5,9 @@ on:
     branches: [main]
   pull_request:
   workflow_dispatch:
+  schedule:
+    # Keep Apple Silicon coverage without depending on scarce hosted ARM64 runners for PRs.
+    - cron: '0 9 * * 1'
 
 permissions:
   contents: read
@@ -17,17 +20,10 @@ concurrency:
 
 jobs:
   check:
-    name: ${{ matrix.os }} / ${{ matrix.command }}
-    runs-on: ${{ matrix.os }}
+    name: ubuntu-24.04 / check
+    if: github.event_name != 'schedule'
+    runs-on: ubuntu-24.04
     timeout-minutes: 15
-    strategy:
-      fail-fast: false
-      matrix:
-        include:
-          - os: ubuntu-24.04
-            command: check
-          - os: macos-15
-            command: check:native
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -37,7 +33,22 @@ jobs:
           node-version: '22'
           cache: npm
       - run: npm ci --ignore-scripts
-      - run: npm run ${{ matrix.command }}
+      - run: npm run check
       - name: Benchmark harness unit tests
-        if: runner.os == 'Linux'
         run: python3 -B -m unittest discover -s tests -p 'test_bench_v2_*.py'
+
+  native:
+    name: macos-15 / check:native
+    if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
+    runs-on: macos-15
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci --ignore-scripts
+      - run: npm run check:native
