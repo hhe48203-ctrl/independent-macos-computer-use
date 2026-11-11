@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync, statSync} from 'node:fs';
+import {verticalGaps} from '../scripts/render-readme-visuals.mjs';
 
 test('readme figures are original, small, and linked from both languages', () => {
   const gif = readFileSync('docs/assets/session-illustration.gif');
@@ -28,4 +29,16 @@ test('readme figures are original, small, and linked from both languages', () =>
   assert.match(chinese, /\.\.\/assets\/architecture\.svg/);
   assert.match(chinese, /\.\.\/assets\/session-illustration\.gif/);
   assert.match(chinese, /不是屏幕录制/);
+});
+
+test('boxed labels split the leftover space so the gaps differ by at most one pixel', () => {
+  for (const box of [26, 28, 30, 40, 52, 308]) {
+    for (const ink of [8, 9, 11, 14, 16, 21]) {
+      if (ink > box) continue;
+      const {gapTop, gapBottom} = verticalGaps(box, ink);
+      assert.ok(Math.abs(gapTop - gapBottom) <= 1, `${box} vs ${ink}: ${gapTop}/${gapBottom}`);
+      assert.equal(gapTop + gapBottom + ink, box);
+      assert.ok(gapTop >= 0 && gapBottom >= 0);
+    }
+  }
 });

@@ -11,12 +11,13 @@ import {spawnSync} from 'node:child_process';
 import {mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync, openSync, writeSync, closeSync, statSync} from 'node:fs';
 import {tmpdir} from 'node:os';
 import {join} from 'node:path';
-import {fileURLToPath} from 'node:url';
+import {fileURLToPath, pathToFileURL} from 'node:url';
 
 const root = fileURLToPath(new URL('..', import.meta.url));
 const assetDir = join(root, 'docs/assets');
-const scratch = mkdtempSync(join(tmpdir(), 'readme-visuals-'));
+let scratch = '';
 let textSerial = 0;
+const centeringNotes = [];
 
 // Real JS API surface. Placeholders match the README: pid, windowId, and the
 // element index are not a live window or a measured result.
@@ -249,7 +250,9 @@ function lineMetrics(font, size) {
   const stored = Math.round(size * 0.95);
   const ascenderPx = Math.round(font.ascender * size / font.unitsPerEm);
   const clippedRows = Math.max(0, -(stored - ascenderPx));
-  const pad = Math.max(4, Math.ceil(size * 0.28));
+  // Glyphs can paint about one pixel outside drawtext's y, so the pad is
+  // larger than the 4px inset the checker requires.
+  const pad = Math.max(6, Math.ceil(size * 0.35));
   const descentPx = Math.ceil(Math.abs(font.descender) * size / font.unitsPerEm);
   const y = pad;
   const baseline = pad + clippedRows + stored;
@@ -287,8 +290,8 @@ function assertGlyphInset(img, label) {
     left: bounds.minX,
     right: img.w - 1 - bounds.maxX,
   };
-  if (slack.top < 2 || slack.bottom < 2 || slack.left < 2 || slack.right < 2) {
-    throw new Error(`${JSON.stringify(label)} is flush with its bitmap (top ${slack.top}, bottom ${slack.bottom}, left ${slack.left}, right ${slack.right})`);
+  if (slack.top < 4 || slack.bottom < 4 || slack.left < 4 || slack.right < 4) {
+    throw new Error(`${JSON.stringify(label)} is within 4px of its bitmap edge (top ${slack.top}, bottom ${slack.bottom}, left ${slack.left}, right ${slack.right})`);
   }
   img.inkTop = bounds.minY;
   img.inkBottom = bounds.maxY;
@@ -339,6 +342,38 @@ function drawTextBitmap(text, font, size, color, tokens) {
 
 function renderText(text, font, size, color) {
   return drawTextBitmap(text, font, size, color, null);
+}
+
+// Split leftover pixels so the two gaps differ by at most one.
+export function verticalGaps(boxHeight, inkHeight) {
+  const slack = boxHeight - inkHeight;
+  const gapTop = Math.floor(slack / 2);
+  const gapBottom = slack - gapTop;
+  return {gapTop, gapBottom};
+}
+
+// Center the visible ink, not the padded bitmap and not the alphabetic baseline.
+// Latin ink is the cap-height or x-height band plus any ascender or descender
+// that actually draws. CJK uses that same full ink box.
+function centerInBox(img, box, entries, alpha = 255) {
+  let relTop = Infinity;
+  let relBottom = -Infinity;
+  for (const entry of entries) {
+    const bitmap = entry.bitmap;
+    const shift = entry.baselineOffset || 0;
+    relTop = Math.min(relTop, shift + bitmap.inkTop - bitmap.baseline);
+    relBottom = Math.max(relBottom, shift + bitmap.inkBottom - bitmap.baseline);
+  }
+  const inkHeight = relBottom - relTop + 1;
+  if (inkHeight > box.h) throw new Error(`"${box.name}" ink is ${inkHeight}px in a ${box.h}px box`);
+  const {gapTop, gapBottom} = verticalGaps(box.h, inkHeight);
+  if (Math.abs(gapTop - gapBottom) > 1) throw new Error(`"${box.name}" gaps ${gapTop} vs ${gapBottom}`);
+  const baselineY = box.y + gapTop - relTop;
+  for (const entry of entries) {
+    place(img, entry.bitmap, entry.penX, baselineY + (entry.baselineOffset || 0), entry.clip ?? null, entry.alpha ?? alpha);
+  }
+  centeringNotes.push({name: box.name, gapTop, gapBottom});
+  return {baselineY, relTop, relBottom, gapTop, gapBottom};
 }
 
 // Place the pen at penX and the alphabetic baseline at baselineY.
@@ -470,7 +505,8 @@ function buildTimeline() {
 
 function drawPill(img, x, y, w, h, fill, stroke, label) {
   roundRect(img, x, y, w, h, 8, fill, stroke, 1);
-  place(img, label, x + (w - label.advance) / 2, y + h / 2 + 1);
+  const inset = stroke ? 1 : 0;
+  centerInBox(img, {name: label.label, y: y + inset, h: h - inset * 2}, [{bitmap: label, penX: x + (w - label.advance) / 2}]);
 }
 
 function compose(fonts) {
@@ -538,7 +574,7 @@ function compose(fonts) {
   roundRect(base, bindX, codeY, bindW, codeH, 14, white, line, 1);
   place(base, ui.schematic, bindX + 18, codeY + 28);
   place(base, ui.bindingsTitle, bindX + 18, codeY + 54);
-  place(base, ui.toolLabel, codeX + 18, codeY + 26);
+  centerInBox(base, {name: 'MCP tool', y: codeY, h: 52}, [{bitmap: ui.toolLabel, penX: codeX + 18}]);
   place(base, ui.footer, 28, 528);
 
   const chipX = codeX + 18 + ui.toolLabel.advance + 12;
@@ -554,31 +590,42 @@ function compose(fonts) {
       const toolText = frame.tool === 'js' ? ui.js : ui.reset;
       const toolFill = frame.tool === 'js' ? teal : amber;
       const toolW = Math.ceil(toolText.advance + 22);
-      roundRect(img, chipX, codeY + 13, toolW, 26, 7, toolFill);
-      place(img, toolText, chipX + 11, codeY + 26);
+      const toolBoxY = codeY + Math.floor((52 - 26) / 2);
+      roundRect(img, chipX, toolBoxY, toolW, 26, 7, toolFill);
+      centerInBox(img, {name: frame.tool, y: toolBoxY, h: 26}, [{bitmap: toolText, penX: chipX + 11}]);
       const sceneLabel = labels[frame.label];
-      place(img, sceneLabel, codeX + codeW - 18 - sceneLabel.advance, codeY + 26);
+      centerInBox(img, {name: frame.label, y: codeY, h: 52}, [{bitmap: sceneLabel, penX: codeX + codeW - 18 - sceneLabel.advance}]);
 
+      const codeBody = {name: 'code panel', y: codeY + 52, h: codeH - 52};
       if (frame.reset) {
-        place(img, ui.arguments, codeX + (codeW - ui.arguments.advance) / 2, codeY + 168);
-        place(img, ui.emptyArgs, codeX + (codeW - ui.emptyArgs.advance) / 2, codeY + 214);
+        const reset = centerInBox(img, codeBody, [
+          {bitmap: ui.arguments, penX: codeX + (codeW - ui.arguments.advance) / 2, baselineOffset: 0},
+          {bitmap: ui.emptyArgs, penX: codeX + (codeW - ui.emptyArgs.advance) / 2, baselineOffset: 48},
+        ]);
+        void reset;
       } else {
-        const bodyTop = codeY + 52;
-        const bodyH = codeH - 52;
-        const gap = 40;
-        const firstBaseline = bodyTop + (bodyH - gap) / 2;
+        const lineGap = 40;
+        const block = centerInBox(img, codeBody, frame.lines.map((line, lineIndex) => ({
+          bitmap: codeLines[line],
+          penX: codeX + 28,
+          baselineOffset: lineIndex * lineGap,
+          clip: 0,
+          alpha: 0,
+        })));
         frame.lines.forEach((line, lineIndex) => {
           const shown = frame.typed[lineIndex] ?? 0;
           if (shown <= 0 && !(lineIndex === 0 && frame.typed.every((count) => count === 0))) return;
           const bitmap = codeLines[line];
           const clip = lineStops[line][Math.min(shown, line.length)];
-          const baseline = firstBaseline + lineIndex * gap;
+          const baseline = block.baselineY + lineIndex * lineGap;
           place(img, bitmap, codeX + 28, baseline, shown <= 0 ? 0 : clip + 1);
           const caretOn = frame.typing || frame.holdIndex % 8 < 5;
           const caretLine = (frame.typed[1] ?? 0) > 0 ? 1 : 0;
           if (caretOn && lineIndex === caretLine) {
             const caretX = Math.round(codeX + 28 + (lineStops[line][Math.min(frame.typed[lineIndex] ?? 0, line.length)] ?? 0));
-            fillRoundRect(img, caretX, baseline - 16, 2, 20, 1, hex('#8fd9cf'));
+            const caretTop = baseline + bitmap.inkTop - bitmap.baseline;
+            const caretH = Math.max(2, bitmap.inkBottom - bitmap.inkTop);
+            fillRoundRect(img, caretX, caretTop, 2, caretH, 1, hex('#8fd9cf'));
           }
         });
       }
@@ -590,8 +637,13 @@ function compose(fonts) {
         const fill = chip.name === 'app' && chip.reused ? tealSoft : white;
         const stroke = chip.name === 'app' && chip.reused ? teal : line;
         roundRect(img, bindX + 18, chipY, chipW, 30, 8, fill, stroke, 1);
-        place(img, glyph, bindX + 29, chipY + 17, null, Math.round(chip.alpha * 255));
-        if (chip.reused) place(img, ui.reused, bindX + 18 + chipW + 8, chipY + 17, null, Math.round(chip.alpha * 255));
+        const chipAlpha = Math.round(chip.alpha * 255);
+        const placed = centerInBox(img, {name: chip.name, y: chipY + 1, h: 28}, [{bitmap: glyph, penX: bindX + 29, alpha: chipAlpha}]);
+        if (chip.reused) {
+          const center = placed.baselineY + (placed.relTop + placed.relBottom) / 2;
+          const reusedMid = (ui.reused.inkTop + ui.reused.inkBottom) / 2 - ui.reused.baseline;
+          place(img, ui.reused, bindX + 18 + chipW + 8, center - reusedMid, null, chipAlpha);
+        }
         chipY += 40;
       }
       const statusBitmaps = frame.status.flatMap((item) => statuses[item]);
@@ -610,8 +662,11 @@ function compose(fonts) {
         const fill = step.on ? (step.warn ? amber : teal) : white;
         const stroke = step.on ? null : line;
         roundRect(img, stepX, 474, w, 30, 8, fill, stroke, 1);
-        place(img, step.num, stepX + 12, 489);
-        place(img, step.label, stepX + 12 + step.num.advance + 8, 489);
+        const inset = stroke ? 1 : 0;
+        centerInBox(img, {name: `step ${step.n}`, y: 474 + inset, h: 30 - inset * 2}, [
+          {bitmap: step.num, penX: stepX + 12},
+          {bitmap: step.label, penX: stepX + 12 + step.num.advance + 8},
+        ]);
         stepX += w + 10;
       }
 
@@ -622,6 +677,8 @@ function compose(fonts) {
   } finally {
     closeSync(raw);
   }
+  const unique = new Map(centeringNotes.map((note) => [note.name, note]));
+  console.log('centering', [...unique.values()]);
   return {rawPath, frames: frames.length, previews};
 }
 
@@ -656,7 +713,7 @@ function renderSocial(fonts) {
     const glyph = renderText(label, font, 18, color);
     const w = Math.ceil(glyph.advance + 28);
     roundRect(img, chipX, 436, w, 40, 10, fill);
-    place(img, glyph, chipX + 14, 456);
+    centerInBox(img, {name: label, y: 436, h: 40}, [{bitmap: glyph, penX: chipX + 14}]);
     chipX += w + 12;
   }
   place(img, note, x, 530);
@@ -683,7 +740,10 @@ function writeGif(rawPath, dest, frames) {
   console.log(`${dest} ${statSync(dest).size} bytes, ${frames} frames`);
 }
 
+const isDirectRun = process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href;
+if (isDirectRun) {
 const previewDir = process.argv.includes('--preview') ? process.argv[process.argv.indexOf('--preview') + 1] : '';
+scratch = mkdtempSync(join(tmpdir(), 'readme-visuals-'));
 const fonts = {
   mono: loadFont(findFont([
     '/usr/share/fonts/truetype/jetbrains-mono/JetBrainsMono-Regular.ttf',
@@ -724,4 +784,5 @@ try {
   }
 } finally {
   rmSync(scratch, {recursive: true, force: true});
+}
 }
