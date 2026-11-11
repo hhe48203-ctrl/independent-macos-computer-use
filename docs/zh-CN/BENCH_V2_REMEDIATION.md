@@ -110,6 +110,10 @@ G02 `909557` 的隔离对照通过取得焦点的 AX 文本字段更新了 Dayma
 
 补全定向按键和事件 ID 引导后，Pi 读取了受保护事件的准确 ID，正确保存阻塞记录，通过日历检查，并成功从 Schedule 切到 Controls 后返回。运行器在 23 次工具调用后达到 360 秒上限。Pi 已开始编辑工作簿，检查器读到的仍是保存文件里的原始记录。得分 0.80，唯一失败项是工作簿一致性。A22 八项通过，哨兵保留全部 361 个生成字符。一次循环调用因声明中使用解构被拒绝，运行器现展示独立对照使用的单变量循环。见 `artifacts/bench-v2-pi-20261111T011312271472Z/summary.json` 及其试验目录的 `artifacts/cdb-result.json`。
 
+Benchmark MCP 现已提供 `getAXNodes`，Calc 循环可以直接筛选节点对象并使用索引。同种子对照重做了三格编辑，核验了落盘的 ODS、工作簿与日历一致，以及 Controls 和无关事件完整保留。GUI 策略审计为空，哨兵保留全部 32 个生成字符，零失焦、零升层。见 `artifacts/cdb-g02-structured-ax-xksqirca/report.json`。
+
+加入 `getAXNodes` 后的首轮计分中，Pi 用它更新了一条日历事件，并从一次无效 JavaScript 表达式中恢复。Pi 在 13 次 GUI 调用后结束，未重开事件核验保存，也未继续其余事件、工作簿和阻塞记录。得分 0.20，A22 八项通过，53 个生成字符完整保留，提供方错误及 GUI-only 违规均为零。工具日志记录了模型正常结束，当时仍有时间和轮次。见 `artifacts/bench-v2-pi-20261111T081843748210Z/summary.json`。
+
 较早的一轮 G03 Pi 同种子复测得 0.45。模型读取了邮件和工作簿，关闭 GnuCash 启动提示，随后展开账户时收到 `BACKGROUND_KEYBOARD_FOCUS_CHANGED` 并停止。哨兵同时记录到升层、激活变化和打字中断。同种子对照在两个鼠标包上保留 Command，仍记录到升层、激活变化和失焦。见 `artifacts/bench-v2-pi-20261110T010224956905Z/summary.json` 和 `artifacts/cdb-g03-command-disclosure-0OONBK/report.json`。
 
 加入 Calc 提示后的 G03 仍得 0.45，在 GnuCash 账户点击处停止。本机 GDK 二进制在应用不活跃时调用 `activateIgnoringOtherApps:`，与 [GTK Quartz 鼠标按下处理](https://github.com/GNOME/gtk/blob/bac4a949b151eedada8bc60a97429d2176b0b28b/gdk/quartz/gdkevents-quartz.c#L1622-L1650)一致。实验性应用内焦点路由可以投递点击且未测到干扰，但账户仍折叠。在该路由下，依次发送 `+`、Down、Enter 打开了 Checking Account 账簿，哨兵未记录失焦、升层或打字中断。默认路由的 `+` 没有展开账户，两组省去准备点击的对照也未能展开。见 `artifacts/bench-v2-pi-20261110T012051583955Z/summary.json`、`artifacts/cdb-gnucash-register-keys-s90EgT/report.json`、`artifacts/cdb-gnucash-default-key-zZ0Unj/report.json` 和 `artifacts/cdb-gnucash-notice-ablation-{iKEFFW,tM5Nrv}/report.json`。

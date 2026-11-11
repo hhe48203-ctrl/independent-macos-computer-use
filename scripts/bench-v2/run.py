@@ -362,14 +362,17 @@ def run_agent(pi, auth, catalog, targets, prompt, artifacts, turns, seconds, des
         if len(targets) > 1:
             instructions += (
                 " Bind selected windows with cua.getApp({pid,windowId}, {emit:false}) to suppress automatic AX output. "
-                "Inspect current state with getAXState({disableDiffing:true,emit:false}) and use nodeRepl.write to show the relevant lines. "
+                "Inspect (await app.getAXNodes({emit:false})).nodes. Filter by role, title, label or value and print only the relevant fields. "
+                "Use node.index for GUI actions. "
                 "Use await app.getScreenshot(); undefined; to emit a screenshot without echoing its byte array. "
                 "Let tool errors end the call. Use the next call to observe the new state. "
                 "Use a single variable in each for-of loop, for example for (const item of items) with item[0] and item[1]. "
-                " Track the required source reads, updates and save checks across all task windows. "
+                "Track the required source reads, updates and save checks across all task windows. "
+                "After each verified update, continue to the next unfinished step while you have a supported GUI route. "
+                "Correct a rejected JavaScript expression and retry after observing current state. "
                 "If one step is blocked, continue the independent steps that you can verify. "
                 "If a save has no visible confirmation, reopen the item and read its saved fields before retrying. "
-                "Before ending, verify every required destination or state which step blocked it."
+                "Before ending, check each required destination against the task and identify the observed blocker for any unfinished step."
             )
         if "com.trycua.cdbbench.daymark-calendar" in owned_bundles:
             instructions += (
