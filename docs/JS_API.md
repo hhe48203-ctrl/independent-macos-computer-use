@@ -112,10 +112,10 @@ Two styles are selected by `CU_AGENT_CURSOR_STYLE`; anchor, motion and lifecycle
 
 | Style | Appearance | Purpose |
 | --- | --- | --- |
-| `ring` (default) | amber ring, crosshair ticks and a white center dot, no glow | shape and color do not read as a pointer, so it stays distinguishable from Codex's own cursor |
-| `arrow` | the light outline, translucent small arrow and soft glow this project drew originally | the historical v1 look, selected explicitly when preferred |
+| `arrow` (default) | standard macOS pointer: black fill, white outline, tip at the action point, and a small highlight while pressed | the cursor viewers follow in a recording |
+| `ring` | amber ring, crosshair ticks and a white center dot, no glow | shape and color do not read as a pointer, so it stays distinguishable from another app's cursor |
 
-An unknown value falls back to the default `ring`; `cursorState` reports the effective `style` and `styleDescription`.
+An unknown value falls back to the default `arrow`; `cursorState` reports the effective `style` and `styleDescription`.
 
 `CU_AGENT_CURSOR_VISIBILITY=target` (default) hides the cursor when its target point is covered, clips the complete glyph/glow to exposed target regions, and keeps motion and input running while hidden. `always` preserves the earlier top-level progress overlay. Unknown values fall back to `target`. The setting is read at helper startup; reconnect the MCP client after changing its environment. `cursorState` reports `visibilityMode`, `visibilityReason`, global logical-point `clipRects`, `occluderCount` and `occlusionGeometry`. These are drawing diagnostics, not input receipts. See [visibility rules and verification scope](CURSOR_OCCLUSION.md).
 
