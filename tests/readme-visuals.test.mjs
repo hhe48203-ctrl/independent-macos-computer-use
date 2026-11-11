@@ -29,6 +29,20 @@ test('readme figures are original, small, and linked from both languages', () =>
   assert.match(chinese, /\.\.\/assets\/architecture\.svg/);
   assert.match(chinese, /\.\.\/assets\/session-illustration\.gif/);
   assert.match(chinese, /不是屏幕录制/);
+  const demo = readFileSync('docs/assets/demo.gif');
+  assert.equal(demo.subarray(0, 6).toString(), 'GIF89a');
+  const demoWidth = demo.readUInt16LE(6);
+  const demoHeight = demo.readUInt16LE(8);
+  assert.ok(demoWidth >= 800 && demoWidth <= 960, `demo width ${demoWidth}`);
+  assert.ok(demoHeight >= 500 && demoHeight <= 800, `demo height ${demoHeight}`);
+  assert.ok(demo.length < 3 * 1024 * 1024, `demo gif is ${demo.length} bytes`);
+  let demoFrames = 0;
+  for (let i = 0; i < demo.length - 1; i++) if (demo[i] === 0x21 && demo[i + 1] === 0xF9) demoFrames++;
+  assert.ok(demoFrames >= 96, `expected a real-time demo, saw ${demoFrames} frames`);
+  assert.match(english, /docs\/assets\/demo\.gif/);
+  assert.match(english, /Ledger Lantern Mail/);
+  assert.match(chinese, /\.\.\/assets\/demo\.gif/);
+  assert.match(chinese, /Ledger Lantern Mail/);
 });
 
 test('boxed labels split the leftover space so the gaps differ by at most one pixel', () => {
