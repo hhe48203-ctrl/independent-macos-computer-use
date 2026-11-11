@@ -35,6 +35,8 @@ Pass `{emit:false}` to `getApp` to suppress its initial tree and automatic AX ou
 
 `getAXState` and `getAXStateAndScreenshot` accept `maxNodes` (1–2000, default 500) and `maxDepth` (1–30, default 16) for a single observation. Use `emit:false` to filter the returned text before displaying relevant lines from a large tree.
 
+`getAXNodes({emit:false,maxNodes:500,maxDepth:16})` returns `{nodes,truncated,coordinates}` for a full or bounded AX-only observation. Each node has `index`, `parentIndex` (`null` at the root), `depth` and its available AX attributes. Filter by fields such as `role`, `title`, `label` or `value` and use the latest `index` for actions. This observation refreshes indices and applies the binding's AX-only coordinate rules. The next text diff still compares against the last text observation. Pass `emit:false` to keep the entire result out of the displayed output.
+
 `getScreenshot` returns a PNG Buffer, and `getAXStateAndScreenshot` returns `{state,coordinates,screenshot?}`. Both display as MCP image blocks by default; `emit:false` only returns them. `nodeRepl.write(value)` emits text and `nodeRepl.emitImage(PNG or JPEG bytes)` emits an image. Ending a call with `undefined` avoids a redundant value inspection.
 
 An ordinary window screenshot captures the bound window alone. A separate child window can otherwise expand the captured image and invalidate its coordinate scale. Bind a separate dialog by its own PID and window ID when it appears in `listWindows`. The explicit hover capture can include owned transient windows within the bound frame.

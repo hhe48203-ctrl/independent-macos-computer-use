@@ -388,8 +388,9 @@ def run_agent(pi, auth, catalog, targets, prompt, artifacts, turns, seconds, des
             instructions += (
                 " In LibreOffice Calc, use the observed cell index with performSecondaryAction(index, 'focus') "
                 "and verify the selected address in the Name Box. The cell's AXValue setter may leave it unchanged. "
-                "For toolbar controls and the editor, use getAXState({maxNodes:2000,maxDepth:5,disableDiffing:true,emit:false}) "
-                "and print just the relevant lines. Use performSecondaryAction on the Formula button with action 'press'. "
+                "For toolbar controls and the editor, use (await app.getAXNodes({maxNodes:2000,maxDepth:5,emit:false})).nodes "
+                "and print just the relevant controls. Use node.index for GUI actions. "
+                "Use performSecondaryAction on the Formula button with action 'press'. "
                 "Re-observe the unique focused AXTextArea and its current selection, then use typeText(text, {target:index}) "
                 "and verify the editor value. " + calc_commit +
                 "Verify the actual cell value. Look for the Save AXMenuButton in a shallow AX tree and use its AX press to save."
@@ -402,8 +403,7 @@ def run_agent(pi, auth, catalog, targets, prompt, artifacts, turns, seconds, des
                     "Time values can display with seconds and AM/PM. Compare the logical time on readback. "
                     "Use app.pressKey('cmd+s', {strategy:'appkit'}) to save after leaving the editor. "
                     "For several verified edits in the same row, use an array of observed addresses and desired values "
-                    "with an inline for-of loop in one JS call. Use string matching, a regex literal or RegExp(pattern). "
-                    "The JS subset rejects new RegExp and calls to named local helpers. "
+                    "with an inline for-of loop in one JS call. Find cells with nodes.filter(n=>n.role==='AXTextField'&&n.title===address). "
                     "For each cell, take fresh AX observations, check the intended address in the Name Box, and check for a unique focused editor. "
                     "If the editor contains text, select the exact current value and verify the selection before typing. "
                     "Check the editor value before committing. Read back the committed cell and stop the loop at the first failed check. "

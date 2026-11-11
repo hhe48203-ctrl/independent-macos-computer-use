@@ -11,6 +11,7 @@ test('benchmark JS allows ordinary REPL actions and filters out process, network
   validate('const shown = (await cua.listWindows()).filter(w => w.onScreen);');
   validate('const update = await app.setValue(5, "sample"); nodeRepl.write(update.valueVerified);');
   validate('await (async () => {const s = await app.getAXState({emit:false}); nodeRepl.write(s.split("\\n").filter(line => line.includes("Button")));})();');
+  validate('const tree = await app.getAXNodes({emit:false,maxNodes:1000,maxDepth:5}); const cells = tree.nodes.filter(n => n.role === "AXTextField"); nodeRepl.write(cells.map(n => [n.index,n.title,n.value]));');
   validate('const edits = [[5, "sample"]]; for (const edit of edits) { await app.setValue(edit[0], edit[1]); }');
   validate('nodeRepl.write(RegExp("A1").test("A1"));');
   assert.throws(() => validate('new RegExp("A1")'), {code:'BENCH_JS_SUBSET'});

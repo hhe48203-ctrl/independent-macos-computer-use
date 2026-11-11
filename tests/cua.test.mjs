@@ -48,13 +48,18 @@ test('app binding, AX diffs and screenshot coordinate mappings fail closed on am
 });
 
 test('quiet bindings refresh element references and keep changes visible on explicit AX reads',async()=>{
-  const outputs=[],clicks=[];
+  const outputs=[],clicks=[];let observations=0;
   const window={pid:12,windowId:20,bundleId:'io.test',frame:{width:400,height:300}};
-  const snapshotId=()=>`00000000-0000-4000-8000-${String(clicks.length).padStart(12,'0')}`;
+  const snapshotId=()=>`00000000-0000-4000-8000-${String(observations).padStart(12,'0')}`;
   const cua=createCua({emit:result=>outputs.push(result),request:async(method,args)=>{
     if(method==='apps')return {apps:[]};
     if(method==='windows')return {windows:[window]};
-    if(method==='snapshot')return {snapshotId:snapshotId(),window,nodes:[{id:'e0',depth:0,label:`Clicked ${clicks.length} times`}]};
+    if(method==='snapshot'){
+      observations++;
+      const nodes=[{id:'e0',depth:0,label:`Clicked ${clicks.length} times`}];
+      if(args.maxDepth===2)nodes.push({id:'e1',parent:'e0',depth:1,role:'AXButton',title:'Go'});
+      return {snapshotId:snapshotId(),window,nodes,truncated:args.maxNodes===2};
+    }
     if(method==='click')clicks.push(args.snapshotId);
     return {ok:true};
   }});
@@ -64,11 +69,24 @@ test('quiet bindings refresh element references and keep changes visible on expl
   assert.match(initial,/AX tree:[\s\S]*Clicked 0 times/);
   const before=snapshotId();
   await app.click(0);
-  const refreshed=snapshotId();
+  const automatic=snapshotId();
   await app.click(0);
-  assert.deepEqual(clicks,[before,refreshed]);
+  const outputCount=outputs.length;
+  const {nodes,truncated,coordinates}=await app.getAXNodes({emit:false,maxDepth:2,maxNodes:2});
+  assert.deepEqual(nodes,[
+    {index:0,parentIndex:null,depth:0,label:'Clicked 2 times'},
+    {index:1,parentIndex:0,depth:1,role:'AXButton',title:'Go'}
+  ]);
+  assert.equal(truncated,true);
+  assert.equal(coordinates.unit,'logical points');
+  assert.equal(outputs.length,outputCount);
+  const structured=snapshotId();
+  await app.click(nodes[1].index);
+  assert.deepEqual(clicks,[before,automatic,structured]);
   assert.ok(!outputs.some(result=>result.text?.startsWith('Window ')));
-  assert.match(await app.getAXState(),/AX diff[\s\S]*Clicked 2 times/);
+  const diff=await app.getAXState();
+  assert.match(diff,/AX diff[\s\S]*Clicked 3 times/);
+  assert.doesNotMatch(diff,/removed/);
 });
 
 test('dialog bindings select exact windows and preserve ordinary app-name ambiguity checks', async () => {
@@ -104,10 +122,11 @@ test('original mode preserves measured pixels through AX readbacks, refreshes af
   assert.equal(outputs.some(v=>v.type==='image'),false,'initial hidden capture must not emit an image');
   assert.deepEqual(await app.getCoordinateInfo({emit:false}),{mode:'original',unit:'screenshot pixels',origin:'window top-left',scaleX:2,scaleY:2,range:{minX:0,minY:0,maxXExclusive:800,maxYExclusive:600},axFrameUnit:'logical points'});
   await app.getAXState({emit:false});await app.click([100,80]);await app.click([100,80]);
+  assert.equal((await app.getAXNodes({emit:false})).coordinates.scaleX,2);
   assert.ok(calls.filter(c=>c.method==='click').every(c=>c.args.x===50&&c.args.y===40));
   assert.equal(calls.filter(c=>c.method==='snapshot'&&c.args.screenshot).length,1);
   width=500;await assert.rejects(app.click([100,80]),{code:'STALE_GEOMETRY'});
-  await app.getAXState({emit:false});assert.equal((await app.getCoordinateInfo({emit:false})).range.maxXExclusive,1000);
+  assert.equal((await app.getAXNodes({emit:false})).coordinates.range.maxXExclusive,1000);
   await assert.rejects(app.move([1000,0]),{code:'INVALID_COORDINATE'});
   width=600;failCapture=true;await assert.rejects(app.getAXState(),{code:'COORDINATES_UNAVAILABLE'});
   await assert.rejects(app.move([10,10]),{code:'COORDINATES_UNAVAILABLE'});

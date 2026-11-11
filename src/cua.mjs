@@ -98,7 +98,7 @@ export function createCua({request, emit}) {
       this.#snapshot=snap; this.#dimensions=snap.window.frame;
       if(snap.screenshot){this.#unit='screenshot pixels';this.#scale={x:snap.screenshot.scaleX,y:snap.screenshot.scaleY};this.#maxDimension=opts.maxDimension??this.#maxDimension;}
       else if(this.#coordinateMode==='adaptive'){this.#scale={x:1,y:1};this.#unit='logical points';}
-      if(!render) return;
+      if(!render) return snap;
       const coordinates=this.#coordinates();
       const lines=snap.nodes.map(n=>{const {id,depth,parent,...rest}=n;return `${'  '.repeat(depth)}[${id.slice(1)}] ${JSON.stringify(rest)}`;});
       const header=`Window ${this.windowId} pid ${this.pid} ${JSON.stringify(snap.window.title??'')} (${snap.window.frame.width}x${snap.window.frame.height} logical points)${snap.truncated?' [TRUNCATED]':''}\nCoordinates ${JSON.stringify(coordinates)}`;
@@ -114,6 +114,14 @@ export function createCua({request, emit}) {
       return {state,coordinates,...(screenshot&&snap.screenshot?{screenshot:Buffer.from(snap.screenshot.data,'base64')}:{})};
     }
     async getAXState(opts) {return (await this.#observe(false,opts)).state;}
+    async getAXNodes(opts={}) {
+      options(opts,['emit','maxNodes','maxDepth']);
+      const snap=await this.#observe(false,opts,false);
+      const nodes=snap.nodes.map(({id,parent,...attributes})=>({
+        index:Number(id.slice(1)),parentIndex:parent===undefined?null:Number(parent.slice(1)),...attributes
+      }));
+      return display({nodes,truncated:!!snap.truncated,coordinates:this.#coordinates()},opts);
+    }
     async getAXStateAndScreenshot(opts) {return this.#observe(true,opts);}
     #recordScreenshot(s,opts) {
       this.#unit='screenshot pixels';this.#scale={x:s.scaleX,y:s.scaleY};this.#dimensions=s.frame;this.#maxDimension=opts.maxDimension??this.#maxDimension;
