@@ -685,16 +685,22 @@ struct HeldBackgroundMouse {
             try inputObservation.validate()
             try assertBackgroundIsolation(pid,wid,orderBefore,foregroundBefore)
             cursorTracksPointer=true
-            try backgroundMouse(.leftMouseDown,from,.left,1,pid,wid,frame,pointerDelivery)
-            var last=from
             let dragSteps=max(6,Int(ceil(duration*60)))
+            let interval=UInt64(duration/Double(dragSteps+1)*1e9)
+            try backgroundMouse(.leftMouseDown,from,.left,1,pid,wid,frame,pointerDelivery)
+            // AppKit can react to mouse-down before it receives any motion.
+            // Give that response time to arrive and check stacking before
+            // sending each motion. The existing cleanup releases on error.
+            try await Task.sleep(nanoseconds:interval)
+            var last=from
             for i in 1...dragSteps {
                 try inputObservation.validate()
+                try assertBackgroundIsolation(pid,wid,orderBefore,foregroundBefore)
                 let (_,_,current) = try target(p)
                 guard current == frame else { throw BridgeError("WINDOW_MOVED","Window moved during drag; stopped without following the global pointer") }
                 last=CGPoint(x:from.x+(to.x-from.x)*Double(i)/Double(dragSteps),y:from.y+(to.y-from.y)*Double(i)/Double(dragSteps))
                 try backgroundMouse(.leftMouseDragged,last,.left,1,pid,wid,frame,pointerDelivery)
-                try await Task.sleep(nanoseconds:UInt64(duration/Double(dragSteps)*1e9))
+                try await Task.sleep(nanoseconds:interval)
             }
             try backgroundMouse(.leftMouseUp,last,.left,1,pid,wid,frame,pointerDelivery)
             result=["ok":true,"mode":"background","method":"window-scoped CGEvent.postToPid","verificationRequired":true]
@@ -748,7 +754,15 @@ struct HeldBackgroundMouse {
         } catch {
             if let held=heldBackgroundMouse,held.pid==pid,held.windowID==wid {
                 let up:CGEventType=held.button == .left ? .leftMouseUp:held.button == .right ? .rightMouseUp:.otherMouseUp
-                try? backgroundMouse(up,held.point,held.button,1,held.pid,held.windowID,held.frame)
+                // Keep the same routing for a live press. A plain mouse-up
+                // can be lost when AppKit has only received the mouse-down.
+                if !Task.isCancelled,!shuttingDown,let pointerDelivery {
+                    try? backgroundMouse(up,held.point,held.button,1,held.pid,held.windowID,held.frame,pointerDelivery)
+                    if heldBackgroundMouse == nil { try? await pointerDelivery.waitForDelivery() }
+                }
+                if heldBackgroundMouse != nil {
+                    try? backgroundMouse(up,held.point,held.button,1,held.pid,held.windowID,held.frame)
+                }
             }
             appKitSession?.finish();activeAppKitSession=nil
             if appKitSession != nil {try? await Task.sleep(nanoseconds:80_000_000)}

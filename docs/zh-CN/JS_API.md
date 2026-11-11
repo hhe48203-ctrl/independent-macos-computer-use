@@ -86,6 +86,8 @@ let replacement=await app.reconnect({pid:789,windowId:1011});
 
 对非前台窗口，若 `drag` 的起点命中具有可写 `AXSelectedRows` 的原生表格普通行，或命中该行旁一个逻辑点宽的滚动区边框，调用会在发送鼠标事件前返回 `BACKGROUND_NATIVE_ROW_DRAG_UNSUPPORTED`。AppKit 拖放跟踪可能在拖影出现前夺取键盘焦点，从边框开始拖动也可能让窗口升层。若应用提供移动行的控件，可通过该控件操作。
 
+拖动过程中，驱动在每个移动事件前检查窗口层级。检测到层级变化后，停止发送移动事件，并尝试向原目标释放鼠标按钮。重试前应重新观察当前状态。
+
 修饰键点击示例：`await app.click([200,400],{key:'super+shift',durationMs:250})`。key 仅接受 cmd/command/meta/super、shift、ctrl/control、alt/option，以 `+` 连接；支持坐标和最新元素索引。修饰键或时长选项强制后台事件，`strategy:'ax'` 会拒绝，auto 会选择 event。真实 Command 标志保留给目标，路由临时添加的 Command 仅在未请求时移除。
 
 click/pressKey 的 `durationMs` 为0..5000毫秒，控制每个 down/up 对之间的间隔；显式 key duration（含0）禁用 CMD+A 的 AX 替代。不模拟系统自动重复，也不生成全局修饰键 down/up。取消、重置、目标移动会尝试仅向原目标释放已按住的键或按钮；应用退出或强制硬终止无法保证收件。实验 AppKit 路径的局部通知会覆盖所请求的按住区间，长按没有新增真人 IME 并用验收。
