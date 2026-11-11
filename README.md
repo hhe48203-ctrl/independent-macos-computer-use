@@ -4,6 +4,10 @@
 
 Script macOS apps from a persistent JavaScript session — through just two MCP tools.
 
+![Public path from an MCP client through the js and js_reset tools, a persistent Node.js REPL, and the Swift helper, to macOS Accessibility, screenshots, OCR, and background-first input.](docs/assets/architecture.svg)
+
+Public path from the MCP client through `js` and `js_reset` into one persistent REPL and the Swift helper. Internal pieces are named in the [architecture notes](docs/ARCHITECTURE.md).
+
 Variables, functions, and app handles persist across tool calls. Observe a window in one call, then continue working with the same objects in the next. A native Swift helper provides Accessibility trees, screenshots, OCR, and background-first interaction.
 
 Inspired by Codex-style JavaScript computer-use sessions. Independent implementation; not an official Codex integration. Runs as a trusted local Node.js process, not a security sandbox.
@@ -78,6 +82,10 @@ pi --approve --extension builtin:mcp
 That setup leaves synthetic AppKit activation off, including when the legacy `--background-events` flag is passed. `--experimental-appkit-focus` is the explicit opt-in for the older activation route. See [input isolation](docs/INPUT_ISOLATION.md).
 
 ## Persistent session
+
+![API illustration: one js call binds state and app, a later js call reuses app, and js_reset clears those bindings. Not a screen recording.](docs/assets/session-illustration.gif)
+
+API illustration of the calls below, not a screen recording. `pid`, `windowId`, and index `7` are placeholders, and the figure shows no app output.
 
 The first `js` call reads the live inventory and binds one window. `state.windows` entries include `pid`, `windowId`, `title`, `app`, `bundleId`, `path`, `frame`, and `onScreen`. `cua.listWindows()` returns that window array by itself. Copy one real pair. The constants below are placeholders, not a window on your Mac.
 

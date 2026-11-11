@@ -4,6 +4,10 @@
 
 用持久的 JavaScript 会话编写 macOS 应用脚本——只需两个 MCP 工具。
 
+![公开路径：MCP 客户端经 js 与 js_reset 进入持久的 Node.js REPL，再由 Swift helper 使用 macOS Accessibility、截图、OCR 和以后台为先的输入。](../assets/architecture.svg)
+
+公开路径：MCP 客户端经 `js` 和 `js_reset` 进入同一个持久 REPL，再由 Swift helper 接触 macOS。内部结构见[架构说明](../ARCHITECTURE.md)（仅英文）。
+
 变量、函数和应用句柄在多次工具调用之间保留。一次调用观察窗口，下一次调用继续使用同一批对象。原生 Swift helper 提供 Accessibility 树、截图、OCR，以及以后台为先的交互。
 
 灵感来自 Codex 风格的 JavaScript computer-use 会话。这是独立实现，不是官方 Codex 集成。它作为可信的本地 Node.js 进程运行，不是安全沙箱。
@@ -78,6 +82,10 @@ pi --approve --extension builtin:mcp
 该安装保持合成 AppKit 激活关闭，即使传入旧的 `--background-events` 参数也是如此。`--experimental-appkit-focus` 才会显式打开旧的激活路径。见[输入隔离](INPUT_ISOLATION.md)。
 
 ## 持久会话
+
+![API 示意：一次 js 调用绑定 state 和 app，之后的 js 调用继续使用 app，js_reset 清除这些绑定。不是屏幕录制。](../assets/session-illustration.gif)
+
+下面这段调用的 API 示意，不是屏幕录制。`pid`、`windowId` 和索引 `7` 都是占位符，图中没有应用输出。
 
 第一次 `js` 调用读取当前清单并绑定一个窗口。`state.windows` 的每一项包含 `pid`、`windowId`、`title`、`app`、`bundleId`、`path`、`frame` 和 `onScreen`。`cua.listWindows()` 只返回这个窗口数组。请复制一对真实的值。下面的常量是占位符，不是你这台 Mac 上的窗口。
 
