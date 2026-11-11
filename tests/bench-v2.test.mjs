@@ -11,6 +11,10 @@ test('benchmark JS allows ordinary REPL actions and filters out process, network
   validate('const shown = (await cua.listWindows()).filter(w => w.onScreen);');
   validate('const update = await app.setValue(5, "sample"); nodeRepl.write(update.valueVerified);');
   validate('await (async () => {const s = await app.getAXState({emit:false}); nodeRepl.write(s.split("\\n").filter(line => line.includes("Button")));})();');
+  validate('const edits = [[5, "sample"]]; for (const edit of edits) { await app.setValue(edit[0], edit[1]); }');
+  validate('nodeRepl.write(RegExp("A1").test("A1"));');
+  assert.throws(() => validate('new RegExp("A1")'), {code:'BENCH_JS_SUBSET'});
+  assert.throws(() => validate('for (const [index, value] of edits) { await app.setValue(index, value); }'), {code:'BENCH_JS_SUBSET'});
   for (const code of [
     'await import("node:fs")', 'require("child_process")', 'nodeRepl.env', 'process.env',
     'cua.launchApp("com.apple.Terminal")', 'app["constructor"]', 'const a = () => 1; a.constructor("return process")()',

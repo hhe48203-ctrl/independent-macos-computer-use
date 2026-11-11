@@ -363,6 +363,7 @@ def run_agent(pi, auth, catalog, targets, prompt, artifacts, turns, seconds, des
                 "Inspect current state with getAXState({disableDiffing:true,emit:false}) and use nodeRepl.write to show the relevant lines. "
                 "Use await app.getScreenshot(); undefined; to emit a screenshot without echoing its byte array. "
                 "Let tool errors end the call. Use the next call to observe the new state. "
+                "Use a single variable in each for-of loop, for example for (const item of items) with item[0] and item[1]. "
                 " Track the required source reads, updates and save checks across all task windows. "
                 "If one step is blocked, continue the independent steps that you can verify. "
                 "If a save has no visible confirmation, reopen the item and read its saved fields before retrying. "
@@ -373,7 +374,8 @@ def run_agent(pi, auth, catalog, targets, prompt, artifacts, turns, seconds, des
                 " In Daymark Calendar, click the observed event button with {strategy:'ax'} and verify its ID in the editor. "
                 "If the editor is offscreen, scroll the current AXWebArea down and observe again. For each visible text field, "
                 "click it, verify focused:true, select its exact current text if nonempty with selectText, then typeText with the current field index. "
-                "Verify the new value, click Update event with {strategy:'ax'}, then reopen the event to verify the saved fields."
+                "Verify the new value, click Update event with {strategy:'ax'}, then reopen the event to verify the saved fields. "
+                "For any event you cite in another app, use the exact ID from the calendar editor's ID field."
             )
         if "org.libreoffice.script" in owned_bundles:
             calc_commit = (
@@ -392,13 +394,18 @@ def run_agent(pi, auth, catalog, targets, prompt, artifacts, turns, seconds, des
             )
             if "org.libreoffice.script" in scoped_key_bundles:
                 instructions += (
-                    " Scoped cmd+pagedown and cmd+pageup switch sheets. Verify the new Sheet title. "
-                    "Use scoped forwarddelete after verifying the selected cell when the task requires clearing it. "
+                    " Use app.pressKey('cmd+pagedown', {strategy:'appkit'}) and "
+                    "app.pressKey('cmd+pageup', {strategy:'appkit'}) to switch sheets. Verify the new Sheet title. "
+                    "Use app.pressKey('forwarddelete', {strategy:'appkit'}) after verifying the selected cell when clearing it. "
                     "Time values can display with seconds and AM/PM. Compare the logical time on readback. "
-                    "Scoped cmd+s also saves the workbook after leaving the editor. "
-                    "For repeated verified cell edits, use one JS call per cell. Read fresh AX state within the call "
-                    "and use if checks to proceed only when the Name Box shows the intended address and the editor is unique and focused. "
-                    "Print the final cell value or the failed check. Save finished groups before moving to another app."
+                    "Use app.pressKey('cmd+s', {strategy:'appkit'}) to save after leaving the editor. "
+                    "For several verified edits in the same row, use an array of observed addresses and desired values "
+                    "with an inline for-of loop in one JS call. Use string matching, a regex literal or RegExp(pattern). "
+                    "The JS subset rejects new RegExp and calls to named local helpers. "
+                    "For each cell, take fresh AX observations, check the intended address in the Name Box, and check for a unique focused editor. "
+                    "If the editor contains text, select the exact current value and verify the selection before typing. "
+                    "Check the editor value before committing. Read back the committed cell and stop the loop at the first failed check. "
+                    "Print the compact results and save finished groups before moving to another app."
                 )
         if "org.gnucash.Gnucash" in scoped_key_bundles:
             instructions += (

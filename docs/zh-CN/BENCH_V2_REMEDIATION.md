@@ -82,6 +82,12 @@ G02 `909557` 的隔离对照通过取得焦点的 AX 文本字段更新了 Dayma
 
 加入精简截图输出和 Calc 写入核验引导后，G02 种子 `909557` 得 0.80，原始计分基线为 0.20。检查器确认四项日历变更、阻塞记录与审计、约束及保留项均通过。模型保存了一条工作簿记录，另有三行及证据引用待补，工作簿一致性是唯一失败项。Pi 在 35 次工具调用后结束，一次调用因 `NewExpression` 语法被拒绝，GUI-only 违规为零。A22 八项通过，哨兵保留全部 208 个生成字符。见 `artifacts/bench-v2-pi-20261110T203610196664Z/summary.json` 及其试验目录的 `artifacts/cdb-result.json`。
 
+下一轮同种子复测给出了 Benchmark JS 子集支持的内联 `for...of` 写法，得 0.20，A22 八项通过。Pi 在 14 次调用后结束。切换工作表时漏了 AppKit 策略，回读仍为原表，随后在编辑工作簿或日历之前结束。阻塞审计通过，记录引用的冲突事件 ID 有误。运行器现给出完整的定向按键调用，并要求从日历编辑器读取准确的事件 ID。见 `artifacts/bench-v2-pi-20261111T010800325791Z/summary.json` 和试验目录的 `artifacts/pi.jsonl` 与 `artifacts/cdb-result.json`。
+
+种子 `909557` 的独立对照保存并重新打开了测试日历事件，再通过 Benchmark MCP，在一次调用中用内联 `for...of` 替换对应 Calc 行的原有状态和两个时间值。每次编辑均核验工作表、单元格地址、编辑器选区、编辑器值和提交后的单元格。随后用定向 Command-S 保存。只读观察器确认日历与工作簿一致，恰有三个单元格改变，Controls、无关日历事件和受保护的占位事件均保留。哨兵的 35 个生成字符全部保留，失焦和升层均为零，GUI 策略审计为空。见 `artifacts/cdb-g02-guarded-row-d22FQd/report.json`。
+
+补全定向按键和事件 ID 引导后，Pi 读取了受保护事件的准确 ID，正确保存阻塞记录，通过日历检查，并成功从 Schedule 切到 Controls 后返回。运行器在 23 次工具调用后达到 360 秒上限。Pi 已开始编辑工作簿，检查器读到的仍是保存文件里的原始记录。得分 0.80，唯一失败项是工作簿一致性。A22 八项通过，哨兵保留全部 361 个生成字符。一次循环调用因声明中使用解构被拒绝，运行器现展示独立对照使用的单变量循环。见 `artifacts/bench-v2-pi-20261111T011312271472Z/summary.json` 及其试验目录的 `artifacts/cdb-result.json`。
+
 较早的一轮 G03 Pi 同种子复测得 0.45。模型读取了邮件和工作簿，关闭 GnuCash 启动提示，随后展开账户时收到 `BACKGROUND_KEYBOARD_FOCUS_CHANGED` 并停止。哨兵同时记录到升层、激活变化和打字中断。同种子对照在两个鼠标包上保留 Command，仍记录到升层、激活变化和失焦。见 `artifacts/bench-v2-pi-20261110T010224956905Z/summary.json` 和 `artifacts/cdb-g03-command-disclosure-0OONBK/report.json`。
 
 加入 Calc 提示后的 G03 仍得 0.45，在 GnuCash 账户点击处停止。本机 GDK 二进制在应用不活跃时调用 `activateIgnoringOtherApps:`，与 [GTK Quartz 鼠标按下处理](https://github.com/GNOME/gtk/blob/bac4a949b151eedada8bc60a97429d2176b0b28b/gdk/quartz/gdkevents-quartz.c#L1622-L1650)一致。实验性应用内焦点路由可以投递点击且未测到干扰，但账户仍折叠。在该路由下，依次发送 `+`、Down、Enter 打开了 Checking Account 账簿，哨兵未记录失焦、升层或打字中断。默认路由的 `+` 没有展开账户，两组省去准备点击的对照也未能展开。见 `artifacts/bench-v2-pi-20261110T012051583955Z/summary.json`、`artifacts/cdb-gnucash-register-keys-s90EgT/report.json`、`artifacts/cdb-gnucash-default-key-zZ0Unj/report.json` 和 `artifacts/cdb-gnucash-notice-ablation-{iKEFFW,tM5Nrv}/report.json`。
