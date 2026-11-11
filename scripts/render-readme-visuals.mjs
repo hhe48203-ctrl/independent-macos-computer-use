@@ -76,6 +76,7 @@ function loadFont(file) {
   const unitsPerEm = buf.readUInt16BE(head + 18);
   const hhea = tables.get('hhea').offset;
   const ascender = buf.readInt16BE(hhea + 4);
+  const descender = buf.readInt16BE(hhea + 6);
   const numberOfHMetrics = buf.readUInt16BE(hhea + 34);
   const hmtx = tables.get('hmtx').offset;
   const glyphOf = cmapFormat4(buf, tables.get('cmap').offset);
@@ -87,6 +88,7 @@ function loadFont(file) {
     file,
     unitsPerEm,
     ascender,
+    descender,
     advance(text, size) {
       let em = 0;
       for (const char of text) em += advanceOf(glyphOf(char.codePointAt(0)));
@@ -237,23 +239,124 @@ function blit(dst, src, dx, dy, clipW = src.w, alpha = 255) {
   }
 }
 
-function renderText(text, font, size, color) {
-  const width = Math.max(8, Math.ceil(font.advance(text, size) + size * 2));
-  const height = Math.ceil(size * 2.4);
-  const baseline = Math.round(size * 0.95);
-  const file = join(scratch, `t${textSerial++}.txt`);
-  writeFileSync(file, text);
+// drawtext's y is the top of the glyph ink. The old layout put that top at
+// y <= 0, so the first row of ascenders (t, d, l, h, b, accents) was clipped.
+const lineMetricCache = new Map();
+function lineMetrics(font, size) {
+  const key = `${font.file}\0${size}`;
+  const cached = lineMetricCache.get(key);
+  if (cached) return cached;
+  const stored = Math.round(size * 0.95);
+  const ascenderPx = Math.round(font.ascender * size / font.unitsPerEm);
+  const clippedRows = Math.max(0, -(stored - ascenderPx));
+  const pad = Math.max(4, Math.ceil(size * 0.28));
+  const descentPx = Math.ceil(Math.abs(font.descender) * size / font.unitsPerEm);
+  const y = pad;
+  const baseline = pad + clippedRows + stored;
+  const height = baseline + descentPx + pad;
+  const metrics = {y, baseline, height, originX: pad, pad};
+  lineMetricCache.set(key, metrics);
+  return metrics;
+}
+
+function inkBounds(img) {
+  let minX = img.w;
+  let minY = img.h;
+  let maxX = -1;
+  let maxY = -1;
+  const data = img.data;
+  for (let y = 0; y < img.h; y++) {
+    for (let x = 0; x < img.w; x++) {
+      if (data[(y * img.w + x) * 4 + 3] > 8) {
+        if (x < minX) minX = x;
+        if (y < minY) minY = y;
+        if (x > maxX) maxX = x;
+        if (y > maxY) maxY = y;
+      }
+    }
+  }
+  return {minX, minY, maxX, maxY};
+}
+
+function assertGlyphInset(img, label) {
+  const bounds = inkBounds(img);
+  if (bounds.maxX < 0) throw new Error(`no pixels drawn for ${JSON.stringify(label)}`);
+  const slack = {
+    top: bounds.minY,
+    bottom: img.h - 1 - bounds.maxY,
+    left: bounds.minX,
+    right: img.w - 1 - bounds.maxX,
+  };
+  if (slack.top < 2 || slack.bottom < 2 || slack.left < 2 || slack.right < 2) {
+    throw new Error(`${JSON.stringify(label)} is flush with its bitmap (top ${slack.top}, bottom ${slack.bottom}, left ${slack.left}, right ${slack.right})`);
+  }
+  img.inkTop = bounds.minY;
+  img.inkBottom = bounds.maxY;
+  img.inkLeft = bounds.minX;
+  img.inkRight = bounds.maxX;
+}
+
+function drawTextBitmap(text, font, size, color, tokens) {
+  const metrics = lineMetrics(font, size);
+  const advance = font.advance(text, size);
+  const width = Math.max(8, Math.ceil(metrics.originX + advance + metrics.pad + size));
+  const filters = [];
+  if (tokens) {
+    let x = metrics.originX;
+    for (const token of tokens) {
+      const file = join(scratch, `t${textSerial++}.txt`);
+      writeFileSync(file, token.text);
+      filters.push(`drawtext=fontfile=${font.file}:textfile=${file}:fontsize=${size}:fontcolor=${token.color}:x=${x.toFixed(2)}:y=${metrics.y}:expansion=none`);
+      x += font.advance(token.text, size);
+    }
+  } else {
+    const file = join(scratch, `t${textSerial++}.txt`);
+    writeFileSync(file, text);
+    filters.push(`drawtext=fontfile=${font.file}:textfile=${file}:fontsize=${size}:fontcolor=${color}:x=${metrics.originX}:y=${metrics.y}:expansion=none`);
+  }
   const drawn = spawnSync('ffmpeg', [
     '-hide_banner', '-loglevel', 'error',
-    '-f', 'lavfi', '-i', `color=c=black@0.0:s=${width}x${height}:r=1,format=rgba`,
-    '-vf', `drawtext=fontfile=${font.file}:textfile=${file}:fontsize=${size}:fontcolor=${color}:x=0:y=${baseline - Math.round(font.ascender * size / font.unitsPerEm)}:expansion=none`,
+    '-f', 'lavfi', '-i', `color=c=black@0.0:s=${width}x${metrics.height}:r=1,format=rgba`,
+    '-vf', filters.join(','),
     '-frames:v', '1', '-f', 'rawvideo', '-pix_fmt', 'rgba', 'pipe:1',
-  ], {maxBuffer: width * height * 4 + 65536});
+  ], {maxBuffer: width * metrics.height * 4 + 65536});
   if (drawn.status !== 0) throw new Error(drawn.stderr.toString() || `ffmpeg could not draw ${JSON.stringify(text)}`);
-  if (drawn.stdout.length !== width * height * 4) {
-    throw new Error(`Expected ${width * height * 4} bytes for ${JSON.stringify(text)}, got ${drawn.stdout.length}`);
+  if (drawn.stdout.length !== width * metrics.height * 4) {
+    throw new Error(`Expected ${width * metrics.height * 4} bytes for ${JSON.stringify(text)}, got ${drawn.stdout.length}`);
   }
-  return {w: width, h: height, data: drawn.stdout, advance: font.advance(text, size), baseline};
+  const img = {
+    w: width,
+    h: metrics.height,
+    data: drawn.stdout,
+    advance,
+    baseline: metrics.baseline,
+    originX: metrics.originX,
+    label: text,
+  };
+  assertGlyphInset(img, text);
+  return img;
+}
+
+function renderText(text, font, size, color) {
+  return drawTextBitmap(text, font, size, color, null);
+}
+
+// Place the pen at penX and the alphabetic baseline at baselineY.
+// clipAdvance limits a typewriter line to that many pixels of glyph advance.
+function place(img, bitmap, penX, baselineY, clipAdvance = null, alpha = 255) {
+  const dx = Math.round(penX - bitmap.originX);
+  const dy = Math.round(baselineY - bitmap.baseline);
+  const clipW = clipAdvance == null ? bitmap.w : Math.ceil(bitmap.originX + clipAdvance);
+  if (alpha > 0 && clipW > bitmap.inkLeft) {
+    const top = dy + bitmap.inkTop;
+    const bottom = dy + bitmap.inkBottom;
+    const left = dx + bitmap.inkLeft;
+    const right = dx + Math.min(bitmap.inkRight, clipW - 1);
+    if (top < 1 || left < 1 || bottom > img.h - 2 || right > img.w - 2) {
+      throw new Error(`"${bitmap.label}" escapes the canvas (top ${top}, bottom ${bottom}, left ${left}, right ${right})`);
+    }
+  }
+  blit(img, bitmap, dx, dy, clipW, alpha);
 }
 
 function tokenize(line) {
@@ -281,27 +384,7 @@ function tokenize(line) {
 }
 
 function renderCodeLine(line, font, size) {
-  const tokens = tokenize(line);
-  let x = 0;
-  const filters = [];
-  for (const token of tokens) {
-    const file = join(scratch, `t${textSerial++}.txt`);
-    writeFileSync(file, token.text);
-    const baseline = Math.round(size * 0.95);
-    const y = baseline - Math.round(font.ascender * size / font.unitsPerEm);
-    filters.push(`drawtext=fontfile=${font.file}:textfile=${file}:fontsize=${size}:fontcolor=${token.color}:x=${x.toFixed(2)}:y=${y}:expansion=none`);
-    x += font.advance(token.text, size);
-  }
-  const width = Math.ceil(x + size);
-  const height = Math.ceil(size * 2.4);
-  const drawn = spawnSync('ffmpeg', [
-    '-hide_banner', '-loglevel', 'error',
-    '-f', 'lavfi', '-i', `color=c=black@0.0:s=${width}x${height}:r=1,format=rgba`,
-    '-vf', filters.join(','),
-    '-frames:v', '1', '-f', 'rawvideo', '-pix_fmt', 'rgba', 'pipe:1',
-  ], {maxBuffer: width * height * 4 + 65536});
-  if (drawn.status !== 0) throw new Error(drawn.stderr.toString() || `ffmpeg could not draw ${line}`);
-  return {w: width, h: height, data: drawn.stdout, advance: x, baseline: Math.round(size * 0.95)};
+  return drawTextBitmap(line, font, size, '0xffffff', tokenize(line));
 }
 
 function stops(font, size, text) {
@@ -385,9 +468,9 @@ function buildTimeline() {
   }
 }
 
-function drawPill(img, x, y, w, h, fill, stroke, label, labelColor, fonts) {
+function drawPill(img, x, y, w, h, fill, stroke, label) {
   roundRect(img, x, y, w, h, 8, fill, stroke, 1);
-  blit(img, label, x + (w - label.advance) / 2, y + h / 2 - label.baseline + 1);
+  place(img, label, x + (w - label.advance) / 2, y + h / 2 + 1);
 }
 
 function compose(fonts) {
@@ -447,16 +530,16 @@ function compose(fonts) {
   const base = create(GIF_W, GIF_H);
   fillSolid(base, paper);
   frameBorder(base, edge);
-  blit(base, ui.title, 28, 46 - ui.title.baseline);
-  blit(base, ui.subtitle, 28, 74 - ui.subtitle.baseline);
+  place(base, ui.title, 28, 46);
+  place(base, ui.subtitle, 28, 74);
   roundRect(base, codeX, codeY, codeW, codeH, 14, codeBg);
   roundRect(base, codeX, codeY, codeW, 52, 14, codeHeader);
   fillRoundRect(base, codeX, codeY + 32, codeW, 20, 0, codeHeader);
   roundRect(base, bindX, codeY, bindW, codeH, 14, white, line, 1);
-  blit(base, ui.schematic, bindX + 18, codeY + 28 - ui.schematic.baseline);
-  blit(base, ui.bindingsTitle, bindX + 18, codeY + 54 - ui.bindingsTitle.baseline);
-  blit(base, ui.toolLabel, codeX + 18, codeY + 26 - ui.toolLabel.baseline);
-  blit(base, ui.footer, 28, 528 - ui.footer.baseline);
+  place(base, ui.schematic, bindX + 18, codeY + 28);
+  place(base, ui.bindingsTitle, bindX + 18, codeY + 54);
+  place(base, ui.toolLabel, codeX + 18, codeY + 26);
+  place(base, ui.footer, 28, 528);
 
   const chipX = codeX + 18 + ui.toolLabel.advance + 12;
   const labels = { 'call 1': ui.call1, 'call 2 · same session': ui.call2, 'clears bindings': ui.call3 };
@@ -472,13 +555,13 @@ function compose(fonts) {
       const toolFill = frame.tool === 'js' ? teal : amber;
       const toolW = Math.ceil(toolText.advance + 22);
       roundRect(img, chipX, codeY + 13, toolW, 26, 7, toolFill);
-      blit(img, toolText, chipX + 11, codeY + 26 - toolText.baseline);
+      place(img, toolText, chipX + 11, codeY + 26);
       const sceneLabel = labels[frame.label];
-      blit(img, sceneLabel, codeX + codeW - 18 - sceneLabel.advance, codeY + 26 - sceneLabel.baseline);
+      place(img, sceneLabel, codeX + codeW - 18 - sceneLabel.advance, codeY + 26);
 
       if (frame.reset) {
-        blit(img, ui.arguments, codeX + (codeW - ui.arguments.advance) / 2, codeY + 168 - ui.arguments.baseline);
-        blit(img, ui.emptyArgs, codeX + (codeW - ui.emptyArgs.advance) / 2, codeY + 214 - ui.emptyArgs.baseline);
+        place(img, ui.arguments, codeX + (codeW - ui.arguments.advance) / 2, codeY + 168);
+        place(img, ui.emptyArgs, codeX + (codeW - ui.emptyArgs.advance) / 2, codeY + 214);
       } else {
         const bodyTop = codeY + 52;
         const bodyH = codeH - 52;
@@ -490,7 +573,7 @@ function compose(fonts) {
           const bitmap = codeLines[line];
           const clip = lineStops[line][Math.min(shown, line.length)];
           const baseline = firstBaseline + lineIndex * gap;
-          blit(img, bitmap, codeX + 28, baseline - bitmap.baseline, shown <= 0 ? 0 : clip + 1);
+          place(img, bitmap, codeX + 28, baseline, shown <= 0 ? 0 : clip + 1);
           const caretOn = frame.typing || frame.holdIndex % 8 < 5;
           const caretLine = (frame.typed[1] ?? 0) > 0 ? 1 : 0;
           if (caretOn && lineIndex === caretLine) {
@@ -507,13 +590,13 @@ function compose(fonts) {
         const fill = chip.name === 'app' && chip.reused ? tealSoft : white;
         const stroke = chip.name === 'app' && chip.reused ? teal : line;
         roundRect(img, bindX + 18, chipY, chipW, 30, 8, fill, stroke, 1);
-        blit(img, glyph, bindX + 29, chipY + 16 - glyph.baseline + 1, glyph.w, Math.round(chip.alpha * 255));
-        if (chip.reused) blit(img, ui.reused, bindX + 18 + chipW + 8, chipY + 16 - ui.reused.baseline + 1, ui.reused.w, Math.round(chip.alpha * 255));
+        place(img, glyph, bindX + 29, chipY + 17, null, Math.round(chip.alpha * 255));
+        if (chip.reused) place(img, ui.reused, bindX + 18 + chipW + 8, chipY + 17, null, Math.round(chip.alpha * 255));
         chipY += 40;
       }
       const statusBitmaps = frame.status.flatMap((item) => statuses[item]);
       statusBitmaps.forEach((bitmap, statusIndex) => {
-        blit(img, bitmap, bindX + 18, codeY + codeH - 28 - (statusBitmaps.length - 1 - statusIndex) * 22 - bitmap.baseline);
+        place(img, bitmap, bindX + 18, codeY + codeH - 28 - (statusBitmaps.length - 1 - statusIndex) * 22);
       });
 
       const steps = [
@@ -527,8 +610,8 @@ function compose(fonts) {
         const fill = step.on ? (step.warn ? amber : teal) : white;
         const stroke = step.on ? null : line;
         roundRect(img, stepX, 474, w, 30, 8, fill, stroke, 1);
-        blit(img, step.num, stepX + 12, 489 - step.num.baseline);
-        blit(img, step.label, stepX + 12 + step.num.advance + 8, 489 - step.label.baseline);
+        place(img, step.num, stepX + 12, 489);
+        place(img, step.label, stepX + 12 + step.num.advance + 8, 489);
         stepX += w + 10;
       }
 
@@ -558,11 +641,11 @@ function renderSocial(fonts) {
   if (title.advance > 1100) throw new Error('Social title is wider than the banner');
   if (line1.advance > 1100) throw new Error('Social tagline is wider than the banner');
   const x = 76;
-  blit(img, eyebrow, x, 188 - eyebrow.baseline);
+  place(img, eyebrow, x, 188);
   fillRoundRect(img, x, 210, 56, 3, 1.5, hex('#1f8f86'));
-  blit(img, title, x, 292 - title.baseline);
-  blit(img, line1, x, 360 - line1.baseline);
-  blit(img, line2, x, 398 - line2.baseline);
+  place(img, title, x, 292);
+  place(img, line1, x, 360);
+  place(img, line2, x, 398);
   const chips = [
     ['js', fonts.sansBold, hex('#143f3c'), '0xd7f5f1'],
     ['js_reset', fonts.sansBold, hex('#3d3128'), '0xf3ddc4'],
@@ -573,10 +656,10 @@ function renderSocial(fonts) {
     const glyph = renderText(label, font, 18, color);
     const w = Math.ceil(glyph.advance + 28);
     roundRect(img, chipX, 436, w, 40, 10, fill);
-    blit(img, glyph, chipX + 14, 456 - glyph.baseline);
+    place(img, glyph, chipX + 14, 456);
     chipX += w + 12;
   }
-  blit(img, note, x, 530 - note.baseline);
+  place(img, note, x, 530);
   return img;
 }
 
@@ -623,6 +706,9 @@ const fonts = {
 try {
   mkdirSync(assetDir, {recursive: true});
   console.log(`Fonts: ${fonts.mono.file}`);
+  // Accents have to clear the bitmap edge, and a CJK probe checks a full em box.
+  for (const font of [fonts.mono, fonts.sans, fonts.sansBold]) renderText('HÁbdfhklt', font, 22, '0xffffff');
+  renderText('永中', loadFont('/usr/share/fonts/truetype/droid/DroidSansFallbackFull.ttf'), 28, '0xffffff');
   const social = renderSocial(fonts);
   const socialPath = join(assetDir, 'social-preview.png');
   writeRawPng(social.data, social.w, social.h, socialPath);
