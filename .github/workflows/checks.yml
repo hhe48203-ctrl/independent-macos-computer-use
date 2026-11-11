@@ -1,10 +1,19 @@
 name: Checks
 
 on:
+  push:
+    branches: [main]
   pull_request:
+  workflow_dispatch:
 
 permissions:
   contents: read
+
+# A pushed branch and its pull request describe the same tree; keep only one run
+# per ref so a merge to main does not duplicate the check it already passed.
+concurrency:
+  group: checks-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
   check:
