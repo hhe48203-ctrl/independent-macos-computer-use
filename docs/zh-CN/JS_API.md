@@ -27,6 +27,8 @@ await app.getAXStateAndScreenshot();
 
 getApp(reference,{coordinateMode:"adaptive"|"original",maxDimension:1600}) 发送应用 API 文档和完整初始 AX 树。不启动缺失应用，也不自动选择多个窗口中的某一个。listApps/listWindows/status 可单独调用；支持 emit:false。rewriteDocumentation 重新显示本会话已发出的文档。launchApp(bundleId,{allowVisibleWindows:true}) 是明确允许可见启动窗口的扩展。requestPermissions 只触发正常 macOS 设置流程，须符合用户的权限设置请求。
 
+窗口列表返回 Core Graphics 的 `layer`。可见的浮动对话框在其几何范围能唯一匹配同一进程的 Accessibility 对话框时会列出。附属 sheet 可匹配主窗口中嵌套的 AX sheet。通过列表中的 `{pid,windowId}` 绑定并查看该对话框自己的 AX 树。关闭后应刷新列表再操作。按应用名绑定时使用普通层级窗口。
+
 给 `getApp` 传入 `{emit:false}` 可隐藏此绑定的初始树和动作后的自动 AX 输出。自动观察仍会刷新数字引用。用 `getAXState` 显式核对操作结果。`getAXState({emit:false,disableDiffing:true})` 返回完整树，可只打印相关行。隐藏的自动观察不会推进 AX 差分基线。重新连接时继承这一输出设置。
 
 getAXState 返回文字，后续默认按树行索引输出差分；加 disableDiffing:true 返回完整树。索引对应最新观察，不是跨观察稳定身份。AX 可能截断，文本值当前最多4000字符；快照120秒过期、原生最多保留16份。不要因为部分树缺失就认定元素不存在。动作完成后自动观察失败会显示提示，但不会重试已经完成的动作。

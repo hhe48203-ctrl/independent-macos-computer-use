@@ -71,6 +71,27 @@ test('quiet bindings refresh element references and keep changes visible on expl
   assert.match(await app.getAXState(),/AX diff[\s\S]*Clicked 2 times/);
 });
 
+test('dialog bindings select exact windows and preserve ordinary app-name ambiguity checks', async () => {
+  const main = {pid:12,windowId:20,bundleId:'io.test',title:'Document',layer:0,frame:{width:400,height:300}};
+  const dialog = {...main,windowId:21,title:'Notification',layer:3};
+  let windows = [dialog,main];
+  const cua = createCua({emit:()=>{},request:async (method, args) => {
+    if (method==='apps') return {apps:[]};
+    if (method==='windows') return {windows};
+    if (method==='snapshot') return {window:windows.find(w=>w.windowId===args.windowId),nodes:[]};
+    assert.fail(`Unexpected request ${method}`);
+  }});
+  assert.deepEqual(await cua.listWindows({emit:false}),[dialog,main]);
+  assert.equal((await cua.getApp('io.test')).windowId,20);
+  const panel = await cua.getApp({pid:12,windowId:21});
+  assert.equal(panel.windowId,21);
+  windows = [dialog,main,{...main,windowId:22,title:'Attached sheet'}];
+  await assert.rejects(cua.getApp('io.test'),{code:'AMBIGUOUS_APP'});
+  assert.equal((await cua.getApp({pid:12,windowId:22})).windowId,22);
+  windows = [main];
+  await assert.rejects(panel.getAXState(),{code:'WINDOW_GONE'});
+});
+
 test('original mode preserves measured pixels through AX readbacks, refreshes after resize and fails without scale',async()=>{
   const calls=[],outputs=[];let width=400,failCapture=false;
   const w=()=>({pid:12,windowId:20,bundleId:'io.test',path:'/Example.app',frame:{x:0,y:0,width,height:300}});

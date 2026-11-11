@@ -81,36 +81,82 @@ struct Snapshot {
     func appJSON(_ a: NSRunningApplication) -> Object {
         ["pid": Int(a.processIdentifier), "name": a.localizedName ?? "", "bundleId": a.bundleIdentifier ?? "", "path":a.bundleURL?.path ?? "", "active": a.isActive, "hidden": a.isHidden]
     }
-    func windows() -> [Object] {
+    func windows(pid requestedPID: Int? = nil, windowID: Int? = nil) -> [Object] {
         let rows = CGWindowListCopyWindowInfo([.optionAll, .excludeDesktopElements], kCGNullWindowID) as? [Object] ?? []
+        let floating = Int(CGWindowLevelForKey(.floatingWindow))
         return rows.compactMap { row in
             guard let pid = row[kCGWindowOwnerPID as String] as? Int,
                   let id = row[kCGWindowNumber as String] as? Int,
+                  requestedPID == nil || requestedPID == pid,
+                  windowID == nil || windowID == id,
+                  let layer = row[kCGWindowLayer as String] as? Int,
+                  layer == 0 || (layer == floating && row[kCGWindowIsOnscreen as String] as? Bool == true),
                   let bounds = row[kCGWindowBounds as String] as? [String: Any],
                   let r = CGRect(dictionaryRepresentation: bounds as CFDictionary),
-                  number(row, kCGWindowLayer as String) == 0, r.width > 1, r.height > 1,
+                  r.width > 1, r.height > 1,
                   let a = try? app(pid_t(pid)) else { return nil }
-            return ["windowId": id, "pid": pid, "bundleId": a.bundleIdentifier ?? "", "app": a.localizedName ?? "", "path":a.bundleURL?.path ?? "", "title": row[kCGWindowName as String] as? String ?? "", "frame": rectJSON(r), "onScreen": row[kCGWindowIsOnscreen as String] as? Bool ?? false]
+            let onScreen = row[kCGWindowIsOnscreen as String] as? Bool ?? false
+            var title = row[kCGWindowName as String] as? String ?? ""
+            if layer != 0 {
+                // Menus and arbitrary overlay windows are not AX dialog targets.
+                guard let dialog = try? axWindow(pid_t(pid), r, messagingTimeout: 0.25),
+                      attr(dialog, kAXRoleAttribute) as? String == kAXWindowRole,
+                      let subrole = attr(dialog, kAXSubroleAttribute) as? String,
+                      [kAXDialogSubrole, kAXSystemDialogSubrole].contains(subrole),
+                      let axBounds = axFrame(dialog) else { return nil }
+                let peers = rows.filter { other in
+                    guard other[kCGWindowOwnerPID as String] as? Int == pid,
+                          other[kCGWindowIsOnscreen as String] as? Bool == true,
+                          let otherLayer = other[kCGWindowLayer as String] as? Int,
+                          otherLayer == 0 || otherLayer == floating,
+                          let bounds = other[kCGWindowBounds as String] as? Object,
+                          let frame = CGRect(dictionaryRepresentation: bounds as CFDictionary) else { return false }
+                    return matchesAXWindowFrame(frame, axBounds)
+                }
+                guard peers.count == 1, peers[0][kCGWindowNumber as String] as? Int == id else { return nil }
+                if let axTitle = attr(dialog, kAXTitleAttribute) as? String, !axTitle.isEmpty { title = axTitle }
+            }
+            return ["windowId": id, "pid": pid, "bundleId": a.bundleIdentifier ?? "", "app": a.localizedName ?? "", "path":a.bundleURL?.path ?? "", "title": title, "layer": layer, "frame": rectJSON(r), "onScreen": onScreen]
         }
     }
     func target(_ p: Object) throws -> (NSRunningApplication, Object, CGRect) {
         let pid = pid_t(number(p, "pid")); let wid = Int(number(p, "windowId"))
         let a = try app(pid)
-        guard let w = windows().first(where: { ($0["windowId"] as? Int) == wid && ($0["pid"] as? Int) == Int(pid) }),
+        guard let w = windows(pid: Int(pid), windowID: wid).first,
               let f = w["frame"] as? Object else { throw BridgeError("WINDOW_GONE", "No window with this windowId and pid. Call cu_windows again.") }
         return (a, w, CGRect(x: number(f, "x"), y: number(f, "y"), width: number(f, "width"), height: number(f, "height")))
     }
-    func axWindow(_ pid: pid_t, _ frame: CGRect) throws -> AXUIElement {
+    func matchesAXWindowFrame(_ a: CGRect, _ b: CGRect) -> Bool {
+        abs(a.minX-b.minX) < 3 && abs(a.minY-b.minY) < 3 && abs(a.width-b.width) < 3 && abs(a.height-b.height) < 3
+    }
+    func axWindow(_ pid: pid_t, _ frame: CGRect, messagingTimeout: Float = 1) throws -> AXUIElement {
         try requireAX()
         let root = AXUIElementCreateApplication(pid)
-        AXUIElementSetMessagingTimeout(root, 1)
+        AXUIElementSetMessagingTimeout(root, messagingTimeout)
         // Public AX has no documented CGWindowID attribute. Match geometry, reject ambiguity.
         var windowsValue:CFTypeRef?
         try axCheck(AXUIElementCopyAttributeValue(root,kAXWindowsAttribute as CFString,&windowsValue),"Read target AX windows")
-        let observedWindows=windowsValue as? [AXUIElement] ?? []
+        var observedWindows=windowsValue as? [AXUIElement] ?? []
+        // Attached sheets have their own CG window but can appear only below
+        // the parent in AX, rather than in the application's AXWindows list.
+        let sheetLimit = observedWindows.count + 64
+        var index = 0
+        while index < observedWindows.count {
+            let current = observedWindows[index]
+            let sheets = children(current).filter {
+                attr($0, kAXRoleAttribute) as? String == kAXSheetRole
+            }
+            for sheet in sheets where !observedWindows.contains(where: { CFEqual($0, sheet) }) {
+                guard observedWindows.count < sheetLimit else {
+                    throw BridgeError("AX_WINDOW_UNRESOLVED", "Too many attached AX sheets to match safely. Refresh observation.")
+                }
+                observedWindows.append(sheet)
+            }
+            index += 1
+        }
         let candidates = observedWindows.filter {
             guard let r = axFrame($0) else { return false }
-            return abs(r.minX-frame.minX) < 3 && abs(r.minY-frame.minY) < 3 && abs(r.width-frame.width) < 3 && abs(r.height-frame.height) < 3
+            return matchesAXWindowFrame(r, frame)
         }
         guard candidates.count == 1 else {
             let diagnostic=observedWindows.prefix(3).map{element->String in
@@ -469,8 +515,7 @@ struct Snapshot {
         case "apps":
             return ["apps": NSWorkspace.shared.runningApplications.filter { $0.activationPolicy == .regular && (allowed == nil || allowed!.contains($0.bundleIdentifier ?? "")) }.map(appJSON)]
         case "windows":
-            let rows = windows().filter { p["pid"] == nil || ($0["pid"] as? Int) == Int(number(p, "pid")) }
-            return ["windows": rows]
+            return ["windows": windows(pid: p["pid"].map { _ in Int(number(p, "pid")) })]
         case "launch":
             let bundle = try string(p, "bundleId")
             if let allowed, !allowed.contains(bundle) { throw BridgeError("APP_NOT_ALLOWED", "Bundle identifier is outside CU_ALLOWED_BUNDLE_IDS") }

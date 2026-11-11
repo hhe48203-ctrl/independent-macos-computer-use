@@ -30,6 +30,10 @@ IR-01/02 计分见 `artifacts/bench-v2-pi-20261109T065349148172Z/summary.json`�
 
 原版服务 `1001824` 中，`0x10074f7d0` 处的调用读取事件字段，确认结果能用 `UInt32` 表示，然后传给 `0x10026ddfc` 的 `ApplicationRegistrySPI.releaseKeyFocus(withID:)`。同一二进制还暴露了单独的菜单关闭抑制函数。调用链与通知记录支持焦点请求释放这一解释。通知记录本身无法确认释放方，也无法确定抑制何时生效。见 `artifacts/original-native-menu-focus-path-dMRT9H/`。
 
+IR-02 `487371` 修改 Quantity 后出现可见的层级 3 通知窗，AX 子角色为 `AXSystemDialog`。主窗口快照中没有 Later，旧窗口列表也漏掉了这个几何范围与应用 AX 窗口匹配的对话框。自有探针直接执行 AXPress 可以关闭，未测得干扰。驱动现列出 Core Graphics 和 AX 唯一匹配的可见浮动对话框。通过 JS API 的对照绑定了精确窗口、截取 2× 图像、用 AXPress 按下 Later、确认关闭后旧绑定返回 `WINDOW_GONE`，并回到主窗口按下 Apply。两次动作的键盘接收者采样保持稳定，哨兵保留全部四个生成字符，未记录升层。该对照的原生 Priority 下拉框仍为初始值。见 `artifacts/ir02-floating-panel-before-mH95sV/report.json` 和 `artifacts/ir02-floating-panel-after-twUH5o/report.json`。[Core Graphics 浮动窗口层级](https://developer.apple.com/documentation/coregraphics/cgwindowlevelkey/floatingwindow)、[Accessibility 系统对话框子角色](https://developer.apple.com/documentation/appkit/nsaccessibility-swift.struct/subrole/systemdialog)。
+
+IR-01 种子 `147201` 的计分复测得 0.15，A22 八项通过。Next 打开 sheet 并报层级变化。Pi 随后按 sheet 的 CG 窗口 ID 绑定，AX 匹配只搜索应用顶层窗口，返回 `AX_WINDOW_UNRESOLVED`。匹配逻辑现会继续核对附属 AX sheet。同种子独立对照成功绑定 sheet、截取 2× 图像、按下观察到的拒绝按钮，并确认旧绑定失效和进入第 2 页。最初 Next 的层级错误仍发生。哨兵保留全部四个生成字符，未记录失焦或升层。见 `artifacts/bench-v2-pi-20261111T014549796603Z/summary.json` 和 `artifacts/ir01-sheet-binding-VtE1qh/report.json`。
+
 CDB-G02/03 工作流复现见 `artifacts/bench-v2-pi-20261109T064232356505Z/summary.json`。G04 独立 profile 复测见 `artifacts/bench-v2-pi-20261109T064650603373Z/summary.json`，MCP 范围只包含新启动的 Chrome PID。G03 更新临时 profile 后的结果见 `artifacts/bench-v2-pi-20261109T065029893913Z/summary.json`。在这些轮次中，A22 八项均通过，检查器分别得 0.20、0.45、0.15。
 
 用本机 Codex Computer Use 服务（构建 `1001824`）单独对照 MB-09 种子 `790113`。原版 `cua_repl.drag` 对同一行启动了原生拖放，但无投放事件，顺序未变。哨兵的 419 次采样没有观察到键焦点丢失、激活变化、鼠标移动或打字干扰。这是一次未计分的原版对照。静态检查确认了 `NSEvent` 鼠标构造、事件子类型及窗口字段、PID 投递封装，以及此前调查记录的独立焦点通知机制。本轮仍未证实原版由哪条分支保护焦点。见 `artifacts/mb09-original-compare-DDSKEi/report.json` 和 `artifacts/original-drag-path-WrKjJE/`。

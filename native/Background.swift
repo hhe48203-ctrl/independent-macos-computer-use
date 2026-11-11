@@ -547,7 +547,12 @@ struct HeldBackgroundMouse {
     func assertBackgroundIsolation(_ pid:pid_t,_ wid:CGWindowID,_ orderBefore:[(id:Int,pid:pid_t)],_ foregroundBefore:pid_t?) throws {
         if foregroundBefore != pid, NSWorkspace.shared.frontmostApplication?.processIdentifier == pid { throw BridgeError("BACKGROUND_APP_ACTIVATED","The target app activated itself in response to the action. Background isolation was not maintained; no activation-restoration workaround was attempted.") }
         let orderAfter = backgroundWindowOrder()
-        if let beforeIndex=orderBefore.firstIndex(where:{$0.id==Int(wid)}),let afterIndex=orderAfter.firstIndex(where:{$0.id==Int(wid)}) {
+        // A dialog can close while its parent changes order. Watch all of
+        // this application's existing normal windows, including the parent.
+        let watched = orderBefore.filter { $0.pid == pid }.map(\.id)
+        for id in watched {
+            guard let beforeIndex = orderBefore.firstIndex(where: { $0.id == id }),
+                  let afterIndex = orderAfter.firstIndex(where: { $0.id == id }) else { continue }
             let previouslyAbove=Set(orderBefore.prefix(beforeIndex).filter{$0.pid != pid}.map{$0.id})
             if orderAfter.dropFirst(afterIndex+1).contains(where:{previouslyAbove.contains($0.id)}) {
                 throw BridgeError("BACKGROUND_WINDOW_REORDERED","Window stacking changed during the operation. Isolation could not be confirmed; no window-order restoration was attempted. Observe before retrying.")

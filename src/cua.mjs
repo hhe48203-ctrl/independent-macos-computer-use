@@ -200,7 +200,7 @@ export function createCua({request, emit}) {
       const {windows,apps}=await inventory();let matches;
       if(typeof reference==='string') {
         const needle=reference.toLowerCase();const pids=apps.filter(a=>[a.id,a.bundleId,a.name,a.displayName,a.path].some(v=>v?.toLowerCase()===needle)).map(a=>a.pid);
-        matches=windows.filter(w=>pids.includes(w.pid)||[w.app,w.bundleId].some(v=>v?.toLowerCase()===needle));
+        matches=windows.filter(w=>(w.layer??0)===0&&(pids.includes(w.pid)||[w.app,w.bundleId].some(v=>v?.toLowerCase()===needle)));
       } else if(reference&&Number.isInteger(reference.windowId)&&Object.keys(reference).every(k=>['windowId','pid'].includes(k)))matches=windows.filter(w=>w.windowId===reference.windowId&&(reference.pid===undefined||w.pid===reference.pid));
       else throw error('INVALID_ARGUMENT','Use an exact app name/bundle/path or {windowId,pid?}');
       if(matches.length!==1)throw error(matches.length?'AMBIGUOUS_APP':'APP_NOT_FOUND',`Expected one window, found ${matches.length}; inspect cua.listWindows() and select {windowId,pid}. No app was launched.`);
