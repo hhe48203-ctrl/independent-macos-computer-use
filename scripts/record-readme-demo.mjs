@@ -11,9 +11,9 @@
 // Electron app, and drives it only through the js MCP tool (the same REPL
 // client the benchmark uses). It reads the Accessibility tree and uses
 // background AXPress to open "Freight invoice SVL-119" and then SVL-119.txt.
-// screencapture -l records that window id only, at real time. A screen
-// rectangle is not used, because another window can move in front of it.
-// ffmpeg decimates frames for the GIF and does not change playback speed.
+// ScreenCaptureKit records that window together with the agent-cursor panel
+// and no other window, at real time. ffmpeg decimates frames for the GIF and
+// does not change playback speed.
 //
 //   node scripts/record-readme-demo.mjs
 //
@@ -108,6 +108,117 @@ function windowCrop(movie) {
   return crop;
 }
 
+// screencapture of the window alone omits the agent cursor, which is a
+// separate panel. This recorder composites the fixture window and that panel
+// through ScreenCaptureKit and ignores every other window.
+function compileCapture(directory) {
+  const source = path.join(directory, 'capture.swift');
+  const binary = path.join(directory, 'capture');
+  writeFileSync(source, `import AVFoundation
+import CoreMedia
+import Foundation
+import ScreenCaptureKit
+
+final class Sink: NSObject, SCStreamOutput, @unchecked Sendable {
+    let writer: AVAssetWriter
+    let input: AVAssetWriterInput
+    let lock = NSLock()
+    var started = false
+    init(url: URL, width: Int, height: Int) throws {
+        writer = try AVAssetWriter(outputURL: url, fileType: .mov)
+        input = AVAssetWriterInput(mediaType: .video, outputSettings: [
+            AVVideoCodecKey: AVVideoCodecType.h264,
+            AVVideoWidthKey: width,
+            AVVideoHeightKey: height,
+        ])
+        input.expectsMediaDataInRealTime = true
+        if !writer.canAdd(input) { throw NSError(domain: "capture", code: 1) }
+        writer.add(input)
+    }
+    func stream(_ stream: SCStream, didOutputSampleBuffer sample: CMSampleBuffer, of type: SCStreamOutputType) {
+        guard type == .screen, CMSampleBufferGetImageBuffer(sample) != nil else { return }
+        if let rows = CMSampleBufferGetSampleAttachmentsArray(sample, createIfNecessary: false) as? [[SCStreamFrameInfo: Any]],
+           let raw = rows.first?[.status] as? Int,
+           let status = SCFrameStatus(rawValue: raw), status != .complete { return }
+        lock.lock(); defer { lock.unlock() }
+        if !started {
+            writer.startWriting()
+            writer.startSession(atSourceTime: CMSampleBufferGetPresentationTimeStamp(sample))
+            started = true
+            print("RECORDING")
+            fflush(stdout)
+        }
+        if input.isReadyForMoreMediaData { input.append(sample) }
+    }
+}
+
+@main struct Capture {
+    static func main() async {
+        let args = CommandLine.arguments
+        let windowID = CGWindowID(UInt32(args[1])!)
+        let windowPID = pid_t(Int32(args[2])!)
+        let helperPID = pid_t(Int32(args[3])!)
+        let origin = CGPoint(x: Double(args[4])!, y: Double(args[5])!)
+        let size = CGSize(width: Double(args[6])!, height: Double(args[7])!)
+        let seconds = Double(args[8])!
+        let url = URL(fileURLWithPath: args[9])
+        do {
+            let content = try await SCShareableContent.excludingDesktopWindows(true, onScreenWindowsOnly: true)
+            guard let window = content.windows.first(where: { $0.windowID == windowID && $0.owningApplication?.processID == windowPID }) else {
+                fputs("fixture window is not capturable\\n", stderr); exit(2)
+            }
+            let cursors = content.windows.filter { $0.owningApplication?.processID == helperPID && $0.windowID != windowID }
+            if cursors.isEmpty { fputs("agent cursor window was not capturable\\n", stderr); exit(3) }
+            guard let display = content.displays.first(where: { CGDisplayBounds($0.displayID).intersects(window.frame) }) else {
+                fputs("display missing\\n", stderr); exit(4)
+            }
+            let filter = SCContentFilter(display: display, including: [window] + cursors)
+            let bounds = CGDisplayBounds(display.displayID)
+            let crop = CGRect(origin: CGPoint(x: origin.x - bounds.minX, y: origin.y - bounds.minY), size: size)
+            let config = SCStreamConfiguration()
+            config.sourceRect = crop
+            var width = Int((size.width * 2).rounded())
+            var height = Int((size.height * 2).rounded())
+            if width % 2 != 0 { width += 1 }
+            if height % 2 != 0 { height += 1 }
+            config.width = width
+            config.height = height
+            config.showsCursor = false
+            config.pixelFormat = kCVPixelFormatType_32BGRA
+            config.queueDepth = 8
+            config.minimumFrameInterval = CMTime(value: 1, timescale: 30)
+            let sink = try Sink(url: url, width: width, height: height)
+            let stream = SCStream(filter: filter, configuration: config, delegate: nil)
+            try stream.addStreamOutput(sink, type: .screen, sampleHandlerQueue: DispatchQueue(label: "capture"))
+            try await stream.startCapture()
+            try await Task.sleep(nanoseconds: UInt64(seconds * 1_000_000_000))
+            try await stream.stopCapture()
+            sink.input.markAsFinished()
+            await withCheckedContinuation { (done: CheckedContinuation<Void, Never>) in sink.writer.finishWriting { done.resume() } }
+            if sink.writer.status != .completed {
+                fputs("writer failed\\n", stderr)
+                if let error = sink.writer.error { fputs("\\(error)\\n", stderr) }
+                exit(5)
+            }
+        } catch {
+            fputs("\\(error)\\n", stderr); exit(1)
+        }
+    }
+}
+`);
+  run('xcrun', ['swiftc', '-parse-as-library', '-O', source, '-o', binary]);
+  return binary;
+}
+
+function helperPid() {
+  const ids = run('/bin/ps', ['-axo', 'pid=,comm=']).split('\n')
+    .filter((line) => line.includes('computer-use-bridge'))
+    .map((line) => Number(line.trim().split(/\s+/)[0]))
+    .filter((pid) => pid > 0);
+  if (!ids.length) throw new Error('The built helper is not running');
+  return Math.max(...ids);
+}
+
 function topPid(binary, x, y) {
   return Number(run(binary, [String(Math.round(x)), String(Math.round(y))]).trim());
 }
@@ -129,7 +240,7 @@ let session;
 const stopChild = () => { try { child.kill('SIGTERM'); } catch { /* already gone */ } };
 
 try {
-  session = await connectRepl({...process.env});
+  session = await connectRepl({...process.env, CU_AGENT_CURSOR_VISIBILITY: 'always'});
   let win;
   let previousFrame = '';
   for (let attempt = 0; attempt < 40; attempt++) {
@@ -168,17 +279,35 @@ await (async () => {
   nodeRepl.write('RESULT ' + JSON.stringify({ready: found}));
 })()`);
   if (!ready.ready) throw new Error('The freight invoice row was not visible in the Accessibility tree');
+  const cursor = await js(session, `await (async () => {
+  await app.move([860, 240]);
+  const state = await cua.cursorState();
+  nodeRepl.write('RESULT ' + JSON.stringify({style: state.style, description: state.styleDescription, visible: state.visible, reason: state.visibilityReason}));
+})()`);
+  if (cursor.style !== 'arrow' || cursor.visible !== true) {
+    throw new Error(`Default cursor was ${cursor.style} visible=${cursor.visible} (${cursor.reason}). The recording will not be published.`);
+  }
 
   const movie = path.join(scratch, 'capture.mov');
-  // -l records the window's own pixels. A screen rectangle (-R) would include
-  // whatever later moves in front of that region.
-  const captureStarted = Date.now();
-  const capture = spawn('/usr/sbin/screencapture', ['-x', '-v', '-V', '13', '-l', String(win.windowId), movie], {stdio: 'ignore'});
+  const captureTool = compileCapture(scratch);
+  const capture = spawn(captureTool, [
+    String(win.windowId), String(child.pid), String(helperPid()),
+    String(frame.x), String(frame.y), String(frame.width), String(frame.height),
+    '14', movie,
+  ], {stdio: ['ignore', 'pipe', 'pipe']});
+  let captureLog = '';
+  capture.stdout.on('data', (chunk) => { captureLog += chunk; });
+  capture.stderr.on('data', (chunk) => { captureLog += chunk; });
   const captureDone = new Promise((resolve, reject) => {
     capture.once('error', reject);
-    capture.once('close', (code) => (code === 0 ? resolve() : reject(new Error(`screencapture exited ${code}`))));
+    capture.once('close', (code) => (code === 0 ? resolve() : reject(new Error(`window capture exited ${code}: ${captureLog.slice(-500)}`))));
   });
-  await sleep(800);
+  const readyAt = Date.now() + 8000;
+  while (!captureLog.includes('RECORDING')) {
+    if (Date.now() > readyAt) throw new Error(`Capture did not start: ${captureLog.slice(-500)}`);
+    await sleep(50);
+  }
+  const captureStarted = Date.now();
 
   const marks = [];
   const mark = (name) => marks.push({name, ms: Date.now()});

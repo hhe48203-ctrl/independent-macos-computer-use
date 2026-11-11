@@ -4,9 +4,9 @@
 
 Script macOS apps from a persistent JavaScript session — through just two MCP tools.
 
-![Real recording: js reads Ledger Lantern Mail, then background AXPress opens Freight invoice SVL-119 and its attachment.](docs/assets/demo.gif)
+![Real recording: the default arrow cursor travels to Freight invoice SVL-119, and background AXPress opens that message and its attachment.](docs/assets/demo.gif)
 
-One real-time run of the pinned Ledger Lantern Mail fixture. `js` reads the Accessibility tree, then background `AXPress` opens Freight invoice SVL-119 and its SVL-119.txt attachment. Record it again with `node scripts/record-readme-demo.mjs` after `npm run build` and `npm run bench:v2 -- --prepare`.
+One real-time run of the pinned Ledger Lantern Mail fixture. The default arrow cursor travels to each target. `js` reads the Accessibility tree, then background `AXPress` opens Freight invoice SVL-119 and its SVL-119.txt attachment. Record it again with `node scripts/record-readme-demo.mjs` after `npm run build` and `npm run bench:v2 -- --prepare`.
 
 ![Public path from an MCP client through the js and js_reset tools, a persistent Node.js REPL, and the Swift helper, to macOS Accessibility, screenshots, OCR, and background-first input.](docs/assets/architecture.svg)
 

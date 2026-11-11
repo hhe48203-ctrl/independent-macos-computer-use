@@ -4,9 +4,9 @@
 
 用持久的 JavaScript 会话编写 macOS 应用脚本——只需两个 MCP 工具。
 
-![真实录制：js 读取 Ledger Lantern Mail，再用后台 AXPress 打开 Freight invoice SVL-119 及其附件。](../assets/demo.gif)
+![真实录制：默认箭头光标移到 Freight invoice SVL-119，后台 AXPress 打开该邮件及其附件。](../assets/demo.gif)
 
-这是钉选的 Ledger Lantern Mail 夹具的一次实时运行。`js` 读取辅助功能树，再用后台 `AXPress` 打开 Freight invoice SVL-119 和附件 SVL-119.txt。重新录制：`node scripts/record-readme-demo.mjs`（需先 `npm run build` 和 `npm run bench:v2 -- --prepare`）。
+这是钉选的 Ledger Lantern Mail 夹具的一次实时运行。默认箭头光标会移到每个目标。`js` 读取辅助功能树，再用后台 `AXPress` 打开 Freight invoice SVL-119 和附件 SVL-119.txt。重新录制：`node scripts/record-readme-demo.mjs`（需先 `npm run build` 和 `npm run bench:v2 -- --prepare`）。
 
 ![公开路径：MCP 客户端经 js 与 js_reset 进入持久的 Node.js REPL，再由 Swift helper 使用 macOS Accessibility、截图、OCR 和以后台为先的输入。](../assets/architecture.svg)
 
