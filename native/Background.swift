@@ -730,7 +730,12 @@ struct HeldBackgroundMouse {
             let semanticSelectAll=p["durationMs"] == nil && (p["strategy"] as? String ?? "auto") == "auto" && ["cmd+a","command+a","meta+a","super+a"].contains(normalized)
             if let focused=attr(AXUIElementCreateApplication(pid),kAXFocusedUIElementAttribute),CFGetTypeID(focused)==AXUIElementGetTypeID() {
                 let element = focused as! AXUIElement
-                if ["down", "up", "space", "enter", "return", "alt+down", "option+down", "alt+up", "option+up"].contains(normalized) {
+                let chord = try backgroundKeyChord(p)
+                // AppKit can open a popup from a vertical arrow even when
+                // the event carries modifiers such as Command.
+                let verticalArrow = chord.name == "down" || chord.name == "up"
+                let unmodifiedActivation = chord.flags.isEmpty && ["space", "enter", "return"].contains(chord.name)
+                if verticalArrow || unmodifiedActivation {
                     try checkBackgroundPopup(element)
                 }
                 if let at=axFrame(element) {try await agentCursor.move(pid:pid,windowID:wid,frame:frame,point:CGPoint(x:at.midX,y:at.midY),activity:"key")}

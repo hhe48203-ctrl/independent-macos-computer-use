@@ -40,6 +40,12 @@ IR-01 种子 `147201` 的计分复测得 0.15，A22 八项通过。Next 打开 s
 
 单独的 `487371` 对照对关闭的 Priority 下拉框尝试标准 AX increment、decrement 和 confirm。三项均返回 `AXError -25206`，选值保持 Low，菜单保持关闭。哨兵的失焦和升层计数为零。该对照仍未获得选择路径。见 `artifacts/ir02-popup-standard-actions-8WcsW6/report.json`。
 
+种子 `487371` 的六个定向滚轮事件均到达 BenchLab。Priority 在应用内 AX 聚焦前后都保持 Low，菜单始终关闭。另一组对照在两次鼠标事件中保留 Command，菜单打开并列出三个选项。实际键盘接收进程切到 BenchLab，其主窗口越过哨兵，哨兵仍是前台应用。见 `artifacts/ir02-popup-scroll-AH2LsH/report.json`、`artifacts/ir02-popup-command-click-TqErDW/report.json` 及对应事件追踪。
+
+同种子复现了下拉框的键盘预检缺口。应用内 AX 聚焦后，`cmd+down` 打开菜单、夺取键盘焦点并让主窗口升层。驱动现在按解析后的上下方向键进行预检，覆盖带修饰键的组合。修复后的对照在投递前拒绝了六种激活组合，包括 Command+Down 和其他修饰键别名。目标仅收到 Shift+Space 和 Control+Space 的四个键盘包。菜单保持关闭，追踪中的键盘接收者和窗口顺序保持稳定，哨兵保留全部两个生成字符。见 `artifacts/ir02-popup-modified-keys-xaFxVH/report.json` 和 `artifacts/ir02-popup-modified-keys-after-c5ucPo/report.json`。
+
+同种子的后续对照投递了 Home、End、Left、Right 以及四种带修饰键的空格或回车组合。16 个键盘包均到达 BenchLab，选值保持 Low，菜单保持关闭，失焦和升层计数为零。Pi 计分复测中，IR-01 `147201` 拒绝了 sheet 提示，IR-02 `487371` 选择 Later 关闭通知。两轮各得 0.45，A22 八项均通过。两个原生下拉框的选项选择仍待解决。见 `artifacts/ir02-popup-other-keys-eObGYu/report.json` 和 `artifacts/bench-v2-pi-20261111T081114150514Z/summary.json`。
+
 CDB-G02/03 工作流复现见 `artifacts/bench-v2-pi-20261109T064232356505Z/summary.json`。G04 独立 profile 复测见 `artifacts/bench-v2-pi-20261109T064650603373Z/summary.json`，MCP 范围只包含新启动的 Chrome PID。G03 更新临时 profile 后的结果见 `artifacts/bench-v2-pi-20261109T065029893913Z/summary.json`。在这些轮次中，A22 八项均通过，检查器分别得 0.20、0.45、0.15。
 
 用本机 Codex Computer Use 服务（构建 `1001824`）单独对照 MB-09 种子 `790113`。原版 `cua_repl.drag` 对同一行启动了原生拖放，但无投放事件，顺序未变。哨兵的 419 次采样没有观察到键焦点丢失、激活变化、鼠标移动或打字干扰。这是一次未计分的原版对照。静态检查确认了 `NSEvent` 鼠标构造、事件子类型及窗口字段、PID 投递封装，以及此前调查记录的独立焦点通知机制。本轮仍未证实原版由哪条分支保护焦点。见 `artifacts/mb09-original-compare-DDSKEi/report.json` 和 `artifacts/original-drag-path-WrKjJE/`。
