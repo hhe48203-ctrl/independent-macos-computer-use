@@ -34,6 +34,12 @@ IR-02 `487371` 修改 Quantity 后出现可见的层级 3 通知窗，AX 子角�
 
 IR-01 种子 `147201` 的计分复测得 0.15，A22 八项通过。Next 打开 sheet 并报层级变化。Pi 随后按 sheet 的 CG 窗口 ID 绑定，AX 匹配只搜索应用顶层窗口，返回 `AX_WINDOW_UNRESOLVED`。匹配逻辑现会继续核对附属 AX sheet。同种子独立对照成功绑定 sheet、截取 2× 图像、按下观察到的拒绝按钮，并确认旧绑定失效和进入第 2 页。最初 Next 的层级错误仍发生。哨兵保留全部四个生成字符，未记录失焦或升层。见 `artifacts/bench-v2-pi-20261111T014549796603Z/summary.json` 和 `artifacts/ir01-sheet-binding-VtE1qh/report.json`。
 
+浮动对话框的前两轮 Pi 尝试均关闭通知、遇到受保护的 Priority 下拉框，并以正常助手 `stop` 结束。两轮分别包含五次和一次较早的服务过载响应。运行器此前将任意错误响应都视为终止性提供方故障，因此把两轮记为基础设施尝试。现在会统计全部错误响应，再检查最后一条助手响应是否恢复。保留 JSONL 的离线回放确认了两次恢复、指定模型和 GUI-only 检查。测试覆盖正常结束、恢复、终止错误、未恢复错误和错误模型响应。见 `artifacts/bench-v2-pi-20261111T014104424800Z/summary.json` 和 `artifacts/provider-recovery-vl4a9c4v/report.json`。
+
+加入对话框绑定和提供方报告修正后，同种子 Pi 计划完成了两轮计分。IR-01 `147201` 得 0.45，拒绝提示并进入第 2 页。IR-02 `487371` 得 0.45，记录到 Later 动作。两轮均停在受保护的原生下拉框，A22 八项通过，哨兵分别保留 134 和 117 个生成字符。报告分别保留一次和三次已恢复的过载响应，第一轮完成后自动继续第二轮。见 `artifacts/bench-v2-pi-20261111T015212344924Z/summary.json`。
+
+单独的 `487371` 对照对关闭的 Priority 下拉框尝试标准 AX increment、decrement 和 confirm。三项均返回 `AXError -25206`，选值保持 Low，菜单保持关闭。哨兵的失焦和升层计数为零。该对照仍未获得选择路径。见 `artifacts/ir02-popup-standard-actions-8WcsW6/report.json`。
+
 CDB-G02/03 工作流复现见 `artifacts/bench-v2-pi-20261109T064232356505Z/summary.json`。G04 独立 profile 复测见 `artifacts/bench-v2-pi-20261109T064650603373Z/summary.json`，MCP 范围只包含新启动的 Chrome PID。G03 更新临时 profile 后的结果见 `artifacts/bench-v2-pi-20261109T065029893913Z/summary.json`。在这些轮次中，A22 八项均通过，检查器分别得 0.20、0.45、0.15。
 
 用本机 Codex Computer Use 服务（构建 `1001824`）单独对照 MB-09 种子 `790113`。原版 `cua_repl.drag` 对同一行启动了原生拖放，但无投放事件，顺序未变。哨兵的 419 次采样没有观察到键焦点丢失、激活变化、鼠标移动或打字干扰。这是一次未计分的原版对照。静态检查确认了 `NSEvent` 鼠标构造、事件子类型及窗口字段、PID 投递封装，以及此前调查记录的独立焦点通知机制。本轮仍未证实原版由哪条分支保护焦点。见 `artifacts/mb09-original-compare-DDSKEi/report.json` 和 `artifacts/original-drag-path-WrKjJE/`。

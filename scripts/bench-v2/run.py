@@ -495,11 +495,14 @@ def agent_facts(events, guard, v2):
             violations.update(v2.scan_tool_use(name, item.get("arguments", {}))[0])
     usage = {key: sum(msg.get("usage", {}).get(key, 0) for msg in assistant)
              for key in ("input", "output", "cacheRead", "cacheWrite")}
+    provider_error_count = sum(msg.get("stopReason") == "error" for msg in assistant)
+    normal_end = bool(assistant) and assistant[-1].get("stopReason") == "stop"
     return {"model_verified": identities == [(PROVIDER, MODEL)], "observed_models": identities,
             "turns": sum(e.get("type") == "turn_start" for e in events), "tool_calls": len(starts),
             "tool_errors": sum(e.get("type") == "tool_execution_end" and bool(e.get("isError")) for e in events),
             "gui_only_violations": sorted(violations), "gui_only": not violations and all(e.get("toolName") in TOOLS for e in starts),
-            "provider_error": any(msg.get("stopReason") == "error" for msg in assistant), "usage": usage}
+            "provider_error": provider_error_count > 0 and not normal_end,
+            "provider_error_count": provider_error_count, "usage": usage}
 
 
 def run_trial(entry, condition, out, task, spec, bundle_ids, login, modules, *, appkit_key_bundles=(), appkit_click_bundles=()):

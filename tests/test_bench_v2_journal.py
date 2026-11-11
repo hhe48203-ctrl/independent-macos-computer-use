@@ -3,9 +3,12 @@ from pathlib import Path
 import sys
 import tempfile
 import unittest
+from unittest.mock import patch
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "scripts/bench-v2"))
 import journal
+with patch.dict("os.environ", {"CU_BENCH_NODE": "node"}):
+    from run import MODEL, PROVIDER, agent_facts
 
 
 class BenchmarkJournalTest(unittest.TestCase):
@@ -45,3 +48,31 @@ class BenchmarkJournalTest(unittest.TestCase):
         (self.out / "summary.json").write_text('{"plan": []}')
         with self.assertRaisesRegex(ValueError, "--run-index"):
             journal.load_resume(self.out, self.root)
+
+
+class ProviderOutcomeTest(unittest.TestCase):
+    def test_provider_errors_require_a_later_normal_end_to_count_as_recovered(self):
+        cases = (
+            (("toolUse", "stop"), 0, False),
+            (("error", "toolUse", "error", "stop"), 2, False),
+            (("toolUse", "error"), 1, True),
+            (("stop", "error"), 1, True),
+            (("error", "toolUse"), 1, True),
+        )
+        for reasons, count, failed in cases:
+            with self.subTest(reasons=reasons):
+                events = [{"type": "message_end", "message": {
+                    "role": "assistant", "provider": PROVIDER, "model": MODEL, "stopReason": reason,
+                }} for reason in reasons]
+                facts = agent_facts(events, [], None)
+                self.assertTrue(facts["model_verified"])
+                self.assertEqual(facts["provider_error"], failed)
+                self.assertEqual(facts["provider_error_count"], count)
+
+    def test_recovered_provider_error_still_requires_the_exact_model(self):
+        events = [{"type": "message_end", "message": {
+            "role": "assistant", "provider": PROVIDER, "model": model, "stopReason": reason,
+        }} for model, reason in (("other-model", "error"), (MODEL, "stop"))]
+        facts = agent_facts(events, [], None)
+        self.assertFalse(facts["provider_error"])
+        self.assertFalse(facts["model_verified"])
