@@ -180,9 +180,11 @@ export function createCua({request, emit}) {
       return {...await this.#action('scroll',{...this.#target,...at,...deltas}),scrollDistance:{distanceMode,...deltas,unit:'logical points',factor,calibration:vertical&&distanceMode==='calibrated'?'original vertical: window height × pages':'v1 proportional: window dimension × 0.8 × pages'}};
     }
     async typeText(text,opts={}) {
-      options(opts,['strategy','target','replaceAll']);
+      options(opts,['strategy','target','replaceAll','visualCheck']);
       const reference=opts.target===undefined ? {} : this.#ref(opts.target);
-      return this.#action('type_text',{...this.#target,...reference,text,strategy:opts.strategy??'auto',...(opts.replaceAll!==undefined?{replaceAll:opts.replaceAll}:{})});
+      return this.#action('type_text',{...this.#target,...reference,text,strategy:opts.strategy??'auto',
+        ...(opts.replaceAll!==undefined?{replaceAll:opts.replaceAll}:{}),
+        ...(opts.visualCheck!==undefined?{visualCheck:opts.visualCheck}:{})});
     }
     async pressKey(key,opts={}) {options(opts,['strategy','durationMs']);return this.#action('key',{...this.#target,key,strategy:opts.strategy??'auto',...(opts.durationMs!==undefined?{durationMs:opts.durationMs}:{})});}
     async paste(text,opts={}) {options(opts,['format']);if(opts.format&&opts.format!=='text')throw error('UNSUPPORTED_FORMAT','Only plain text paste via AX insertion is implemented');return this.typeText(text);}

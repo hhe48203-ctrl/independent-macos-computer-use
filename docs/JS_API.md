@@ -70,7 +70,7 @@ A confirmed call returns a **new object plus a full initial AX observation**, in
 | Method | Description |
 |---|---|
 | click(index or [x,y], options?) | mouseButton, clickCount, strategy:auto/ax/event/appkit, key, durationMs; plain clicks prefer AXPress |
-| typeText(text,{strategy?,target?,replaceAll?}) | verified AX insertion or real process-directed Unicode. Optional target is the current editable AX index in this bound window |
+| typeText(text,{strategy?,target?,replaceAll?,visualCheck?}) | verified AX insertion or process-directed Unicode, with optional visual readback |
 | pressKey('CMD+A',{strategy?,durationMs?}) | auto may use AX selection; event forces real key packets |
 | drag(from,to,{duration?}) | duration 0.1..2 s, default 0.4; background real events |
 | scroll(index or point,direction,pages?,{distanceMode?}) | up/down/left/right, pages default 1 with range >0..10; calibrated by default, legacy optional |
@@ -85,6 +85,8 @@ A confirmed call returns a **new object plus a full initial AX observation**, in
 If a control advertises `AXScrollToVisible`, `performSecondaryAction(index,'scrollToVisible')` asks the app to reveal it. Re-observe the window to confirm the control is visible and get its current index before acting on it.
 
 For a focused background AX field, pass its current index and observed full value to `typeText(newText,{target:index,replaceAll:oldText})`. The driver checks the live value before replacing it and verifies the resulting text. A changed value returns `STALE_TEXT_VALUE`. Read the application again to verify any subsequent commit or save.
+
+When the exact background window has an observed editor absent from AX, focus the editor and call `typeText(text,{strategy:'event',visualCheck:{before,region}})`. Supply the prior complete line from `app.ocr()` as `before`. Set `region` to a window-relative `{x,y,width,height}` rectangle in logical points that can contain both complete lines. The driver requires a unique prior line and confirms its replacement with the requested text using OCR. Each string must be a single line of 1–160 UTF-16 units. The result's `visualVerified` confirms the displayed text in that region. Check the intended editor before committing and verify the saved document afterward. Refresh the observation after `STALE_VISUAL_TEXT` or `TEXT_VERIFICATION_FAILED`.
 
 Plain background element clicks use the table’s writable `AXSelectedRows` when the observed element is a row or its text and has no `AXPress`. `selectionOutcome:"dialogOpened"` means a sheet appeared. Read the new AX tree before choosing its buttons.
 
@@ -104,7 +106,7 @@ Modifier-click example: `await app.click([200,400],{key:'super+shift',durationMs
 
 The default vertical distance is calibrated to `round(windowHeight*pages)`, consistent with measurements on two owned apps, two sizes and consecutive scrolling. Horizontal keeps `round(windowWidth*0.8*pages)`: the original produced no horizontal displacement in this round, so no horizontal compatibility is claimed. The fourth parameter `{distanceMode:'legacy'}` restores the v1.0 0.8 algorithm on both axes. The returned `scrollDistance` gives the logical-point delta sent; the actual displacement is still up to the app. Full data is in the [compatibility acceptance](COMPATIBILITY_V1_1.md).
 
-For a readable string `AXValue`, `setValue` reports `valueVerified` when the returned value exactly matches the request. If a requested change leaves the previous value in place, it reports `AX_VALUE_UNCHANGED`. Observe normalized or unreadable values before proceeding. Closed popups with read-only values, no children and only native menu actions report `BACKGROUND_POPUP_UNSUPPORTED` for background opens. The same preflight covers a drag starting on the popup and Up and Down on the focused popup, including with modifiers. Real events require app support. The `event` text strategy requires a pre-existing, readable, non-secure text focus and selection range.
+For a readable string `AXValue`, `setValue` reports `valueVerified` when the returned value exactly matches the request. If a requested change leaves the previous value in place, it reports `AX_VALUE_UNCHANGED`. Observe normalized or unreadable values before proceeding. Closed popups with read-only values, no children and only native menu actions report `BACKGROUND_POPUP_UNSUPPORTED` for background opens. The same preflight covers a drag starting on the popup and Up and Down on the focused popup, including with modifiers. Real events require app support. The `event` text strategy uses a pre-existing, readable, non-secure text focus and selection range unless `visualCheck` explicitly selects visual readback.
 
 In the tested Chrome address bar, `typeText` updated the displayed value without preparing the address for submission. For navigation, focus the current address field, call `setValue(index,address)`, press Enter, and verify the loaded page in a fresh observation.
 

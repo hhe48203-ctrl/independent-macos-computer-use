@@ -14,6 +14,7 @@ test('benchmark JS allows ordinary REPL actions and filters out process, network
   validate('await (async () => {const s = await app.getAXState({emit:false}); nodeRepl.write(s.split("\\n").filter(line => line.includes("Button")));})();');
   validate('const tree = await app.getAXNodes({emit:false,maxNodes:1000,maxDepth:5}); const cells = tree.nodes.filter(n => n.role === "AXTextField"); nodeRepl.write(cells.map(n => [n.index,n.title,n.value]));');
   validate('const field = cells[0]; const replaced = await app.typeText("new", {target:field.index,replaceAll:field.value}); nodeRepl.write(replaced.verified); nodeRepl.write(field.selectedText);');
+  validate('const line = (await app.ocr({emit:false})).lines.find(n => n.text.includes("prior")); const written = await app.typeText("new", {strategy:"event",visualCheck:{before:line.text,region:line.frame}}); nodeRepl.write(written.visualVerified);');
   validate('const close = tree.nodes.find(n => n.subrole === "AXCloseButton" && n.enabled && n.actions.includes("AXPress")); if (close) await app.performSecondaryAction(close.index, "press");');
   validate('const edits = [[5, "sample"]]; let results = []; for (const edit of edits) { const result = await app.setValue(edit[0], edit[1]); results = [...results, result]; } nodeRepl.write(results);');
   validate('nodeRepl.write(RegExp("A1").test("A1"));');

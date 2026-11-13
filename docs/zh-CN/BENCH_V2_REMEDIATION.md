@@ -184,6 +184,8 @@ G03 同种子对照再次发现，第一个 Reconcile 对话框把登记簿移�
 
 随后在同样成功的 Unicode 写入前后直接查询 AX，`AXFocusedUIElement` 都指向登记簿窗口本身，角色为 `AXWindow`，子角色为 `AXStandardWindow`。可以核对精确窗口身份，AX 没有提供独立的聚焦备注编辑器来回读改动。见基准测试工作树的 `artifacts/cdb-g03-memo-unicode-focus-r15ck_dv/report.json`。
 
+MCP 的 `typeText` 现可结合 `strategy:'event'` 显式使用 `visualCheck`。调用方提供 OCR 读到的完整原行和窗口内区域。每对可打印 Unicode 键事件发送前，驱动会核对同一焦点窗口和键盘隔离，随后在指定区域回读完整新行。同种子受限 stdio MCP 对照在发送前拒绝了过期原行及另一个焦点编辑器。有效调用返回 `visualVerified`，167 次焦点采样无变化、无缺失。独立提交及保存后，账本只读复核确认标点完整、仅改动一条备注、拆分 ID 保持一致。哨兵保留全部 12 个生成字符，零失焦、零升层。见基准测试工作树的 `artifacts/cdb-g03-memo-visual-mcp-duak1ugo/report.json`。
+
 另一轮同种子对照中，第二个 Reconcile 窗口在已观察交易行与 OCR 定位的 R 列交点接收了定向点击。Funds Out 合计从 $73.10 升至 $1,321.70，再次点击恢复 $73.10。哨兵保留全部 17 个生成字符，零失焦。第一个对话框仍改变了与其他测试后台窗口的相对顺序。对照在 Finish 前结束，确认了可撤销的行勾选。见基准测试工作树的 `artifacts/cdb-g03-reconcile-row-8glk4mao/report.json`。
 
 另一轮 `99589` 对照在一次性账本完成并保存了一笔诊断性对账。定向数字编辑保留原有小数分隔符。Finish 前通过 OCR 和截图核对了勾选金额、两项余额相等及差额为零。只读 XML 观察器确认一条 Checking Account 拆分从 `n` 变为 `y`，对账日期随之写入，所有交易编号均保留。哨兵的 19 个生成字符完整保留，零失焦、零激活。驱动仍报告了初始对话框导致的后台窗口换序。见基准测试工作树的 `artifacts/cdb-g03-reconcile-finish-i1wkeb6t/report.json` 和截图。

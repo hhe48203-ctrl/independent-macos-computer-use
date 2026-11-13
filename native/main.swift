@@ -356,9 +356,9 @@ struct Snapshot {
         guard let data = rep.representation(using: .png, properties: [:]) else { throw BridgeError("PNG_FAILED", "PNG encoding failed") }
         return ["data": data.base64EncodedString(), "mimeType": "image/png", "width": image.width, "height": image.height, "frame": rectJSON(frame), "scaleX": Double(image.width)/frame.width, "scaleY": Double(image.height)/frame.height, "kind": kind, "coordinateSpace": "image pixels; divide by scaleX/scaleY for window-relative input points"]
     }
-    func ocr(_ p: Object) async throws -> Object {
+    func ocr(_ p: Object, languageCorrection: Bool = true) async throws -> Object {
         let (image, frame, _) = try await capture(p)
-        let request = VNRecognizeTextRequest(); request.recognitionLevel = .accurate; request.usesLanguageCorrection = true
+        let request = VNRecognizeTextRequest(); request.recognitionLevel = .accurate; request.usesLanguageCorrection = languageCorrection
         try VNImageRequestHandler(cgImage: image).perform([request])
         let lines: [Object] = (request.results ?? []).compactMap { observation in
             guard let text = observation.topCandidates(1).first else { return nil }
@@ -474,6 +474,9 @@ struct Snapshot {
         if method == "type_text" {
             let strategy=p["strategy"] as? String ?? "auto"
             guard ["auto","ax","event"].contains(strategy),backgroundMode || strategy == "auto" else {throw BridgeError("INVALID_ARGUMENT","Text strategy must be auto, ax or event in background mode; foreground accepts auto only")}
+            if p["visualCheck"] != nil, (!backgroundMode || strategy != "event" || p["snapshotId"] != nil || p["elementId"] != nil || p["replaceAll"] != nil) {
+                throw BridgeError("INVALID_ARGUMENT", "visualCheck requires background event text without an AX reference or replaceAll")
+            }
         }
         if method == "key" {
             let strategy = p["strategy"] as? String ?? "auto"

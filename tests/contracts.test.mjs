@@ -59,6 +59,19 @@ test('raw Unicode strategy is explicit and cannot imply foreground or AX fallbac
   assert.equal(schema('cu_type_text').safeParse({...text,strategy:'event-then-AX'}).success,false);
 });
 
+test('visual text acknowledgement requires an explicit region and a distinct single line',()=>{
+  const text={pid:1,windowId:2,text:'Memo: $14.75',strategy:'event'};
+  const visualCheck={before:'Prior line',region:{x:0,y:300,width:460,height:24}};
+  const contract=schema('cu_type_text');
+  assert.deepEqual(contract.parse({...text,visualCheck}).visualCheck,visualCheck);
+  for(const request of [
+    {...text,strategy:'auto'}, {...text,mode:'foreground'}, {...text,text:'line\nnext'},
+    {...text,text:'\t'}, {...text,text:visualCheck.before}, {...text,text:'a'.repeat(161)},
+    {...text,replaceAll:''}, {...text,snapshotId:'aaaaaa00-aaaa-4aaa-8aaa-aaaaaaaaaaaa',elementId:'e0'},
+    {...text,visualCheck:{...visualCheck,region:{...visualCheck.region,width:0}}}
+  ]) assert.equal(contract.safeParse({visualCheck,...request}).success,false);
+});
+
 test('event key strategy preserves real select-all without a semantic fallback',()=>{
  const args={pid:1,windowId:2,key:'CMD+A'};
  assert.equal(schema('cu_key').parse(args).strategy,'auto');

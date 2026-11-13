@@ -284,6 +284,20 @@ struct HeldBackgroundMouse {
         }
         throw BridgeError("TEXT_VERIFICATION_FAILED", "\(mechanism) did not produce the expected readable value. It may have partly completed; refresh state before retrying.")
     }
+    func postBackgroundUnicode(_ units: [UniChar], source: CGEventSource, pid: pid_t, wid: CGWindowID) throws {
+        guard let down = CGEvent(keyboardEventSource: source, virtualKey: 0, keyDown: true),
+              let up = CGEvent(keyboardEventSource: source, virtualKey: 0, keyDown: false) else {
+            throw BridgeError("EVENT_FAILED", "Could not create paired Unicode keyboard events")
+        }
+        for event in [down, up] {
+            event.flags = []
+            units.withUnsafeBufferPointer { event.keyboardSetUnicodeString(stringLength: $0.count, unicodeString: $0.baseAddress) }
+            event.setIntegerValueField(CGEventField(rawValue: 51)!, value: Int64(wid))
+            event.setIntegerValueField(.eventSourceUserData, value: 0x43554247)
+            event.timestamp = DispatchTime.now().uptimeNanoseconds
+            event.postToPid(pid)
+        }
+    }
     func insertBackgroundEventText(_ p:Object,_ pid:pid_t,_ wid:CGWindowID,_ frame:CGRect,_ observation:BackgroundFocusObservation) async throws -> Object {
         let root=AXUIElementCreateApplication(pid)
         let window=try axWindow(pid,frame)
@@ -315,15 +329,7 @@ struct HeldBackgroundMouse {
         for units in packets {
             try observation.validate()
             try checkFocus()
-            for down in [true,false] {
-                guard let event=CGEvent(keyboardEventSource:source,virtualKey:0,keyDown:down) else {throw BridgeError("EVENT_FAILED","Could not create Unicode keyboard event")}
-                event.flags=[]
-                units.withUnsafeBufferPointer{event.keyboardSetUnicodeString(stringLength:units.count,unicodeString:$0.baseAddress)}
-                event.setIntegerValueField(CGEventField(rawValue:51)!,value:Int64(wid))
-                event.setIntegerValueField(.eventSourceUserData,value:0x43554247)
-                event.timestamp=DispatchTime.now().uptimeNanoseconds
-                event.postToPid(pid)
-            }
+            try postBackgroundUnicode(units, source: source, pid: pid, wid: wid)
             deliveredText += String(utf16CodeUnits:units,count:units.count)
             let partial=ns.replacingCharacters(in:NSRange(location:selected.location,length:selected.length),with:deliveredText)
             var acknowledged=false
@@ -343,6 +349,89 @@ struct HeldBackgroundMouse {
             try await Task.sleep(nanoseconds:20_000_000)
         }
         throw BridgeError("TEXT_VERIFICATION_FAILED","Raw Unicode events did not produce the exact expected text. The application may ignore or transform them; the operation may be partial. No AX or foreground fallback was attempted. Observe before retrying.")
+    }
+    func insertVisuallyCheckedText(_ p: Object, _ pid: pid_t, _ wid: CGWindowID, _ frame: CGRect,
+                                   _ observation: BackgroundFocusObservation, _ order: [(id:Int,pid:pid_t)], _ foreground: pid_t?) async throws -> Object {
+        func singleLine(_ value: String) -> Bool {
+            (1...160).contains(value.utf16.count) && value.unicodeScalars.allSatisfy {
+                ![.control, .lineSeparator, .paragraphSeparator].contains($0.properties.generalCategory)
+            }
+        }
+        guard let check = p["visualCheck"] as? Object, let before = check["before"] as? String,
+              let text = p["text"] as? String, singleLine(before), singleLine(text), !before.utf16.elementsEqual(text.utf16),
+              let bounds = check["region"] as? Object else {
+            throw BridgeError("INVALID_ARGUMENT", "visualCheck requires distinct observed and requested single lines of 1–160 UTF-16 units")
+        }
+        let region = CGRect(x: number(bounds, "x", -1), y: number(bounds, "y", -1),
+                            width: number(bounds, "width"), height: number(bounds, "height"))
+        guard [region.minX, region.minY, region.width, region.height].allSatisfy(\.isFinite),
+              number(bounds, "width") > 0, number(bounds, "height") > 0,
+              CGRect(origin: .zero, size: frame.size).contains(region) else {
+            throw BridgeError("INVALID_ARGUMENT", "Visual check region must fit inside the window in logical points")
+        }
+        let packets = text.map { Array(String($0).utf16) }
+        guard packets.allSatisfy({ $0.count <= 16 }) else {
+            throw BridgeError("INVALID_ARGUMENT", "Visual text input requires each character to fit in one Unicode event")
+        }
+        let root = AXUIElementCreateApplication(pid)
+        let window = try axWindow(pid, frame)
+        guard attr(window, kAXRoleAttribute) as? String == kAXWindowRole,
+              attr(window, kAXSubroleAttribute) as? String == kAXStandardWindowSubrole else {
+            throw BridgeError("BACKGROUND_EVENT_TEXT_FOCUS_MISMATCH", "Visual text input requires an exact standard window")
+        }
+        guard let foreground, foreground != pid, observation.before.keyboardPID != nil else {
+            throw BridgeError("BACKGROUND_EVENT_TEXT_FOCUS_MISMATCH", "Visual text input requires a background target and an observed keyboard recipient")
+        }
+        func checkFocus() throws {
+            try Task.checkCancellation()
+            guard !shuttingDown else { throw BridgeError("CANCELLED", "Helper stopped during visual text input") }
+            let (application, currentWindow, currentFrame) = try target(p)
+            guard currentFrame == frame, currentWindow["onScreen"] as? Bool == true, !application.isHidden else {
+                throw BridgeError("WINDOW_MOVED", "Window geometry or visibility changed during visual text input. Observe before retrying.")
+            }
+            try ensureEditableNotSecure(pid)
+            guard let activeWindow = attr(root, kAXFocusedWindowAttribute), CFEqual(activeWindow, window),
+                  let focused = attr(root, kAXFocusedUIElementAttribute), CFEqual(focused, window) else {
+                throw BridgeError("BACKGROUND_EVENT_TEXT_FOCUS_MISMATCH", "Visual text input requires the same exact focused window without a distinct AX editor. Observe before retrying.")
+            }
+            try observation.validate()
+            guard observation.unresolved == 0, observation.transitions.isEmpty else {
+                throw BridgeError("BACKGROUND_KEYBOARD_ROUTE_CHANGED", "Focus changed or became unresolved during visual text input. Observe before retrying.")
+            }
+            try assertBackgroundIsolation(pid, wid, order, foreground)
+        }
+        func visibleLines() async throws -> [String] {
+            try checkFocus()
+            let result = try await ocr(p, languageCorrection: false)
+            try checkFocus()
+            return (result["lines"] as? [Object] ?? []).compactMap { line in
+                guard let bounds = line["frame"] as? Object else { return nil }
+                let rect = CGRect(x: number(bounds, "x"), y: number(bounds, "y"), width: number(bounds, "width"), height: number(bounds, "height"))
+                return region.contains(rect) ? line["text"] as? String : nil
+            }
+        }
+        func count(_ wanted: String, in lines: [String]) -> Int {
+            lines.count(where: { $0.utf16.elementsEqual(wanted.utf16) })
+        }
+        let initial = try await visibleLines()
+        guard count(before, in: initial) == 1, count(text, in: initial) == 0 else {
+            throw BridgeError("STALE_VISUAL_TEXT", "The prior line is missing or ambiguous, or the requested line is already present. No text was sent.")
+        }
+        let source = try backgroundSource()
+        for units in packets {
+            try checkFocus()
+            try postBackgroundUnicode(units, source: source, pid: pid, wid: wid)
+            try await Task.sleep(nanoseconds: 12_000_000)
+        }
+        for _ in 0..<3 {
+            let lines = try await visibleLines()
+            if count(text, in: lines) == 1, count(before, in: lines) == 0 {
+                return ["ok":true,"mode":"background","method":"Unicode CGEvent.postToPid with OCR","strategy":"event",
+                        "visualVerified":true,"verificationRequired":true,"AXActionsGenerated":false,"characters":text.count]
+            }
+            try await Task.sleep(nanoseconds: 40_000_000)
+        }
+        throw BridgeError("TEXT_VERIFICATION_FAILED", "OCR did not confirm the complete new line in the same region. Input may be partial. Observe before retrying.")
     }
     func modifierFlags(_ text:String) throws -> CGEventFlags {
         var flags:CGEventFlags=[]
@@ -740,6 +829,10 @@ struct HeldBackgroundMouse {
             guard ["auto","ax","event"].contains(strategy) else {throw BridgeError("INVALID_ARGUMENT","Unknown text strategy")}
             if p["replaceAll"] != nil, (strategy == "event" || p["elementId"] == nil || !(p["replaceAll"] is String)) {
                 throw BridgeError("INVALID_ARGUMENT", "replaceAll requires an exact background AX text target and the observed text.")
+            }
+            if p["visualCheck"] != nil {
+                result = try await insertVisuallyCheckedText(p, pid, wid, frame, inputObservation, orderBefore, foregroundBefore)
+                break
             }
             let textElement=try backgroundTextElement(p,pid,wid,frame)
             if let at=axFrame(textElement){try await agentCursor.move(pid:pid,windowID:wid,frame:frame,point:CGPoint(x:at.midX,y:at.midY),activity:"type")}
