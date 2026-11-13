@@ -132,6 +132,8 @@ Benchmark MCP 现已提供 `getAXNodes`，Calc 循环可以直接筛选节点对
 
 首轮 `high` 档 `909557` 复测使用了 `scrollToVisible`，在 273.27 秒后达到本地 45 轮上限。日历与阻塞记录通过，唯一未通过的是工作簿一致性。日志保留 0.80 分并记录 `turn_cap_reached:true`，提供方错误为零，A22 八项通过，274 个生成字符完整保留。这一轮同时包含新的滚动动作。见基准测试工作树的 `artifacts/bench-v2-pi-20261113T042304154305Z/summary.json`。
 
+工作簿评估器指出只剩最后一条阻塞记录及其证据引用未完成。同种子 F2 对照打开了单元格编辑器，但 AX 未报告焦点。对通过工具栏取得焦点的编辑器直接调用 `setValue` 返回 `AX_VALUE_UNCHANGED`。沿用 Formula 和 Enter 路径时，`typeText(newText,{target:index,replaceAll:oldText})` 能在该编辑器上核对原值并验证写入。三格对照耗时 13.99 秒，显式选中文本后输入的对照耗时 16.26 秒。恰有三格按预期落盘，Controls 和无关记录完整保留，哨兵的 27 个字符全部保留，零失焦、零升层。见基准测试工作树的 `artifacts/cdb-g02-calc-f2-yqir66ce/report.json`、`artifacts/cdb-g02-calc-set-editor-t4x0ujz9/report.json` 和 `artifacts/cdb-g02-calc-replace-all-ki0ynmki/report.json`。
+
 较早的一轮 G03 Pi 同种子复测得 0.45。模型读取了邮件和工作簿，关闭 GnuCash 启动提示，随后展开账户时收到 `BACKGROUND_KEYBOARD_FOCUS_CHANGED` 并停止。哨兵同时记录到升层、激活变化和打字中断。同种子对照在两个鼠标包上保留 Command，仍记录到升层、激活变化和失焦。见 `artifacts/bench-v2-pi-20261110T010224956905Z/summary.json` 和 `artifacts/cdb-g03-command-disclosure-0OONBK/report.json`。
 
 加入 Calc 提示后的 G03 仍得 0.45，在 GnuCash 账户点击处停止。本机 GDK 二进制在应用不活跃时调用 `activateIgnoringOtherApps:`，与 [GTK Quartz 鼠标按下处理](https://github.com/GNOME/gtk/blob/bac4a949b151eedada8bc60a97429d2176b0b28b/gdk/quartz/gdkevents-quartz.c#L1622-L1650)一致。实验性应用内焦点路由可以投递点击且未测到干扰，但账户仍折叠。在该路由下，依次发送 `+`、Down、Enter 打开了 Checking Account 账簿，哨兵未记录失焦、升层或打字中断。默认路由的 `+` 没有展开账户，两组省去准备点击的对照也未能展开。见 `artifacts/bench-v2-pi-20261110T012051583955Z/summary.json`、`artifacts/cdb-gnucash-register-keys-s90EgT/report.json`、`artifacts/cdb-gnucash-default-key-zZ0Unj/report.json` 和 `artifacts/cdb-gnucash-notice-ablation-{iKEFFW,tM5Nrv}/report.json`。

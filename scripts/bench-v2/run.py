@@ -382,7 +382,7 @@ def run_agent(pi, auth, catalog, targets, prompt, artifacts, turns, seconds, des
                 " In Daymark Calendar, click the observed event button with {strategy:'ax'} and verify its ID in the editor. "
                 "If the editor is offscreen, use performSecondaryAction(index, 'scrollToVisible') on an observed editor control that exposes AXScrollToVisible. "
                 "Observe the editor again before using an index. For each visible text field, "
-                "click it, verify focused:true, select its exact current text if nonempty with selectText, then typeText with the current field index. "
+                "click it, observe focused:true, then use typeText(newText,{target:field.index,replaceAll:field.value}). "
                 "Verify the new value, click Update event with {strategy:'ax'}, then reopen the event to verify the saved fields. "
                 "For any event you cite in another app, use the exact ID from the calendar editor's ID field."
             )
@@ -395,11 +395,11 @@ def run_agent(pi, auth, catalog, targets, prompt, artifacts, turns, seconds, des
             instructions += (
                 " Bind LibreOffice Calc with {emit:false,autoObserve:false}. Take getAXNodes after every action before using another index. "
                 "Use the observed cell index with performSecondaryAction(index, 'focus') "
-                "and verify the selected address in the Name Box. The cell's AXValue setter may leave it unchanged. "
+                "and verify the selected address in the Name Box (AXComboBox with identifier pos_window). The cell's AXValue setter may leave it unchanged. "
                 "For toolbar controls and the editor, use (await app.getAXNodes({maxNodes:2000,maxDepth:5,emit:false})).nodes "
                 "and print just the relevant controls. Use node.index for GUI actions. "
                 "Use performSecondaryAction on the Formula button with action 'press'. "
-                "Re-observe the unique focused AXTextArea and its current selection, then use typeText(text, {target:index}) "
+                "Re-observe the unique focused AXTextArea, then use typeText(text,{target:editor.index,replaceAll:editor.value}) "
                 "and verify the editor value. " + calc_commit +
                 "Verify the actual cell value. Look for the Save AXMenuButton in a shallow AX tree and use its AX press to save."
             )
@@ -413,7 +413,7 @@ def run_agent(pi, auth, catalog, targets, prompt, artifacts, turns, seconds, des
                     "Batch at most one row of observed addresses and desired values per JS call. Long batches can time out. "
                     "Use an inline for-of loop and find cells with nodes.filter(n=>n.role==='AXTextField'&&n.title===address). "
                     "For each cell, take fresh AX observations, check the intended address in the Name Box, and check for a unique focused editor. "
-                    "If the editor contains text, select the exact current value and verify the selection before typing. "
+                    "Pass the full observed editor value as replaceAll and check the returned verified field. "
                     "Check the editor value before committing. Read back the committed cell and stop the loop at the first failed check. "
                     "Print the compact results and save finished groups before moving to another app."
                 )

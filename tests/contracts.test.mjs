@@ -39,6 +39,9 @@ test('background is the default; foreground is explicit and text references are 
   assert.equal(schema('cu_type_text').safeParse(text).success,true);
   assert.equal(schema('cu_type_text').safeParse({...text,elementId:undefined}).success,false);
   assert.equal(schema('cu_type_text').safeParse({...text,mode:'foreground'}).success,false);
+  assert.equal(schema('cu_type_text').safeParse({...text,replaceAll:''}).success,true);
+  assert.equal(schema('cu_type_text').safeParse({...text,replaceAll:'old',strategy:'event'}).success,false);
+  assert.equal(schema('cu_type_text').safeParse({...target,text:'new',replaceAll:'old'}).success,false);
 });
 
 test('background click strategies are explicit and constrained',()=>{

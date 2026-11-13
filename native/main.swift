@@ -664,6 +664,7 @@ struct Snapshot {
             for i in 1...count { try assertFocus(a.processIdentifier); try mouse(down, at, button, i); try mouse(up, at, button, i) }
             return ["ok": true, "point": ["x": at.x-f.minX, "y": at.y-f.minY]]
         case "type_text":
+            guard p["replaceAll"] == nil else { throw BridgeError("INVALID_ARGUMENT", "replaceAll requires a background AX text target.") }
             let (a, _, _) = try await focus(p); try ensureEditableNotSecure(a.processIdentifier)
             let text = p["text"] as? String ?? ""
             // Chunk on Character boundaries to keep composed Unicode sequences intact.

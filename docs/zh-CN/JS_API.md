@@ -70,7 +70,7 @@ let replacement=await app.reconnect({pid:789,windowId:1011});
 | 方法 | 说明 |
 |---|---|
 | click(index或[x,y],options?) | mouseButton、clickCount、strategy:auto/ax/event/appkit、key、durationMs；普通点击默认 AXPress 优先 |
-| typeText(text,{strategy?,target?}) | 支持验证后的 AX 插入或真实进程定向 Unicode。target 可指定当前窗口的可编辑 AX 索引 |
+| typeText(text,{strategy?,target?,replaceAll?}) | 支持验证后的 AX 插入或真实进程定向 Unicode。target 可指定当前窗口的可编辑 AX 索引 |
 | pressKey('CMD+A',{strategy?,durationMs?}) | auto 可用 AX 选择；event 强制真实键包 |
 | drag(from,to,{duration?}) | duration0.1..2秒，默认0.4；后台真实事件 |
 | scroll(index或point,direction,pages?,{distanceMode?}) | up/down/left/right，pages默认1、范围>0..10；calibrated默认，legacy可选 |
@@ -83,6 +83,8 @@ let replacement=await app.reconnect({pid:789,windowId:1011});
 | hover([x,y],{durationMs?,screenshot?}) | 显式前台悬停，移动系统鼠标 |
 
 控件支持 `AXScrollToVisible` 时，可调用 `performSecondaryAction(index,'scrollToVisible')` 请求应用将它滚动到可见区域。后续操作前请重新观察窗口，确认控件可见并获取最新索引。
+
+后台 AX 字段取得焦点后，可用 `typeText(newText,{target:index,replaceAll:oldText})` 传入最新索引及观察到的完整原值。驱动会先核对当前值，再替换并回读文字。原值已变化时返回 `STALE_TEXT_VALUE`。后续提交或保存仍需重新观察应用来确认结果。
 
 普通后台元素点击在目标是可观察的表格行或行文本、没有 `AXPress` 时，可用表格可写的 `AXSelectedRows`。`selectionOutcome:"dialogOpened"` 表示出现了附属弹窗，应读取新的 AX 树后再操作弹窗按钮。
 

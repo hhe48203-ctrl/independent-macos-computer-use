@@ -70,7 +70,7 @@ A confirmed call returns a **new object plus a full initial AX observation**, in
 | Method | Description |
 |---|---|
 | click(index or [x,y], options?) | mouseButton, clickCount, strategy:auto/ax/event/appkit, key, durationMs; plain clicks prefer AXPress |
-| typeText(text,{strategy?,target?}) | verified AX insertion or real process-directed Unicode. Optional target is the current editable AX index in this bound window |
+| typeText(text,{strategy?,target?,replaceAll?}) | verified AX insertion or real process-directed Unicode. Optional target is the current editable AX index in this bound window |
 | pressKey('CMD+A',{strategy?,durationMs?}) | auto may use AX selection; event forces real key packets |
 | drag(from,to,{duration?}) | duration 0.1..2 s, default 0.4; background real events |
 | scroll(index or point,direction,pages?,{distanceMode?}) | up/down/left/right, pages default 1 with range >0..10; calibrated by default, legacy optional |
@@ -83,6 +83,8 @@ A confirmed call returns a **new object plus a full initial AX observation**, in
 | hover([x,y],{durationMs?,screenshot?}) | explicit foreground hover with the real pointer |
 
 If a control advertises `AXScrollToVisible`, `performSecondaryAction(index,'scrollToVisible')` asks the app to reveal it. Re-observe the window to confirm the control is visible and get its current index before acting on it.
+
+For a focused background AX field, pass its current index and observed full value to `typeText(newText,{target:index,replaceAll:oldText})`. The driver checks the live value before replacing it and verifies the resulting text. A changed value returns `STALE_TEXT_VALUE`. Read the application again to verify any subsequent commit or save.
 
 Plain background element clicks use the table’s writable `AXSelectedRows` when the observed element is a row or its text and has no `AXPress`. `selectionOutcome:"dialogOpened"` means a sheet appeared. Read the new AX tree before choosing its buttons.
 

@@ -23,7 +23,13 @@ try{
   const bound=await js(`let app=await cua.getApp({pid:${fixture.apps.target.pid},windowId:${fixture.apps.target.windowId}})`);
   const index=label=>Number(text(bound).split('\n').find(l=>l.includes(label))?.match(/\[(\d+)\]/)?.[1]);
   const field=index('message-input'),button=index('Apply message');assert.ok(Number.isInteger(field)&&Number.isInteger(button));
-  await js(`await app.performSecondaryAction(${field},'focus'); await app.typeText('REPL 桌面 verified')`);
+  await js(`await app.performSecondaryAction(${field},'focus'); await app.typeText('initial 🧪')`);
+  const stale=await client.callTool({name:'js',arguments:{code:`await app.typeText('wrong',{target:${field},replaceAll:'stale'});`}});
+  outputs.push({action:'replace text with a stale value',result:stale});
+  assert.equal(stale.isError,true);
+  assert.match(text(stale),/STALE_TEXT_VALUE/);
+  const replacement=await js(`await app.typeText('REPL 桌面 verified',{target:${field},replaceAll:'initial 🧪'})`);
+  assert.match(text(replacement),/REPL 桌面 verified/);
   await js(`await app.click(${button})`);
   const state=await js('await app.getAXState({disableDiffing:true})');assert.match(text(state),/Result: REPL 桌面 verified/);
   const popupLine=text(state).split('\n').find(line=>line.includes('"identifier":"fixture-popup"'));

@@ -228,21 +228,45 @@ struct HeldBackgroundMouse {
         guard let original = attr(element, kAXValueAttribute) as? String else { throw BridgeError("BACKGROUND_TEXT_UNSUPPORTED", "Element has no readable AX text value; no global input fallback was attempted") }
         let ns = original as NSString
         guard ns.length <= 1_000_000 else { throw BridgeError("TEXT_TOO_LARGE", "Background insertion is bounded to one million existing UTF-16 units") }
+        let observed = p["replaceAll"] as? String
+        if let observed {
+            guard attr(element, kAXFocusedAttribute) as? Bool == true else {
+                throw BridgeError("BACKGROUND_TEXT_TARGET_REQUIRED", "Focus the observed text target and confirm its focus before replacing its value.")
+            }
+            guard original.utf16.elementsEqual(observed.utf16) else {
+                throw BridgeError("STALE_TEXT_VALUE", "The current text differs from the observed replacement value. No text was sent.")
+            }
+        }
         var selection = CFRange(location: ns.length, length: 0)
         if let value = attr(element, kAXSelectedTextRangeAttribute), CFGetTypeID(value) == AXValueGetTypeID() {
             guard AXValueGetValue(value as! AXValue, .cfRange, &selection) else { throw BridgeError("BACKGROUND_TEXT_UNSUPPORTED", "Cannot read current text selection") }
         } else if !original.isEmpty { throw BridgeError("BACKGROUND_TEXT_UNSUPPORTED", "No AX text selection; refusing to guess insertion position") }
         guard selection.location >= 0, selection.length >= 0, selection.location <= ns.length, selection.length <= ns.length-selection.location else { throw BridgeError("STALE_SELECTION", "Text selection is no longer valid") }
-        let expected = ns.replacingCharacters(in: NSRange(location: selection.location, length: selection.length), with: text)
         var selectedSettable: DarwinBoolean = false
         _ = AXUIElementIsAttributeSettable(element, kAXSelectedTextAttribute as CFString, &selectedSettable)
         var valueSettable: DarwinBoolean = false
         _ = AXUIElementIsAttributeSettable(element, kAXValueAttribute as CFString, &valueSettable)
-        let mechanism: String
         // Focused web inputs can advertise AXSelectedText and acknowledge its
         // setter without changing the page. Prefer writable AXValue there,
         // using the same observed UTF-16 range and exact readback.
-        if selectedSettable.boolValue && !(webField && valueSettable.boolValue) {
+        let useSelectedText = selectedSettable.boolValue && !(webField && valueSettable.boolValue)
+        if observed != nil {
+            if useSelectedText, selection.location != 0 || selection.length != ns.length {
+                var all = CFRange(location: 0, length: ns.length)
+                guard let encoded = AXValueCreate(.cfRange, &all) else { throw BridgeError("AX_ERROR", "Could not encode full selection") }
+                try axCheck(AXUIElementSetAttributeValue(element, kAXSelectedTextRangeAttribute as CFString, encoded), "Select full text")
+                guard let current = attr(element, kAXSelectedTextRangeAttribute), CFGetTypeID(current) == AXValueGetTypeID(),
+                      AXValueGetValue(current as! AXValue, .cfRange, &selection), selection.location == 0, selection.length == ns.length,
+                      let value = attr(element, kAXValueAttribute) as? String, value.utf16.elementsEqual(original.utf16),
+                      attr(element, kAXFocusedAttribute) as? Bool == true else {
+                    throw BridgeError("STALE_SELECTION", "Could not verify the full selection and its current text. No text was sent.")
+                }
+            }
+            selection = CFRange(location: 0, length: ns.length)
+        }
+        let expected = ns.replacingCharacters(in: NSRange(location: selection.location, length: selection.length), with: text)
+        let mechanism: String
+        if useSelectedText {
             mechanism = "AXSelectedText insertion"
             try axCheck(AXUIElementSetAttributeValue(element, kAXSelectedTextAttribute as CFString, text as CFString), "Background text insertion")
         } else {
@@ -714,6 +738,9 @@ struct HeldBackgroundMouse {
         case "type_text":
             let strategy=p["strategy"] as? String ?? "auto"
             guard ["auto","ax","event"].contains(strategy) else {throw BridgeError("INVALID_ARGUMENT","Unknown text strategy")}
+            if p["replaceAll"] != nil, (strategy == "event" || p["elementId"] == nil || !(p["replaceAll"] is String)) {
+                throw BridgeError("INVALID_ARGUMENT", "replaceAll requires an exact background AX text target and the observed text.")
+            }
             let textElement=try backgroundTextElement(p,pid,wid,frame)
             if let at=axFrame(textElement){try await agentCursor.move(pid:pid,windowID:wid,frame:frame,point:CGPoint(x:at.midX,y:at.midY),activity:"type")}
             if strategy == "event",ProcessInfo.processInfo.environment["CU_EXPERIMENTAL_APPKIT_FOCUS"] == "1" {
