@@ -50,6 +50,8 @@ IR-02 `487371` 从 Priority 开始坐标拖动时打开了原生菜单。键盘�
 
 加入拖动保护后，IR-01 `147201` 与 IR-02 `487371` 各得 0.45，A22 八项均通过。另一次 `147201` 复测把 Next 触发的 `BACKGROUND_WINDOW_REORDERED` 写入 `driver_isolation`，锁定版哨兵仍报告零升层。报告现保留两种观察。见基准测试工作树的 `artifacts/bench-v2-pi-20261113T012028606171Z/summary.json` 和 `artifacts/bench-v2-pi-20261113T012304189387Z/summary.json`。
 
+IR-01 `517139` 复测同样得 0.45，A22 八项均通过，`driver_isolation` 也记录了 Next 导致的换序。MB-09 `790113` 回归得 0.05，A22 八项均通过，驱动未报告隔离错误，11 个生成字符完整保留。表格行拖动在投递前被拒绝。自有光标遮挡回归确认普通画布仍收到后台拖动，且目标窗口保持在覆盖窗之后。见基准测试工作树的 `artifacts/bench-v2-pi-20261113T012423376072Z/summary.json` 和 `artifacts/cursor-occlusion-1794533030859/report.json`。
+
 CDB-G02/03 工作流复现见 `artifacts/bench-v2-pi-20261109T064232356505Z/summary.json`。G04 独立 profile 复测见 `artifacts/bench-v2-pi-20261109T064650603373Z/summary.json`，MCP 范围只包含新启动的 Chrome PID。G03 更新临时 profile 后的结果见 `artifacts/bench-v2-pi-20261109T065029893913Z/summary.json`。在这些轮次中，A22 八项均通过，检查器分别得 0.20、0.45、0.15。
 
 用本机 Codex Computer Use 服务（构建 `1001824`）单独对照 MB-09 种子 `790113`。原版 `cua_repl.drag` 对同一行启动了原生拖放，但无投放事件，顺序未变。哨兵的 419 次采样没有观察到键焦点丢失、激活变化、鼠标移动或打字干扰。这是一次未计分的原版对照。静态检查确认了 `NSEvent` 鼠标构造、事件子类型及窗口字段、PID 投递封装，以及此前调查记录的独立焦点通知机制。本轮仍未证实原版由哪条分支保护焦点。见 `artifacts/mb09-original-compare-DDSKEi/report.json` 和 `artifacts/original-drag-path-WrKjJE/`。
