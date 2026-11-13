@@ -321,6 +321,7 @@ def run_agent(pi, auth, catalog, targets, prompt, artifacts, turns, seconds, des
             (agent / model_catalog.name).symlink_to(model_catalog.resolve())
         scope = artifacts / "scope.json"
         write_json(scope, {"targets": targets, "audit": str(artifacts / "gui-guard.jsonl"),
+                           "isolationAudit": str(artifacts / "driver-isolation.jsonl"),
                            "allowForegroundHover": allow_foreground_hover})
         owned_bundles = {t["bundleId"] for t in targets}
         bundles = ",".join(sorted(owned_bundles))
@@ -568,6 +569,7 @@ def run_trial(entry, condition, out, task, spec, bundle_ids, login, modules, *, 
                 sentinel.toggle_armed()
                 armed = False
                 row["disturbance"] = sentinel.summary()
+                row["driver_isolation"] = json_lines(artifacts / "driver-isolation.jsonl")
                 row["agent"] = agent_facts(json_lines(artifacts / "pi.jsonl"), json_lines(artifacts / "gui-guard.jsonl"), v2)
                 row["evaluation"] = pack.evaluate(row["exit_code"]) if pack else runner.evaluate_probe(
                     task, seed, paths, artifacts, sentinel.log)

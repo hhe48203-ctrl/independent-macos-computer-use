@@ -7,8 +7,13 @@ import {BenchPolicyError, createGuiValidator} from './guard.mjs';
 const windowMethods = new Set(['snapshot', 'screenshot', 'ocr', 'click', 'drag', 'scroll', 'type_text', 'key', 'cursor', 'hover']);
 const referenceMethods = new Set(['click', 'ax_action', 'select_text']);
 const metadataMethods = new Set(['status', 'apps', 'windows', 'cursor_state', 'cursor_hide']);
+const isolationErrors = new Set([
+  'BACKGROUND_APP_ACTIVATED', 'BACKGROUND_WINDOW_REORDERED', 'BACKGROUND_KEYBOARD_FOCUS_CHANGED',
+  'BACKGROUND_KEYBOARD_ROUTE_CHANGED', 'BACKGROUND_TYPING_ROUTE_CHANGED'
+]);
 
-export function createScopedRequest(request, targets, reject = message => { throw new BenchPolicyError(message, true); }, {allowForegroundHover = false} = {}) {
+export function createScopedRequest(request, targets, reject = message => { throw new BenchPolicyError(message, true); },
+  {allowForegroundHover = false, reportIsolation = () => {}} = {}) {
   const pids = new Set(targets.map(target => target.pid));
   const snapshots = new Set();
   return async (method, params = {}, options) => {
@@ -27,7 +32,12 @@ export function createScopedRequest(request, targets, reject = message => { thro
       (windowMethods.has(method) && pids.has(params.pid) && Number.isSafeInteger(params.windowId)) ||
       (referenceMethods.has(method) && snapshots.has(params.snapshotId));
     if (!allowed) return reject(`Native method ${method} has no authorized benchmark target.`);
-    const result = await request(method, params, options);
+    let result;
+    try { result = await request(method, params, options); }
+    catch (error) {
+      if (isolationErrors.has(error?.code)) reportIsolation({code:error.code,method});
+      throw error;
+    }
     if (method === 'apps' || method === 'windows') {
       return {[method]: result[method].filter(item => pids.has(item.pid))};
     }
@@ -51,7 +61,12 @@ if (process.argv[2] === '--check') {
   bridge.request = createScopedRequest(bridge.request.bind(bridge), scope.targets, message => {
     audit('BENCH_GUI_ONLY', message);
     throw new BenchPolicyError(message, true);
-  }, {allowForegroundHover: scope.allowForegroundHover === true});
+  }, {
+    allowForegroundHover: scope.allowForegroundHover === true,
+    reportIsolation: scope.isolationAudit ? event => {
+      appendFileSync(scope.isolationAudit, JSON.stringify(event)+'\n', {mode:0o600});
+    } : undefined
+  });
   const validate = createGuiValidator();
   const {server, runtime} = createServer(bridge, {validateCode(code) {
     try { validate(code); }

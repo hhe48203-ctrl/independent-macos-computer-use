@@ -60,3 +60,17 @@ test('benchmark permits explicit real hover only in a foreground trial on an own
   await foreground('hover', params);
   assert.deepEqual(calls, [['hover', params]]);
 });
+
+test('benchmark records native isolation errors and propagates the original errors', async () => {
+  const observations = [];
+  const reorder = Object.assign(new Error('Window order changed'), {code:'BACKGROUND_WINDOW_REORDERED'});
+  const prevented = Object.assign(new Error('Popup was guarded'), {code:'BACKGROUND_POPUP_UNSUPPORTED'});
+  const request = createScopedRequest(async (method, params) => {
+    if (method === 'snapshot') return {snapshotId:'observed'};
+    throw params.elementId === 'e1' ? reorder : prevented;
+  }, [{pid:42}], undefined, {reportIsolation: event => observations.push(event)});
+  await request('snapshot', {pid:42,windowId:8});
+  await assert.rejects(request('ax_action', {snapshotId:'observed',elementId:'e1'}), error => error === reorder);
+  await assert.rejects(request('click', {snapshotId:'observed',elementId:'e2'}), error => error === prevented);
+  assert.deepEqual(observations, [{code:'BACKGROUND_WINDOW_REORDERED',method:'ax_action'}]);
+});
