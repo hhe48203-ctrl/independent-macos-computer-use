@@ -37,6 +37,8 @@ getAXState 返回文字，后续默认按树行索引输出差分；加 disableD
 
 `getAXNodes({emit:false,maxNodes:500,maxDepth:16})` 返回 `{nodes,truncated,coordinates}`，支持完整或限量的纯 AX 观察。每个节点有 `index`、`parentIndex`（根节点为 `null`）、`depth` 及其可用的 AX 属性。可按 `role`、`title`、`label` 或 `value` 等字段筛选，用最新的 `index` 执行动作。此观察会刷新索引并应用绑定的纯 AX 坐标规则，下一次文字差分仍与上一次文字观察比较。传入 `emit:false` 可隐藏整个结果的自动输出。
 
+如果脚本在每次动作后都显式读取和核验 AX 状态，可用 `getApp(reference,{emit:false,autoObserve:false})` 跳过动作后的自动快照。即使原生动作报错，原有 AX 索引也会失效。再次使用索引前请调用 `getAXNodes` 或 `getAXState`。坐标数组保留上次观察的映射，仍需与窗口当前尺寸匹配。初始绑定和显式重连仍会获取快照，重连会继承 `autoObserve`。
+
 getScreenshot 返回 PNG Buffer，getAXStateAndScreenshot 返回 {state,coordinates,screenshot?}。默认以 MCP image 块显示；emit:false 只返回。可用 nodeRepl.write(value) 输出文本，nodeRepl.emitImage(PNG或JPEG字节) 输出图像。以 undefined 结束调用可避免重复检查返回值。
 
 普通窗口截图只截取绑定窗口。单独的子窗口可能扩大合成图像，导致坐标比例失效。若独立弹窗出现在 `listWindows` 中，可用它自己的 PID 和窗口 ID 绑定。显式悬停截图可以包含绑定范围内的同进程临时窗口。

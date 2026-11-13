@@ -89,6 +89,40 @@ test('quiet bindings refresh element references and keep changes visible on expl
   assert.doesNotMatch(diff,/removed/);
 });
 
+test('manual AX observation skips post-action snapshots and rejects old indices after success or failure',async()=>{
+  const calls=[];
+  let window={pid:12,windowId:20,bundleId:'io.test',path:'/Example.app',frame:{width:400,height:300}};
+  let reads=0;
+  const cua=createCua({emit:()=>{},request:async(method,args)=>{
+    calls.push({method,args});
+    if(method==='apps')return {apps:[]};
+    if(method==='windows')return {windows:args.pid===undefined||args.pid===window.pid?[window]:[]};
+    if(method==='snapshot')return {
+      window,snapshotId:`00000000-0000-4000-8000-${String(++reads).padStart(12,'0')}`,
+      nodes:[{id:'e0',depth:0,role:'AXButton',title:'Go'}]
+    };
+    if(method==='ax_action')throw Object.assign(new Error('Partial action'),{code:'BACKGROUND_WINDOW_REORDERED'});
+    return {ok:true};
+  }});
+  await assert.rejects(cua.getApp('io.test',{autoObserve:'false'}),{code:'INVALID_ARGUMENT'});
+  const app=await cua.getApp('io.test',{emit:false,autoObserve:false});
+  assert.equal(reads,1);
+  await app.click(0);
+  await assert.rejects(app.click(0),{code:'INVALID_ELEMENT'});
+  assert.equal(reads,1);
+  await app.getAXNodes({emit:false});
+  await assert.rejects(app.performSecondaryAction(0,'press'),{code:'BACKGROUND_WINDOW_REORDERED'});
+  await assert.rejects(app.click(0),{code:'INVALID_ELEMENT'});
+  assert.equal(reads,2);
+  await app.click([10,10]);
+  assert.deepEqual(calls.filter(c=>c.method==='click').map(c=>c.args.x),[undefined,10]);
+  window={...window,pid:13,windowId:21,frame:{width:500,height:300}};
+  const replacement=await app.reconnect({pid:13,windowId:21});
+  await replacement.click(0);
+  await assert.rejects(replacement.click(0),{code:'INVALID_ELEMENT'});
+  assert.equal(reads,3);
+});
+
 test('dialog bindings select exact windows and preserve ordinary app-name ambiguity checks', async () => {
   const main = {pid:12,windowId:20,bundleId:'io.test',title:'Document',layer:0,frame:{width:400,height:300}};
   const dialog = {...main,windowId:21,title:'Notification',layer:3};

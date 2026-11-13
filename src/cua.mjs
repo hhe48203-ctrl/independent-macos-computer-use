@@ -24,11 +24,12 @@ export function createCua({request, emit}) {
   }
   class App {
     #target; #identity; #snapshot; #lines; #scale={x:1,y:1}; #dimensions; #coordinateMode; #maxDimension; #unit='logical points';
-    #emitAutomaticAX;
+    #emitAutomaticAX; #autoObserve;
     constructor(target, identity, opts={}) {
       this.#target=Object.freeze({pid:target.pid,windowId:target.windowId});this.#identity=identity;
       this.#coordinateMode=opts.coordinateMode??'adaptive';this.#maxDimension=opts.maxDimension??1600;
       this.#emitAutomaticAX=opts.emit!==false;
+      this.#autoObserve=opts.autoObserve!==false;
       this.pid=target.pid;this.windowId=target.windowId;this.coordinateMode=this.#coordinateMode;Object.freeze(this);
     }
     static async bind(target, identity, opts) {
@@ -57,7 +58,7 @@ export function createCua({request, emit}) {
       if(!Number.isInteger(selection.pid)||!Number.isInteger(selection.windowId))throw error('INVALID_ARGUMENT','Reconnect requires explicit {pid,windowId} from the candidate list');
       const w=candidates.find(w=>w.pid===selection.pid&&w.windowId===selection.windowId);
       if(!w)throw error('RECONNECT_TARGET_MISMATCH','Selected window is absent or belongs to a different bundle/path. No binding changed.');
-      return App.bind(w,this.#identity,{coordinateMode:this.#coordinateMode,maxDimension:this.#maxDimension,emit:this.#emitAutomaticAX});
+      return App.bind(w,this.#identity,{coordinateMode:this.#coordinateMode,maxDimension:this.#maxDimension,emit:this.#emitAutomaticAX,autoObserve:this.#autoObserve});
     }
     async #live() {
       const {windows}=await native('windows',{pid:this.pid});
@@ -136,6 +137,11 @@ export function createCua({request, emit}) {
     async ocr(opts={}) {options(opts,['emit','maxDimension']);const result=await native('ocr',{...this.#target,maxDimension:opts.maxDimension??1600});return display({...result,rectUnit:'logical points',arrayCoordinates:await this.getCoordinateInfo({emit:false})},opts);}
     async #action(method,args) {
       await this.#live();
+      if(!this.#autoObserve){
+        this.#snapshot=undefined;
+        try {return await native(method,args);}
+        finally {this.#snapshot=undefined;}
+      }
       const result=await native(method,args);
       try {await this.#observe(false,{},this.#emitAutomaticAX);} catch(e) {emit({type:'text',text:`Action completed, observation failed: ${e.code??e.name}: ${e.message}. Observe before retrying.`});}
       return result;
@@ -201,10 +207,11 @@ export function createCua({request, emit}) {
     async requestPermissions(opts) {return display(await native('request_permissions',opts));},
     async launchApp(bundleId,opts={}) {options(opts,['allowVisibleWindows']);return display(await native('launch',{bundleId,allowVisibleWindows:opts.allowVisibleWindows??false}));},
     async getApp(reference,opts={}) {
-      options(opts,['coordinateMode','maxDimension','emit']);
+      options(opts,['coordinateMode','maxDimension','emit','autoObserve']);
       if(opts.coordinateMode!==undefined&&!['adaptive','original'].includes(opts.coordinateMode))throw error('INVALID_ARGUMENT','coordinateMode must be adaptive or original');
       if(opts.maxDimension!==undefined&&(!Number.isInteger(opts.maxDimension)||opts.maxDimension<320||opts.maxDimension>4096))throw error('INVALID_ARGUMENT','maxDimension must be an integer from 320 to 4096');
       if(opts.emit!==undefined&&typeof opts.emit!=='boolean')throw error('INVALID_ARGUMENT','emit must be a boolean');
+      if(opts.autoObserve!==undefined&&typeof opts.autoObserve!=='boolean')throw error('INVALID_ARGUMENT','autoObserve must be a boolean');
       const {windows,apps}=await inventory();let matches;
       if(typeof reference==='string') {
         const needle=reference.toLowerCase();const pids=apps.filter(a=>[a.id,a.bundleId,a.name,a.displayName,a.path].some(v=>v?.toLowerCase()===needle)).map(a=>a.pid);

@@ -391,7 +391,8 @@ def run_agent(pi, auth, catalog, targets, prompt, artifacts, turns, seconds, des
                 "Use performSecondaryAction on the Accept button with action 'press' to commit. "
             )
             instructions += (
-                " In LibreOffice Calc, use the observed cell index with performSecondaryAction(index, 'focus') "
+                " Bind LibreOffice Calc with {emit:false,autoObserve:false}. Take getAXNodes after every action before using another index. "
+                "Use the observed cell index with performSecondaryAction(index, 'focus') "
                 "and verify the selected address in the Name Box. The cell's AXValue setter may leave it unchanged. "
                 "For toolbar controls and the editor, use (await app.getAXNodes({maxNodes:2000,maxDepth:5,emit:false})).nodes "
                 "and print just the relevant controls. Use node.index for GUI actions. "

@@ -120,6 +120,8 @@ G02 `909557` 的隔离对照通过取得焦点的 AX 文本字段更新了 Dayma
 
 Benchmark MCP 现已提供 `getAXNodes`，Calc 循环可以直接筛选节点对象并使用索引。同种子对照重做了三格编辑，核验了落盘的 ODS、工作簿与日历一致，以及 Controls 和无关事件完整保留。GUI 策略审计为空，哨兵保留全部 32 个生成字符，零失焦、零升层。见 `artifacts/cdb-g02-structured-ax-xksqirca/report.json`。
 
+两次 `909557` 对照通过 Benchmark MCP 执行了相同的三格编辑循环。静默自动观察耗时 18.84 秒，启用 `autoObserve:false` 耗时 16.26 秒。后者保留所有显式观察，只读核验确认 ODS 已保存、数值与日历一致、仅三格按预期变化，Controls 和无关记录完整保留。策略审计为空，29 个生成字符完整保留，零失焦、零升层。Calc 引导现使用此绑定选项，并要求重新读取 AX 后再使用数字索引。见基准测试工作树的 `artifacts/cdb-g02-calc-observation-baseline-f6hynl4_/report.json` 和 `artifacts/cdb-g02-calc-explicit-observation-x_1aoqhr/report.json`。
+
 加入 `getAXNodes` 后的首轮计分中，Pi 用它更新了一条日历事件，并从一次无效 JavaScript 表达式中恢复。Pi 在 13 次 GUI 调用后结束，未重开事件核验保存，也未继续其余事件、工作簿和阻塞记录。得分 0.20，A22 八项通过，53 个生成字符完整保留，提供方错误及 GUI-only 违规均为零。工具日志记录了模型正常结束，当时仍有时间和轮次。见 `artifacts/bench-v2-pi-20261111T081843748210Z/summary.json`。
 
 补充继续执行已核验编辑的引导后，下一轮得 0.20，A22 八项通过。Pi 在一次调用中依次绑定 Mail 和 Chat，第二个 `getApp` 返回 `WINDOW_GONE`。随后的清单仍显示相同的 Chat PID 和窗口 ID。Pi 随后读取 Calc 并结束，未重试 Chat 绑定或写入。相同种子的只读对照连续 30 次绑定 Mail 和 Chat 并读取结构化 AX，均未出错。短暂不一致的原因仍待查明。见 `artifacts/bench-v2-pi-20261111T082105297757Z/summary.json` 和 `artifacts/cdb-g02-binding-check-4tbr2ix3/report.json`。

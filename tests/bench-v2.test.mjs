@@ -6,6 +6,7 @@ import {createScopedRequest} from '../scripts/bench-v2/mcp.mjs';
 test('benchmark JS allows ordinary REPL actions and filters out process, network and filesystem access', () => {
   const validate = createGuiValidator();
   validate('let app = await cua.getApp({pid: 123, windowId: 7});');
+  validate('let workbook = await cua.getApp({pid: 123, windowId: 8}, {emit:false,autoObserve:false});');
   validate('await app.click(4); await app.getAXStateAndScreenshot();');
   validate('await app.hover([15, 25], {durationMs:1500, screenshot:true});');
   validate('const shown = (await cua.listWindows()).filter(w => w.onScreen);');
