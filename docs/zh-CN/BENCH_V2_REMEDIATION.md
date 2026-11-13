@@ -180,6 +180,10 @@ G03 同种子对照再次发现，第一个 Reconcile 对话框把登记簿移�
 
 下一轮 `high` 计分复测用时 316.13 秒，达到 45 次调用上限，得 0.45。A22 八项通过，317 个生成字符完整保留，提供方、GUI-only 和驱动隔离均无报错。检查器接受了工作簿证据格式，两条账本备注和两笔正式对账仍未完成。模型约用 20 次调用列出窗口和读取来源。同种子对照使用实际受限 REPL，一次调用在 7.07 秒内打开、读取并关闭三个已观察的邮件附件预览，零失焦、零升层。运行器现说明如何合并这些读取，并提示 AX 描述对应现有的 `label` 字段。独立备注对照还确认登记簿编辑器缺少可读 AX 值，`typeText(...,{strategy:'event'})` 因此拒绝输入。在当前拼音键盘布局下，GTK 十六进制输入组合也未能产生半角美元符号。见基准测试工作树的 `artifacts/bench-v2-pi-20261113T191555554345Z/summary.json`、`artifacts/cdb-g03-mail-batch-elwv4scu/report.json` 和 `artifacts/cdb-g03-memo-literal-1f8g0_ws/report.json`。
 
+加入邮件批量引导后，Pi 在第五次调用结束前读完所需的五份附件。Calc 编辑阶段在第 21 次工具调用触及 360 秒上限，得 0.45。仅来源行和账本操作仍未完成。A22 八项通过，361 个生成字符完整保留，出现一次可恢复的 JS 语法错误，提供方、GUI-only 和驱动隔离均无报错。随后两轮同种子诊断向已选中的备注格发送定向 Unicode 键事件，每个按下及抬起事件对携带一个字符。基于 NSEvent 和直接构造 CGEvent 的两种方式均在同一拼音布局下显示并保存了原样标点，包括半角美元符号。文件观察器确认仅一处备注改动，拆分 ID 不变。两轮均完整保留哨兵的十个生成字符，零失焦、零升层。公开 `event` 策略仍要求可读的 AX 回读。见基准测试工作树的 `artifacts/bench-v2-pi-20261113T192522086014Z/summary.json`、`artifacts/cdb-g03-memo-unicode-icsxre1l/report.json` 和 `artifacts/cdb-g03-memo-unicode-cg-4_opcww3/report.json`。
+
+随后在同样成功的 Unicode 写入前后直接查询 AX，`AXFocusedUIElement` 都指向登记簿窗口本身，角色为 `AXWindow`，子角色为 `AXStandardWindow`。可以核对精确窗口身份，AX 没有提供独立的聚焦备注编辑器来回读改动。见基准测试工作树的 `artifacts/cdb-g03-memo-unicode-focus-r15ck_dv/report.json`。
+
 另一轮同种子对照中，第二个 Reconcile 窗口在已观察交易行与 OCR 定位的 R 列交点接收了定向点击。Funds Out 合计从 $73.10 升至 $1,321.70，再次点击恢复 $73.10。哨兵保留全部 17 个生成字符，零失焦。第一个对话框仍改变了与其他测试后台窗口的相对顺序。对照在 Finish 前结束，确认了可撤销的行勾选。见基准测试工作树的 `artifacts/cdb-g03-reconcile-row-8glk4mao/report.json`。
 
 另一轮 `99589` 对照在一次性账本完成并保存了一笔诊断性对账。定向数字编辑保留原有小数分隔符。Finish 前通过 OCR 和截图核对了勾选金额、两项余额相等及差额为零。只读 XML 观察器确认一条 Checking Account 拆分从 `n` 变为 `y`，对账日期随之写入，所有交易编号均保留。哨兵的 19 个生成字符完整保留，零失焦、零激活。驱动仍报告了初始对话框导致的后台窗口换序。见基准测试工作树的 `artifacts/cdb-g03-reconcile-finish-i1wkeb6t/report.json` 和截图。
