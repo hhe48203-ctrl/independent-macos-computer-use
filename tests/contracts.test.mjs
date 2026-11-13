@@ -19,6 +19,7 @@ test('capture scope and AX value semantics fail closed', () => {
   assert.equal(schema('cu_ax_action').safeParse({ ...ref, action: 'setValue' }).success, false);
   assert.equal(schema('cu_ax_action').safeParse({ ...ref, action: 'setValue', value: '' }).success, true);
   assert.equal(schema('cu_ax_action').safeParse({ ...ref, action: 'press', value: 'oops' }).success, false);
+  assert.equal(schema('cu_ax_action').parse({ ...ref, action: 'scrollToVisible' }).mode, 'background');
 });
 test('PNG appears once as image, metadata does not duplicate image bytes', () => {
   const r = toMcpResult({ snapshotId: 'test', screenshot: { data: 'YWJj', mimeType: 'image/png', width: 3 } });

@@ -76,11 +76,13 @@ let replacement=await app.reconnect({pid:789,windowId:1011});
 | scroll(index或point,direction,pages?,{distanceMode?}) | up/down/left/right，pages默认1、范围>0..10；calibrated默认，legacy可选 |
 | selectText(index,text,{prefix?,suffix?,selectionType?}) | text/cursor_before/cursor_after，UTF-16选择范围 |
 | setValue(index,text) | AXValue 语义设置，可读时回读字符串 |
-| performSecondaryAction(index,action) | focus/press/showMenu/increment/decrement/confirm |
+| performSecondaryAction(index,action) | focus/press/showMenu/increment/decrement/confirm/scrollToVisible |
 | paste(text,{format:'text'}) | 纯文本 AX 插入，不用剪贴板 |
 | ocr({emit?,maxDimension?}) | 本机 Vision OCR，矩形为窗口内逻辑点 |
 | move([x,y]) | 只移动独立覆盖光标，不产生鼠标输入 |
 | hover([x,y],{durationMs?,screenshot?}) | 显式前台悬停，移动系统鼠标 |
+
+控件支持 `AXScrollToVisible` 时，可调用 `performSecondaryAction(index,'scrollToVisible')` 请求应用将它滚动到可见区域。后续操作前请重新观察窗口，确认控件可见并获取最新索引。
 
 普通后台元素点击在目标是可观察的表格行或行文本、没有 `AXPress` 时，可用表格可写的 `AXSelectedRows`。`selectionOutcome:"dialogOpened"` 表示出现了附属弹窗，应读取新的 AX 树后再操作弹窗按钮。
 

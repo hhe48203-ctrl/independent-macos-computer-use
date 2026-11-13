@@ -380,7 +380,8 @@ def run_agent(pi, auth, catalog, targets, prompt, artifacts, turns, seconds, des
         if "com.trycua.cdbbench.daymark-calendar" in owned_bundles:
             instructions += (
                 " In Daymark Calendar, click the observed event button with {strategy:'ax'} and verify its ID in the editor. "
-                "If the editor is offscreen, scroll the current AXWebArea down and observe again. For each visible text field, "
+                "If the editor is offscreen, use performSecondaryAction(index, 'scrollToVisible') on an observed editor control that exposes AXScrollToVisible. "
+                "Observe the editor again before using an index. For each visible text field, "
                 "click it, verify focused:true, select its exact current text if nonempty with selectText, then typeText with the current field index. "
                 "Verify the new value, click Update event with {strategy:'ax'}, then reopen the event to verify the saved fields. "
                 "For any event you cite in another app, use the exact ID from the calendar editor's ID field."

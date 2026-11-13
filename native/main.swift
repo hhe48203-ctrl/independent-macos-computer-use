@@ -584,9 +584,16 @@ struct Snapshot {
             var valueWrite: (before: String, requested: String)?
             defer {inputObservation?.stop()}
             if r.scope == "menu", backgroundMode { throw BridgeError("BACKGROUND_MENU_UNSUPPORTED", "Global application menus can interfere with the foreground session. Use explicit foreground mode only when authorized.") }
+            if action == "scrollToVisible" {
+                var available: CFArray?
+                try axCheck(AXUIElementCopyActionNames(r.element, &available), "Read supported actions")
+                guard (available as? [String])?.contains("AXScrollToVisible") == true else {
+                    throw BridgeError("AX_ACTION_UNSUPPORTED", "This element does not expose AXScrollToVisible.")
+                }
+            }
             if backgroundMode, action == "press" || action == "showMenu" { try checkBackgroundPopup(r.element) }
             if r.scope == "menu" { _ = try await focus(["pid": Int(r.pid), "windowId": Int(r.windowID)]) }
-            if backgroundMode,let at=axFrame(r.element) {
+            if backgroundMode, action != "scrollToVisible", let at=axFrame(r.element) {
                 let (_,_,frame)=try target(["pid":Int(r.pid),"windowId":Int(r.windowID)])
                 try await agentCursor.move(pid:r.pid,windowID:r.windowID,frame:frame,point:CGPoint(x:at.midX,y:at.midY),activity:action)
             }
@@ -607,7 +614,7 @@ struct Snapshot {
                 if !backgroundMode { _ = try await focus(["pid": Int(r.pid), "windowId": Int(r.windowID)]) }
                 try axCheck(AXUIElementSetAttributeValue(r.element, kAXFocusedAttribute as CFString, kCFBooleanTrue), "Focus element")
             } else {
-                let actions = ["press": kAXPressAction, "showMenu": kAXShowMenuAction, "increment": kAXIncrementAction, "decrement": kAXDecrementAction, "confirm": kAXConfirmAction]
+                let actions = ["press": kAXPressAction, "showMenu": kAXShowMenuAction, "increment": kAXIncrementAction, "decrement": kAXDecrementAction, "confirm": kAXConfirmAction, "scrollToVisible": "AXScrollToVisible"]
                 guard let name = actions[action] else { throw BridgeError("INVALID_ARGUMENT", "Unsupported AX action") }
                 try axCheck(AXUIElementPerformAction(r.element, name as CFString), action)
                 if action == "press" {agentCursor.pulse()}

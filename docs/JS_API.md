@@ -76,11 +76,13 @@ A confirmed call returns a **new object plus a full initial AX observation**, in
 | scroll(index or point,direction,pages?,{distanceMode?}) | up/down/left/right, pages default 1 with range >0..10; calibrated by default, legacy optional |
 | selectText(index,text,{prefix?,suffix?,selectionType?}) | text/cursor_before/cursor_after with UTF-16 ranges |
 | setValue(index,text) | semantic AXValue set, with string readback when available |
-| performSecondaryAction(index,action) | focus/press/showMenu/increment/decrement/confirm |
+| performSecondaryAction(index,action) | focus/press/showMenu/increment/decrement/confirm/scrollToVisible |
 | paste(text,{format:'text'}) | plain-text AX insertion, no clipboard |
 | ocr({emit?,maxDimension?}) | local Vision OCR; rectangles are logical points in the window |
 | move([x,y]) | moves only the independent overlay cursor, produces no mouse input |
 | hover([x,y],{durationMs?,screenshot?}) | explicit foreground hover with the real pointer |
+
+If a control advertises `AXScrollToVisible`, `performSecondaryAction(index,'scrollToVisible')` asks the app to reveal it. Re-observe the window to confirm the control is visible and get its current index before acting on it.
 
 Plain background element clicks use the table’s writable `AXSelectedRows` when the observed element is a row or its text and has no `AXPress`. `selectionOutcome:"dialogOpened"` means a sheet appeared. Read the new AX tree before choosing its buttons.
 
