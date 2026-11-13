@@ -83,12 +83,24 @@ export function createCua({request, emit}) {
     }
     async #observe(screenshot, opts={}, render=true) {
       options(opts,['emit','disableDiffing','maxDimension','maxNodes','maxDepth']);
-      const w=await this.#live();
-      const establish=this.#coordinateMode==='original'&&(opts.maxDimension!==undefined&&opts.maxDimension!==this.#maxDimension||!this.#dimensions||w.frame.width!==this.#dimensions.width||w.frame.height!==this.#dimensions.height);
-      const snap=await native('snapshot',{
-        ...this.#target,screenshot:screenshot||establish,maxDimension:opts.maxDimension??this.#maxDimension,
-        maxNodes:opts.maxNodes,maxDepth:opts.maxDepth
-      });
+      let establish=false;
+      if(this.#coordinateMode==='original'){
+        establish=!this.#dimensions||(opts.maxDimension!==undefined&&opts.maxDimension!==this.#maxDimension);
+        if(!screenshot&&!establish){
+          const {frame}=await this.#live();
+          establish=frame.width!==this.#dimensions.width||frame.height!==this.#dimensions.height;
+        }
+      }
+      let snap;
+      try {
+        snap=await native('snapshot',{
+          ...this.#target,screenshot:screenshot||establish,maxDimension:opts.maxDimension??this.#maxDimension,
+          maxNodes:opts.maxNodes,maxDepth:opts.maxDepth
+        });
+      } catch(e) {
+        this.#snapshot=undefined;
+        throw e;
+      }
       if(establish&&!snap.screenshot) {
         this.#snapshot=undefined;this.#dimensions=undefined;this.#lines=undefined;
         throw error('COORDINATES_UNAVAILABLE',snap.screenshotError??'Screenshot scale unavailable; no coordinate fallback was applied');

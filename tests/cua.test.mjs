@@ -130,7 +130,11 @@ test('dialog bindings select exact windows and preserve ordinary app-name ambigu
   const cua = createCua({emit:()=>{},request:async (method, args) => {
     if (method==='apps') return {apps:[]};
     if (method==='windows') return {windows};
-    if (method==='snapshot') return {window:windows.find(w=>w.windowId===args.windowId),nodes:[]};
+    if (method==='snapshot') {
+      const window=windows.find(w=>w.pid===args.pid&&w.windowId===args.windowId);
+      if(!window) throw Object.assign(new Error('Window is gone'),{code:'WINDOW_GONE'});
+      return {window,nodes:[]};
+    }
     assert.fail(`Unexpected request ${method}`);
   }});
   assert.deepEqual(await cua.listWindows({emit:false}),[dialog,main]);
@@ -142,6 +146,29 @@ test('dialog bindings select exact windows and preserve ordinary app-name ambigu
   assert.equal((await cua.getApp({pid:12,windowId:22})).windowId,22);
   windows = [main];
   await assert.rejects(panel.getAXState(),{code:'WINDOW_GONE'});
+});
+
+test('adaptive AX snapshots verify exact bindings without a second window listing',async()=>{
+  const window={pid:12,windowId:20,bundleId:'io.test',frame:{width:400,height:300}};
+  const calls=[];
+  let alive=true;
+  const cua=createCua({emit:()=>{},request:async(method,args)=>{
+    calls.push(method);
+    if(method==='windows')return {windows:args.pid===undefined?[window]:[]};
+    if(method==='apps')return {apps:[]};
+    if(method==='snapshot'){
+      assert.deepEqual([args.pid,args.windowId],[window.pid,window.windowId]);
+      if(!alive)throw Object.assign(new Error('Window is gone'),{code:'WINDOW_GONE'});
+      return {window,nodes:[{id:'e0',depth:0,role:'AXButton'}]};
+    }
+    assert.fail(`Unexpected request ${method}`);
+  }});
+  const app=await cua.getApp({pid:12,windowId:20},{emit:false});
+  assert.equal((await app.getAXNodes({emit:false})).nodes.length,1);
+  alive=false;
+  await assert.rejects(app.getAXState(),{code:'WINDOW_GONE'});
+  await assert.rejects(app.click(0),{code:'INVALID_ELEMENT'});
+  assert.deepEqual(calls,['windows','apps','snapshot','snapshot','snapshot']);
 });
 
 test('original mode preserves measured pixels through AX readbacks, refreshes after resize and fails without scale',async()=>{
