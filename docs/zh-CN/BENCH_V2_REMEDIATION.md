@@ -130,6 +130,8 @@ Benchmark MCP 现已提供 `getAXNodes`，Calc 循环可以直接筛选节点对
 
 下一轮 `909557` 使用显式 AX 观察，保存了部分工作簿并达到本地轮次上限。评估器给出 0.80，唯一失败项是工作簿一致性。原日志把 Pi 生成的中止响应记为提供方错误。新轮次单独记录本地轮次上限，测量可用时保留评估结果。该轮还在 Calendar 底部遇到高度为零的控件，点击返回 `POINT_OUTSIDE_WINDOW`。同种子的自有测试中，新动作 `scrollToVisible` 让观察到的按钮完整进入可见区域，仍选中同一事件，哨兵记录零升层、零失焦。见基准测试工作树的 `artifacts/bench-v2-pi-20261113T013034140217Z/summary.json`、`artifacts/cdb-g02-calendar-offscreen-r6fly1lv/report.json` 和 `artifacts/cdb-g02-calendar-reveal-opi2z8s9/report.json`。
 
+首轮 `high` 档 `909557` 复测使用了 `scrollToVisible`，在 273.27 秒后达到本地 45 轮上限。日历与阻塞记录通过，唯一未通过的是工作簿一致性。日志保留 0.80 分并记录 `turn_cap_reached:true`，提供方错误为零，A22 八项通过，274 个生成字符完整保留。这一轮同时包含新的滚动动作。见基准测试工作树的 `artifacts/bench-v2-pi-20261113T042304154305Z/summary.json`。
+
 较早的一轮 G03 Pi 同种子复测得 0.45。模型读取了邮件和工作簿，关闭 GnuCash 启动提示，随后展开账户时收到 `BACKGROUND_KEYBOARD_FOCUS_CHANGED` 并停止。哨兵同时记录到升层、激活变化和打字中断。同种子对照在两个鼠标包上保留 Command，仍记录到升层、激活变化和失焦。见 `artifacts/bench-v2-pi-20261110T010224956905Z/summary.json` 和 `artifacts/cdb-g03-command-disclosure-0OONBK/report.json`。
 
 加入 Calc 提示后的 G03 仍得 0.45，在 GnuCash 账户点击处停止。本机 GDK 二进制在应用不活跃时调用 `activateIgnoringOtherApps:`，与 [GTK Quartz 鼠标按下处理](https://github.com/GNOME/gtk/blob/bac4a949b151eedada8bc60a97429d2176b0b28b/gdk/quartz/gdkevents-quartz.c#L1622-L1650)一致。实验性应用内焦点路由可以投递点击且未测到干扰，但账户仍折叠。在该路由下，依次发送 `+`、Down、Enter 打开了 Checking Account 账簿，哨兵未记录失焦、升层或打字中断。默认路由的 `+` 没有展开账户，两组省去准备点击的对照也未能展开。见 `artifacts/bench-v2-pi-20261110T012051583955Z/summary.json`、`artifacts/cdb-gnucash-register-keys-s90EgT/report.json`、`artifacts/cdb-gnucash-default-key-zZ0Unj/report.json` 和 `artifacts/cdb-gnucash-notice-ablation-{iKEFFW,tM5Nrv}/report.json`。
