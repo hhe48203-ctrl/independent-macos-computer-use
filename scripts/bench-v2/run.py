@@ -365,6 +365,7 @@ def run_agent(pi, auth, catalog, targets, prompt, artifacts, turns, seconds, des
             instructions += (
                 " Bind selected windows with cua.getApp({pid,windowId}, {emit:false}) to suppress automatic AX output. "
                 "Inspect (await app.getAXNodes({emit:false})).nodes. Filter by role, title, label or value and print only the relevant fields. "
+                "AX descriptions appear as node.label. Filter before projecting compact output fields. "
                 "Use node.index for GUI actions. "
                 "Use await app.getScreenshot(); undefined; to emit a screenshot without echoing its byte array. "
                 "Let tool errors end the call. Use the next call to observe the new state. "
@@ -379,6 +380,15 @@ def run_agent(pi, auth, catalog, targets, prompt, artifacts, turns, seconds, des
                 "If one step is blocked, continue the independent steps that you can verify. "
                 "If a save has no visible confirmation, reopen the item and read its saved fields before retrying. "
                 "Before ending, check each required destination against the task and identify the observed blocker for any unfinished step."
+            )
+        if "com.trycua.cdbbench.ledger-lantern-mail" in owned_bundles:
+            instructions += (
+                " In Ledger Lantern Mail, read the current AXCheckBox message titles and select those needed for the task. "
+                "Batch up to three observed message titles per call with an inline for-of loop. For each title, use a fresh AX tree "
+                "to find its unique message and click it with {strategy:'ax'}. Re-observe the unique AXButton labeled "
+                "Open read-only attachment followed by the attachment name and click it with {strategy:'ax'}. "
+                "Re-observe, verify the preview and capture its AXStaticText values, then close it with the observed Close attachment AXButton. "
+                "Break if any expected control is missing or ambiguous. Print only the relevant attachment content and keep going with the destination edits."
             )
         if "com.trycua.cdbbench.daymark-calendar" in owned_bundles:
             instructions += (
