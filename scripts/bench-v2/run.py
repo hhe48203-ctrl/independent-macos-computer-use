@@ -415,8 +415,8 @@ def run_agent(pi, auth, catalog, targets, prompt, artifacts, turns, seconds, des
         if "org.gnucash.Gnucash" in scoped_key_bundles:
             instructions += (
                 " If GnuCash opens a separate Tip of the Day window, bind its exact PID and window ID. "
-                "Find its enabled AXCloseButton with AXPress in getAXNodes, use performSecondaryAction(node.index, 'press'), "
-                "and refresh listWindows to confirm the tip closed before binding the Accounts window. "
+                "In getAXNodes, find the single node with n.subrole === 'AXCloseButton', n.enabled and n.actions?.includes('AXPress'). "
+                "Use performSecondaryAction(node.index, 'press') and refresh listWindows to confirm the tip closed before binding Accounts. "
                 "In GnuCash, a pointer click in the account tree can activate the app. Read the current selection in the screenshot. "
                 "With the desired parent row selected, use pressKey('shift+=', {strategy:'appkit'}) to expand it. "
                 "Use scoped Down and Enter to select and open the observed child account, verifying the screenshot after each key."
