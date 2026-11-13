@@ -50,6 +50,8 @@ The baseline and targeted repair results are tracked separately. [Bench v2 failu
 
 `driver_isolation` lists isolation errors observed by the native driver, including crossings between existing background windows. The same events are saved in `driver-isolation.jsonl` when present. Each record contains the error code and native operation. The A22 score continues to use the pinned sentinel measurements.
 
+`turn_cap_reached` records a local stop confirmed by Pi's benchmark extension. Pi's synthetic abort for that stop is excluded from `provider_error_count`. A trial stopped at the cap retains its evaluator score when its evidence is usable and cannot pass the task.
+
 Pi gets only the two MCP tools. A benchmark JS gate blocks OS, file and network operations, and native requests are scoped by bundle, owned PID and observed snapshot. Capture is limited to the owned windows. In foreground trials, explicit `app.hover` can deliver real pointer movement for MB-10 and MB-11. `app.move` moves the visual overlay only. The upstream sentinel measures the eight A22 criteria.
 
 During a trial the idle guard checks HID event counters separately from IOKit idle time. A counter change or unexplained idle reset interrupts the run. It can continue after a fresh WindowServer tickle only when the executable, MCP scope and Pi ancestry identify the trial's own helper and the HID counters stayed unchanged. This affects runner interruption handling only. The upstream sentinel and A22 retain their original measurements and scoring.

@@ -50,6 +50,8 @@ npm run bench:v2 -- --run --tasks v2 --condition both --runs 5 --allow-multi-app
 
 `driver_isolation` 列出原生驱动观察到的隔离错误，包括已有后台窗口之间的顺序交叉。有事件时也会写入 `driver-isolation.jsonl`。每条记录包含错误代码和原生操作。A22 仍按锁定版哨兵的测量计分。
 
+`turn_cap_reached` 记录由 Pi 基准扩展确认的本地轮次上限。Pi 为这次本地停止生成的中止响应不计入 `provider_error_count`。证据可用时，这类轮次保留评估器分数，任务状态记为未通过。
+
 Pi 只获得两个 MCP 工具。benchmark 的 JS 限制阻止系统、文件和网络调用，原生操作按 bundle、受控 PID 和已观察快照限定范围。截图只覆盖测试窗口。前台试验可为 MB-10、MB-11 显式调用 `app.hover`，投递真实指针移动。`app.move` 只移动视觉光标。上游哨兵测量 A22 的八项判据。
 
 试验期间分别观测实体 HID 事件计数和 IOKit 空闲时长。HID 计数变化或无法归因的空闲计时回落会中断本轮。只有核实可执行文件、MCP scope 和 Pi 父进程链都指向本轮 helper，并且 HID 计数保持不变时，才允许带着新的 WindowServer 活动记录继续。上游哨兵的测量和 A22 计分保持原规则。

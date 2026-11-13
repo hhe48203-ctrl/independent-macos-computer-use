@@ -76,3 +76,17 @@ class ProviderOutcomeTest(unittest.TestCase):
         facts = agent_facts(events, [], None)
         self.assertFalse(facts["provider_error"])
         self.assertFalse(facts["model_verified"])
+
+    def test_local_turn_cap_excludes_only_the_confirmed_abort(self):
+        events = [{"type": "message_end", "message": {
+            "role": "assistant", "provider": PROVIDER, "model": MODEL,
+            "stopReason": reason, "errorMessage": message,
+        }} for reason, message in (("error", "Provider overloaded"), ("toolUse", None),
+                                   ("error", "This operation was aborted"))]
+        facts = agent_facts(events, [], None, turn_cap_reached=True)
+        self.assertTrue(facts["model_verified"])
+        self.assertFalse(facts["provider_error"])
+        self.assertEqual(facts["provider_error_count"], 1)
+        self.assertTrue(agent_facts(events, [], None)["provider_error"])
+        events[-1]["message"]["errorMessage"] = "The usage limit has been reached"
+        self.assertTrue(agent_facts(events, [], None, turn_cap_reached=True)["provider_error"])

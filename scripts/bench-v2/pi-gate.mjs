@@ -3,7 +3,10 @@ export default function install(pi) {
   const limit = Number(process.env.CU_BENCH_TURNS);
   let turns = 0;
   pi.on('turn_start', (_event, context) => {
-    if (++turns > limit) context.abort();
+    if (++turns > limit) {
+      process.stderr.write('CU_BENCH_TURN_CAP_REACHED\n');
+      context.abort();
+    }
   });
   pi.on('tool_call', event => {
     if (turns > limit) return {block: true, reason: 'Benchmark turn cap reached.', terminate: true};

@@ -484,11 +484,12 @@ def run_agent(pi, auth, catalog, targets, prompt, artifacts, turns, seconds, des
                         previous_counters = now_counters
             finally:
                 owned_stop(desktop, proc)
+        turn_cap_reached = "CU_BENCH_TURN_CAP_REACHED" in (artifacts / "pi.stderr").read_text("utf-8", errors="replace").splitlines()
         return {"exit_code": proc.returncode, "seconds": round(time.monotonic() - started, 2),
-                "timed_out": timed_out, "interrupted": interrupted}
+                "timed_out": timed_out, "turn_cap_reached": turn_cap_reached, "interrupted": interrupted}
 
 
-def agent_facts(events, guard, v2):
+def agent_facts(events, guard, v2, *, turn_cap_reached=False):
     assistant = [e["message"] for e in events if e.get("type") == "message_end"
                  and e.get("message", {}).get("role") == "assistant"]
     identities = sorted({(msg.get("provider", ""), msg.get("model", "")) for msg in assistant if msg.get("model")})
@@ -504,8 +505,13 @@ def agent_facts(events, guard, v2):
             violations.update(v2.scan_tool_use(name, item.get("arguments", {}))[0])
     usage = {key: sum(msg.get("usage", {}).get(key, 0) for msg in assistant)
              for key in ("input", "output", "cacheRead", "cacheWrite")}
-    provider_error_count = sum(msg.get("stopReason") == "error" for msg in assistant)
-    normal_end = bool(assistant) and assistant[-1].get("stopReason") == "stop"
+    # Pi 1.5 emits a synthetic assistant error for the turn hook's local abort.
+    cap_abort = (turn_cap_reached and bool(assistant) and assistant[-1].get("stopReason") == "error"
+                 and assistant[-1].get("errorMessage") == "This operation was aborted")
+    responses = assistant[:-1] if cap_abort else assistant
+    provider_error_count = sum(msg.get("stopReason") == "error" for msg in responses)
+    normal_end = bool(responses) and (responses[-1].get("stopReason") == "stop" or
+                                      cap_abort and responses[-1].get("stopReason") == "toolUse")
     return {"model_verified": identities == [(PROVIDER, MODEL)], "observed_models": identities,
             "turns": sum(e.get("type") == "turn_start" for e in events), "tool_calls": len(starts),
             "tool_errors": sum(e.get("type") == "tool_execution_end" and bool(e.get("isError")) for e in events),
@@ -571,7 +577,8 @@ def run_trial(entry, condition, out, task, spec, bundle_ids, login, modules, *, 
                 armed = False
                 row["disturbance"] = sentinel.summary()
                 row["driver_isolation"] = json_lines(artifacts / "driver-isolation.jsonl")
-                row["agent"] = agent_facts(json_lines(artifacts / "pi.jsonl"), json_lines(artifacts / "gui-guard.jsonl"), v2)
+                row["agent"] = agent_facts(json_lines(artifacts / "pi.jsonl"), json_lines(artifacts / "gui-guard.jsonl"), v2,
+                                           turn_cap_reached=row["turn_cap_reached"])
                 row["evaluation"] = pack.evaluate(row["exit_code"]) if pack else runner.evaluate_probe(
                     task, seed, paths, artifacts, sentinel.log)
                 if row["interrupted"]:
@@ -581,7 +588,8 @@ def run_trial(entry, condition, out, task, spec, bundle_ids, login, modules, *, 
                 if not row["disturbance"].get("available") or "error" in row["evaluation"]:
                     raise RuntimeError("Sentinel or evaluator did not produce usable measurements")
                 row["passed"] = bool(row["evaluation"]["passed"] and row["agent"]["gui_only"] and
-                                     not row["timed_out"] and row["agent"]["turns"] <= max_turns and row["exit_code"] == 0)
+                                     not row["timed_out"] and not row["turn_cap_reached"] and
+                                     row["agent"]["turns"] <= max_turns and row["exit_code"] == 0)
                 row["background"] = v2.background_score(row["disturbance"], True)
                 row["multiplayer"] = v2.multiplayer_score(row["disturbance"], row["background"]["measured"], row["passed"], condition)
                 row["interruption"] = v2.interruption_of(row["evaluation"])
