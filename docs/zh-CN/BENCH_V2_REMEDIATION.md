@@ -46,6 +46,8 @@ IR-01 种子 `147201` 的计分复测得 0.15，A22 八项通过。Next 打开 s
 
 同种子的后续对照投递了 Home、End、Left、Right 以及四种带修饰键的空格或回车组合。16 个键盘包均到达 BenchLab，选值保持 Low，菜单保持关闭，失焦和升层计数为零。Pi 计分复测中，IR-01 `147201` 拒绝了 sheet 提示，IR-02 `487371` 选择 Later 关闭通知。两轮各得 0.45，A22 八项均通过。两个原生下拉框的选项选择仍待解决。见 `artifacts/ir02-popup-other-keys-eObGYu/report.json` 和 `artifacts/bench-v2-pi-20261111T081114150514Z/summary.json`。
 
+IR-02 `487371` 从 Priority 开始坐标拖动时打开了原生菜单。键盘接收方切到 BenchLab，哨兵记录一次失焦和一次升层。拖动预检现会在投递鼠标按下前检查起点上的下拉框。同种子复测返回 `BACKGROUND_POPUP_UNSUPPORTED`，未发送鼠标包，未观察到焦点通知，窗口顺序稳定，菜单保持关闭且选值仍为 Low。`npm run test:background` 也使用自有 AppKit 下拉框检查拒绝及后续 AX 回读。见基准测试工作树的 `artifacts/ir-popup-drag-baseline-eyw8rqr7/report.json` 和 `artifacts/ir-popup-drag-guard-oj6csw5h/report.json`。
+
 CDB-G02/03 工作流复现见 `artifacts/bench-v2-pi-20261109T064232356505Z/summary.json`。G04 独立 profile 复测见 `artifacts/bench-v2-pi-20261109T064650603373Z/summary.json`，MCP 范围只包含新启动的 Chrome PID。G03 更新临时 profile 后的结果见 `artifacts/bench-v2-pi-20261109T065029893913Z/summary.json`。在这些轮次中，A22 八项均通过，检查器分别得 0.20、0.45、0.15。
 
 用本机 Codex Computer Use 服务（构建 `1001824`）单独对照 MB-09 种子 `790113`。原版 `cua_repl.drag` 对同一行启动了原生拖放，但无投放事件，顺序未变。哨兵的 419 次采样没有观察到键焦点丢失、激活变化、鼠标移动或打字干扰。这是一次未计分的原版对照。静态检查确认了 `NSEvent` 鼠标构造、事件子类型及窗口字段、PID 投递封装，以及此前调查记录的独立焦点通知机制。本轮仍未证实原版由哪条分支保护焦点。见 `artifacts/mb09-original-compare-DDSKEi/report.json` 和 `artifacts/original-drag-path-WrKjJE/`。

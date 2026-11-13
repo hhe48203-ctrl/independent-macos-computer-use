@@ -684,6 +684,8 @@ struct HeldBackgroundMouse {
             let from = try point(p,frame,"fromX","fromY"); let to = try point(p,frame,"toX","toY")
             let duration = min(2,max(0.1,number(p,"duration",0.4)))
             try await agentCursor.move(pid:pid,windowID:wid,frame:frame,point:from,activity:"drag")
+            // A popup can enter native menu tracking on the initial mouse-down.
+            if let candidate = try? backgroundPressTarget(p, pid, frame, from) { try checkBackgroundPopup(candidate) }
             if foregroundBefore != pid { try checkBackgroundRowDrag(pid, frame, from) }
             pointerDelivery=try BackgroundPointerDelivery(pid:pid,windowID:wid)
             appKitSession=try await prepareScopedAppKitFocus(pid,wid,frame,pointerDelivery!,inputObservation)

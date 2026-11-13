@@ -98,7 +98,7 @@ click/pressKey 的 `durationMs` 为0..5000毫秒，控制每个 down/up 对之�
 
 垂直默认距离已校准为 `round(windowHeight*pages)`；两种自建应用、两档尺寸和连续滚动的实测一致。水平保留 `round(windowWidth*0.8*pages)`：原版本轮水平输入未产生位移，不能声称水平兼容。第四个参数 `{distanceMode:'legacy'}` 保留 v1.0 两轴的0.8算法。返回 `scrollDistance` 给出发送的逻辑点增量；实际位移仍由应用决定。完整数据见 [兼容改进验收](COMPATIBILITY_V1_1.md)。
 
-字符串 `AXValue` 可读时，`setValue` 用 `valueVerified` 报告回读是否与请求完全一致。请求修改后仍读到原值会报 `AX_VALUE_UNCHANGED`。应用格式化了结果或回读不可用时，应重新观察。后台打开值只读、没有子节点且只暴露原生菜单动作的关闭下拉框时，会报 `BACKGROUND_POPUP_UNSUPPORTED`。聚焦这类下拉框后，上下方向键也会触发同一预检，包括带修饰键的组合。真实事件需要应用支持。`event` 文本要求控件已经具有可读的非安全文本焦点和选择范围。
+字符串 `AXValue` 可读时，`setValue` 用 `valueVerified` 报告回读是否与请求完全一致。请求修改后仍读到原值会报 `AX_VALUE_UNCHANGED`。应用格式化了结果或回读不可用时，应重新观察。后台打开值只读、没有子节点且只暴露原生菜单动作的关闭下拉框时，会报 `BACKGROUND_POPUP_UNSUPPORTED`。从这类下拉框开始拖动，或聚焦后发送上下方向键，都会触发同一预检，带修饰键的方向键也适用。真实事件需要应用支持。`event` 文本要求控件已经具有可读的非安全文本焦点和选择范围。
 
 在实测的 Chrome 地址栏中，`typeText` 会改变显示值，但地址未进入可提交状态。导航时先聚焦当前地址栏，调用 `setValue(index,address)`，再按 Enter，并通过新的观察核对已加载的页面。
 
