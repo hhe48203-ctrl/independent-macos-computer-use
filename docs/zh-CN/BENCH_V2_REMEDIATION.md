@@ -176,6 +176,8 @@ G03 同种子对照再次发现，第一个 Reconcile 对话框把登记簿移�
 
 该轮首次绑定 Calc 时还记录了 `WINDOW_GONE`，前后清单中均有同一个 PID 和窗口 ID。`99589` 的 30 次正常只读绑定未复现。模拟额外的按 PID 窗口查询返回空结果时，工作簿仍存在，旧路径复现报错。adaptive 模式的 AX 读取现直接使用原生快照的精确 PID 和窗口验证。同一模拟下已成功绑定工作簿并读取表格。原生目标消失时仍报错，快照失败会使数字索引失效。见基准测试工作树的 `artifacts/cdb-g03-exact-bind-8myjqmei/report.json` 和 `artifacts/cdb-g03-exact-bind-fixed-5uqyojfp/report.json`。
 
+两轮 `99589` 对照以定向点击选中同一条已观察的 GnuCash 拆分备注，通过 GUI 输入并保存了 39 个字母、数字及空格。编辑格横向滚动时，登记簿底部状态栏仍显示完整备注。账本只读复核确认 Checking Account 拆分上的完整内容、仅一处备注改动，以及所有拆分 ID 保留。普通定向 `event` 按键耗时 9.17 秒，逐键准备 `appkit` 焦点耗时 11.34 秒。两轮均保留全部哨兵生成文字，零失焦、零升层。另一个标点对照发现，当前拼音键盘布局会把部分美式键位映射为全角标点和 `¥`。运行器现引导先定向点击，再用普通定向键输入，并在提交前核对完整文字及标点。见 `artifacts/cdb-g03-memo-event-verified-vqhb43ff/report.json`、`artifacts/cdb-g03-memo-appkit-verified-7rrjzyj5/report.json` 和 `artifacts/cdb-g03-memo-event-verified-78oasp8t/CDB-G03/register-memo-edited.png`。[GTK Quartz 键位映射](https://github.com/GNOME/gtk/blob/bac4a949b151eedada8bc60a97429d2176b0b28b/gdk/quartz/gdkkeys-quartz.c#L231-L249)
+
 另一轮同种子对照中，第二个 Reconcile 窗口在已观察交易行与 OCR 定位的 R 列交点接收了定向点击。Funds Out 合计从 $73.10 升至 $1,321.70，再次点击恢复 $73.10。哨兵保留全部 17 个生成字符，零失焦。第一个对话框仍改变了与其他测试后台窗口的相对顺序。对照在 Finish 前结束，确认了可撤销的行勾选。见基准测试工作树的 `artifacts/cdb-g03-reconcile-row-8glk4mao/report.json`。
 
 另一轮 `99589` 对照在一次性账本完成并保存了一笔诊断性对账。定向数字编辑保留原有小数分隔符。Finish 前通过 OCR 和截图核对了勾选金额、两项余额相等及差额为零。只读 XML 观察器确认一条 Checking Account 拆分从 `n` 变为 `y`，对账日期随之写入，所有交易编号均保留。哨兵的 19 个生成字符完整保留，零失焦、零激活。驱动仍报告了初始对话框导致的后台窗口换序。见基准测试工作树的 `artifacts/cdb-g03-reconcile-finish-i1wkeb6t/report.json` 和截图。
