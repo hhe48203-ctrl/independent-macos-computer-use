@@ -2,7 +2,7 @@
 
 [English version](../BENCH_V2.md)
 
-`npm run bench:v2` 接入 Cua Driver Bench v2 指定提交 `22a67eacd15dc71811e330ed88951dd615bb395d` 的十个 macOS 任务。运行器将锁定的源码取到 `.research/`，按 Git blob ID 校验文件，复用上游任务提示、种子、测试应用、检查器和 A22 计分。我们的实验组由 Pi 调用本仓库的 MCP，模型固定为 `openai-codex/gpt-6.1-terra`，推理档位为 `low`。[上游锁定版本](https://github.com/trycua/cua/tree/22a67eacd15dc71811e330ed88951dd615bb395d/libs/cua-driver-bench)
+`npm run bench:v2` 接入 Cua Driver Bench v2 指定提交 `22a67eacd15dc71811e330ed88951dd615bb395d` 的十个 macOS 任务。运行器将锁定的源码取到 `.research/`，按 Git blob ID 校验文件，复用上游任务提示、种子、测试应用、检查器和 A22 计分。我们的实验组由 Pi 调用本仓库的 MCP，模型固定为 `openai-codex/gpt-6.1-terra`，推理档位为 `high`。[上游锁定版本](https://github.com/trycua/cua/tree/22a67eacd15dc71811e330ed88951dd615bb395d/libs/cua-driver-bench)
 
 ```sh
 npm ci --ignore-scripts

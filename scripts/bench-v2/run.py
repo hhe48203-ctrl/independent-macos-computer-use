@@ -37,6 +37,7 @@ NATIVE = ROOT / ".build/Local Computer Use.app/Contents/MacOS/computer-use-bridg
 NODE = os.environ["CU_BENCH_NODE"]
 PROVIDER = "openai-codex"
 MODEL = "gpt-6.1-terra"
+THINKING = "high"
 ARM = "pi-terra-independent-macos"
 TOOLS = ("mcp__cua__js", "mcp__cua__js_reset")
 BASE_ENV = {"PATH": os.environ["PATH"], "LANG": "en_US.UTF-8"}
@@ -442,7 +443,7 @@ def run_agent(pi, auth, catalog, targets, prompt, artifacts, turns, seconds, des
             instructions += (" This foreground trial permits app.hover([x,y], {durationMs:1500,screenshot:true}) "
                              "when the task needs real mouse hover. It activates the bound window and captures its own transient UI.")
         command = [pi, "--print", "--mode", "json", "--no-session", "--provider", PROVIDER, "--model", MODEL,
-                   "--thinking", "low", "--approve", "--no-extensions", "-e", "builtin:mcp", "-e",
+                   "--thinking", THINKING, "--approve", "--no-extensions", "-e", "builtin:mcp", "-e",
                    str(HERE / "pi-gate.mjs"), "--no-skills", "--no-context-files", "--no-prompt-templates",
                    "--no-themes", "--no-builtin-tools", "--tools", ",".join(TOOLS),
                    "--system-prompt", instructions, "--", prompt]
@@ -709,7 +710,7 @@ def main():
     if scoped_bundles and any(entry["condition"] != "background" for entry in plan):
         parser.error("Scoped AppKit key and click options are available only for background trials")
     report = {"journal_schema": journal.SCHEMA, "benchmark_version": 2, "upstream_commit": REVISION, "upstream_tree": tree, "arm": ARM,
-              "provider": PROVIDER, "model": MODEL, "thinking": "low", "schedule_seed": args.seed, "plan": plan}
+              "provider": PROVIDER, "model": MODEL, "thinking": THINKING, "schedule_seed": args.seed, "plan": plan}
     if appkit_key_bundles:
         report["appkit_key_bundles"] = appkit_key_bundles
     if appkit_click_bundles:

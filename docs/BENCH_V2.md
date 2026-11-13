@@ -2,7 +2,7 @@
 
 [中文版本](zh-CN/BENCH_V2.md)
 
-`npm run bench:v2` integrates the ten macOS tasks from Cua Driver Bench v2 at commit `22a67eacd15dc71811e330ed88951dd615bb395d`. The runner fetches the pinned subtree into `.research/` and verifies the source files against Git blob IDs. It uses upstream task prompts, seeds, fixtures, evaluators and A22 scoring. The local arm runs our MCP with Pi and `openai-codex/gpt-6.1-terra` at low reasoning effort. [Pinned upstream benchmark](https://github.com/trycua/cua/tree/22a67eacd15dc71811e330ed88951dd615bb395d/libs/cua-driver-bench)
+`npm run bench:v2` integrates the ten macOS tasks from Cua Driver Bench v2 at commit `22a67eacd15dc71811e330ed88951dd615bb395d`. The runner fetches the pinned subtree into `.research/` and verifies the source files against Git blob IDs. It uses upstream task prompts, seeds, fixtures, evaluators and A22 scoring. The local arm runs our MCP with Pi and `openai-codex/gpt-6.1-terra` at `high` reasoning effort. [Pinned upstream benchmark](https://github.com/trycua/cua/tree/22a67eacd15dc71811e330ed88951dd615bb395d/libs/cua-driver-bench)
 
 ```sh
 npm ci --ignore-scripts
