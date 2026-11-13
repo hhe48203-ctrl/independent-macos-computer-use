@@ -13,7 +13,7 @@ test('benchmark JS allows ordinary REPL actions and filters out process, network
   validate('await (async () => {const s = await app.getAXState({emit:false}); nodeRepl.write(s.split("\\n").filter(line => line.includes("Button")));})();');
   validate('const tree = await app.getAXNodes({emit:false,maxNodes:1000,maxDepth:5}); const cells = tree.nodes.filter(n => n.role === "AXTextField"); nodeRepl.write(cells.map(n => [n.index,n.title,n.value]));');
   validate('const close = tree.nodes.find(n => n.subrole === "AXCloseButton" && n.enabled && n.actions.includes("AXPress")); if (close) await app.performSecondaryAction(close.index, "press");');
-  validate('const edits = [[5, "sample"]]; for (const edit of edits) { await app.setValue(edit[0], edit[1]); }');
+  validate('const edits = [[5, "sample"]]; let results = []; for (const edit of edits) { const result = await app.setValue(edit[0], edit[1]); results = [...results, result]; } nodeRepl.write(results);');
   validate('nodeRepl.write(RegExp("A1").test("A1"));');
   assert.throws(() => validate('new RegExp("A1")'), {code:'BENCH_JS_SUBSET'});
   assert.throws(() => validate('for (const [index, value] of edits) { await app.setValue(index, value); }'), {code:'BENCH_JS_SUBSET'});
