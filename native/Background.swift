@@ -351,7 +351,7 @@ struct HeldBackgroundMouse {
         throw BridgeError("TEXT_VERIFICATION_FAILED","Raw Unicode events did not produce the exact expected text. The application may ignore or transform them; the operation may be partial. No AX or foreground fallback was attempted. Observe before retrying.")
     }
     func insertVisuallyCheckedText(_ p: Object, _ pid: pid_t, _ wid: CGWindowID, _ frame: CGRect,
-                                   _ observation: BackgroundFocusObservation, _ order: [(id:Int,pid:pid_t)], _ foreground: pid_t?) async throws -> Object {
+                                   _ observation: BackgroundFocusObservation, _ order: NormalWindowOrder, _ foreground: pid_t?) async throws -> Object {
         func singleLine(_ value: String) -> Bool {
             (1...160).contains(value.utf16.count) && value.unicodeScalars.allSatisfy {
                 ![.control, .lineSeparator, .paragraphSeparator].contains($0.properties.generalCategory)
@@ -650,26 +650,23 @@ struct HeldBackgroundMouse {
         throw BridgeError("TABLE_SELECTION_UNVERIFIED", "The table did not report the requested selection or a dialog. Observe the window before retrying.")
     }
 
-    func backgroundWindowOrder() -> [(id:Int,pid:pid_t)] {
+    func backgroundWindowOrder() -> NormalWindowOrder {
         let rows = CGWindowListCopyWindowInfo([.optionOnScreenOnly,.excludeDesktopElements],kCGNullWindowID) as? [Object] ?? []
         return rows.compactMap { row in
             guard number(row,kCGWindowLayer as String) == 0, let id=row[kCGWindowNumber as String] as? Int,let pid=row[kCGWindowOwnerPID as String] as? Int else{return nil}
             return (id:id,pid:pid_t(pid))
         }
     }
-    func assertBackgroundIsolation(_ pid:pid_t,_ wid:CGWindowID,_ orderBefore:[(id:Int,pid:pid_t)],_ foregroundBefore:pid_t?) throws {
+    func assertBackgroundIsolation(_ pid:pid_t,_ wid:CGWindowID,_ orderBefore:NormalWindowOrder,_ foregroundBefore:pid_t?) throws {
         if foregroundBefore != pid, NSWorkspace.shared.frontmostApplication?.processIdentifier == pid { throw BridgeError("BACKGROUND_APP_ACTIVATED","The target app activated itself in response to the action. Background isolation was not maintained; no activation-restoration workaround was attempted.") }
         let orderAfter = backgroundWindowOrder()
-        // A dialog can close while its parent changes order. Watch all of
-        // this application's existing normal windows, including the parent.
-        let watched = orderBefore.filter { $0.pid == pid }.map(\.id)
-        for id in watched {
-            guard let beforeIndex = orderBefore.firstIndex(where: { $0.id == id }),
-                  let afterIndex = orderAfter.firstIndex(where: { $0.id == id }) else { continue }
-            let previouslyAbove=Set(orderBefore.prefix(beforeIndex).filter{$0.pid != pid}.map{$0.id})
-            if orderAfter.dropFirst(afterIndex+1).contains(where:{previouslyAbove.contains($0.id)}) {
-                throw BridgeError("BACKGROUND_WINDOW_REORDERED","Window stacking changed during the operation. Isolation could not be confirmed; no window-order restoration was attempted. Observe before retrying.")
-            }
+        switch backgroundWindowCrossing(pid: pid, windowId: Int(wid), before: orderBefore, after: orderAfter) {
+        case .existingWindow:
+            throw BridgeError("BACKGROUND_WINDOW_REORDERED", "An existing target window crossed another application's window. Observe before retrying.")
+        case .newWindow:
+            throw BridgeError("BACKGROUND_WINDOW_REORDERED", "A newly visible target window crossed an existing window above the action's target. Observe before retrying.")
+        case nil:
+            break
         }
     }
     func background(_ method: String, _ input: Object) async throws -> Object {
@@ -780,6 +777,7 @@ struct HeldBackgroundMouse {
             try assertBackgroundIsolation(pid,wid,orderBefore,foregroundBefore)
             cursorTracksPointer=true
             for i in 1...count {
+                if i > 1 { try assertBackgroundIsolation(pid,wid,orderBefore,foregroundBefore) }
                 try inputObservation.validate();try backgroundMouse(down,point,button,i,pid,wid,frame,pointerDelivery,modifiers)
                 try await waitInputHold(p,frame,inputObservation,number(p,"durationMs",20))
                 try backgroundMouse(up,point,button,i,pid,wid,frame,pointerDelivery,modifiers)

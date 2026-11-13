@@ -156,4 +156,6 @@ The current original macOS build and the independent build are not identical: as
 
 Real event strategies and synthetic AppKit activation are separate. The pi setup defaults to `CU_EXPERIMENTAL_APPKIT_FOCUS=0`; `--background-events` no longer turns it on. Only `--experimental-appkit-focus` opts into activation. `cua.status().background.appKitFocusPolicy` reports the selected policy.
 
+`BACKGROUND_WINDOW_REORDERED` reports an existing normal window crossing another app’s window or a newly visible normal window crossing a window that was above the action target. The app may already have opened its dialog when the error arrives. Observe current windows before another mutation.
+
 Inactive AppKit apps can ignore raw CMD+A/menu shortcuts and text-selection drags. Prefer `pressKey('CMD+A')`, `selectText(...)`, and `click(index)` for their semantic equivalents. Do not retry failed input with activation automatically. The optional activation route can activate a background text input context while system focus stays elsewhere. [Input isolation](INPUT_ISOLATION.md) records the cause trace, original AX Raise observation and limits; a new single-participant cooperative comparison was accepted; this does not extend to experimental long holds.

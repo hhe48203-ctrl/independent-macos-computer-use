@@ -156,4 +156,6 @@ await cua.getScreenshot({
 
 真实事件策略与局部AppKit激活是两回事。pi setup默认设置 `CU_EXPERIMENTAL_APPKIT_FOCUS=0`，`--background-events` 不再开启它；只有 `--experimental-appkit-focus` 才明确开启。`cua.status().background.appKitFocusPolicy` 报告所选策略。
 
+`BACKGROUND_WINDOW_REORDERED` 表示目标应用的已有普通窗口越过了另一应用的窗口，或新出现的普通窗口越过了原本盖在操作目标上方的窗口。收到错误时对话框可能已经打开，应先观察当前窗口再继续操作。
+
 未内部激活的AppKit应用可能忽略原生CMD+A/菜单快捷键和文本拖选。优先用 `pressKey('CMD+A')`、`selectText(...)`、`click(index)` 的语义等价操作，不在失败后自动激活重试。可选激活路径会在系统焦点仍属别处时激活后台文本输入上下文。[输入隔离调查](INPUT_ISOLATION.md)记录了因果追踪、原版AX Raise及边界；新增的单人并用对照已获接受，不外推到实验长按。

@@ -190,6 +190,10 @@ MCP 的 `typeText` 现可结合 `strategy:'event'` 显式使用 `visualCheck`。
 
 两轮 `99589` 对照使用同一个经 OCR 定位的 Reconcile 工具栏位置。纯 AX 点击未找到语义目标，焦点和窗口顺序保持稳定。普通定向点击在对话框出现前就把登记簿升到哨兵上方，哨兵记录一次失焦、一次升层和十次输入受阻。此前的定向 AppKit 点击打开了第一个对话框，哨兵保持焦点，登记簿越过了另外两个后台窗口。这两类失败分别出现在指针投递和定向点击触发对话框的阶段。两轮新对照都保留了原账本。见基准测试工作树的 `artifacts/cdb-g03-reconcile-open-ax-bnyb_yh8/report.json` 和 `artifacts/cdb-g03-reconcile-open-event-gxqkijjn/report.json`。[GnuCash 登记簿命令](https://github.com/Gnucash/gnucash/blob/5.17/gnucash/gnome/gnc-plugin-page-register.cpp#L2580-L2608)
 
+自有 AppKit 对照分别验证了窗口操作。先置前子窗口时，子窗口越过遮挡窗，父窗口仍在其后。随后附加该子窗口时，父窗口也越过遮挡窗。若先附加，两者都在遮挡窗后，直到子窗口被置前。`beginSheet` 一次让父子窗口越过遮挡窗，哨兵保持键焦点，与 IR-01 种子 `147201` 的表现一致。已安装的 GDK 二进制在 Quartz 显示路径中包含 `showAndMakeKey:` 和 `addChildWindow:ordered:`。对照已确定哪些操作可以复现换序，GnuCash 运行时具体触发父窗口换序的调用仍未跟踪到。见基准测试工作树的 `artifacts/background-dialog-order-tuqtivy_/report.json` 和 `artifacts/ir01-sheet-order-regression-5mghd7hl/report.json`。[GTK Quartz 窗口显示](https://github.com/GNOME/gtk/blob/bac4a949b151eedada8bc60a97429d2176b0b28b/gdk/quartz/gdkwindow-quartz.c#L1083-L1125)
+
+驱动现也报告新出现的普通窗口越过原先盖在操作目标上的窗口。自有 AX 点击对照中，一次把新子窗口留在遮挡窗后，另一次只把子窗口移到遮挡窗前。驱动接受前者，并对后者返回 `BACKGROUND_WINDOW_REORDERED`。两次哨兵均保持键焦点。检测器观察应用反应，检测到换序后停止同一请求中的后续点击。见基准测试工作树的 `artifacts/background-new-dialog-driver-1aieyymy/report.json`。
+
 另一轮同种子对照中，第二个 Reconcile 窗口在已观察交易行与 OCR 定位的 R 列交点接收了定向点击。Funds Out 合计从 $73.10 升至 $1,321.70，再次点击恢复 $73.10。哨兵保留全部 17 个生成字符，零失焦。第一个对话框仍改变了与其他测试后台窗口的相对顺序。对照在 Finish 前结束，确认了可撤销的行勾选。见基准测试工作树的 `artifacts/cdb-g03-reconcile-row-8glk4mao/report.json`。
 
 另一轮 `99589` 对照在一次性账本完成并保存了一笔诊断性对账。定向数字编辑保留原有小数分隔符。Finish 前通过 OCR 和截图核对了勾选金额、两项余额相等及差额为零。只读 XML 观察器确认一条 Checking Account 拆分从 `n` 变为 `y`，对账日期随之写入，所有交易编号均保留。哨兵的 19 个生成字符完整保留，零失焦、零激活。驱动仍报告了初始对话框导致的后台窗口换序。见基准测试工作树的 `artifacts/cdb-g03-reconcile-finish-i1wkeb6t/report.json` 和截图。
