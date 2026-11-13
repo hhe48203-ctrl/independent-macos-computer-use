@@ -188,6 +188,8 @@ MCP 的 `typeText` 现可结合 `strategy:'event'` 显式使用 `visualCheck`。
 
 `99589` 的 `high` 复测使用这条路径精确保存了两条异常备注，得分从 0.45 提升至 0.65，A22 八项通过，360 个生成字符完整保留。评估器只剩两笔未对账及因此未通过的工作簿一致性检查。该轮在 359.73 秒达到 45 次调用上限。驱动在打开正式对账时另记一次 `BACKGROUND_WINDOW_REORDERED`。提供方和 GUI-only 均无报错。见基准测试工作树的 `artifacts/bench-v2-pi-20261113T194551609742Z/summary.json`。
 
+两轮 `99589` 对照使用同一个经 OCR 定位的 Reconcile 工具栏位置。纯 AX 点击未找到语义目标，焦点和窗口顺序保持稳定。普通定向点击在对话框出现前就把登记簿升到哨兵上方，哨兵记录一次失焦、一次升层和十次输入受阻。此前的定向 AppKit 点击打开了第一个对话框，哨兵保持焦点，登记簿越过了另外两个后台窗口。这两类失败分别出现在指针投递和定向点击触发对话框的阶段。两轮新对照都保留了原账本。见基准测试工作树的 `artifacts/cdb-g03-reconcile-open-ax-bnyb_yh8/report.json` 和 `artifacts/cdb-g03-reconcile-open-event-gxqkijjn/report.json`。[GnuCash 登记簿命令](https://github.com/Gnucash/gnucash/blob/5.17/gnucash/gnome/gnc-plugin-page-register.cpp#L2580-L2608)
+
 另一轮同种子对照中，第二个 Reconcile 窗口在已观察交易行与 OCR 定位的 R 列交点接收了定向点击。Funds Out 合计从 $73.10 升至 $1,321.70，再次点击恢复 $73.10。哨兵保留全部 17 个生成字符，零失焦。第一个对话框仍改变了与其他测试后台窗口的相对顺序。对照在 Finish 前结束，确认了可撤销的行勾选。见基准测试工作树的 `artifacts/cdb-g03-reconcile-row-8glk4mao/report.json`。
 
 另一轮 `99589` 对照在一次性账本完成并保存了一笔诊断性对账。定向数字编辑保留原有小数分隔符。Finish 前通过 OCR 和截图核对了勾选金额、两项余额相等及差额为零。只读 XML 观察器确认一条 Checking Account 拆分从 `n` 变为 `y`，对账日期随之写入，所有交易编号均保留。哨兵的 19 个生成字符完整保留，零失焦、零激活。驱动仍报告了初始对话框导致的后台窗口换序。见基准测试工作树的 `artifacts/cdb-g03-reconcile-finish-i1wkeb6t/report.json` 和截图。
@@ -196,4 +198,4 @@ MCP 的 `typeText` 现可结合 `strategy:'event'` 显式使用 `visualCheck`。
 | --- | --- |
 | MB-09 `790113` | 投递前拦截消除了已验证表格行拖动路径上的干扰，后台原生列表重排仍缺少可验证的投递方式。加入预检前，手势全程保留 Command 也会失败。见 `artifacts/mb09-drag-threshold-34DwfW/report.json` 和 `artifacts/mb09-command-drag-igkzdF/report.json` |
 | IR-01 `147201`、`517139` 和 IR-02 `487371` | 无视觉光标时直接通过 AX 按 Next，仍复现了原生 sheet 让目标越过另一后台窗口，哨兵始终保持键焦点。此前打开菜单则单独造成过失焦。在应用内聚焦的 AppKit 下拉框发送普通按键，选值未改变，显式 `appkit` 按键准备的对照也是如此。原生选项选择与 sheet 堆叠仍待解决。见 `artifacts/ir-popup-typeahead-TLnRd8/report.json` 和 `artifacts/ir02-popup-scoped-letter-6TMHum/report.json` |
-| CDB-G03 `99589` | 独立对照已验证 Calc 编辑保存、GnuCash 导航、拆分备注保存和一条 `y` 状态落盘。初始对账对话框仍改变已有后台窗口的相对顺序。计分轮的工作簿一致性、异常备注和正式对账仍未通过 |
+| CDB-G03 `99589` | 计分复测已验证两条异常备注，独立对照也已验证一条 `y` 状态落盘。初始对账对话框仍改变已有后台窗口的相对顺序。计分轮仍有两笔正式对账及依赖它们的工作簿一致性检查待通过 |
