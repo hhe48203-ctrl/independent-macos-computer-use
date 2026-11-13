@@ -156,9 +156,11 @@ G03 同种子对照再次发现，第一个 Reconcile 对话框把登记簿移�
 
 另一轮同种子对照中，第二个 Reconcile 窗口在已观察交易行与 OCR 定位的 R 列交点接收了定向点击。Funds Out 合计从 $73.10 升至 $1,321.70，再次点击恢复 $73.10。哨兵保留全部 17 个生成字符，零失焦。第一个对话框仍改变了与其他测试后台窗口的相对顺序。对照在 Finish 前结束，确认了可撤销的行勾选。见基准测试工作树的 `artifacts/cdb-g03-reconcile-row-8glk4mao/report.json`。
 
+另一轮 `99589` 对照在一次性账本完成并保存了一笔诊断性对账。定向数字编辑保留原有小数分隔符。Finish 前通过 OCR 和截图核对了勾选金额、两项余额相等及差额为零。只读 XML 观察器确认一条 Checking Account 拆分从 `n` 变为 `y`，对账日期随之写入，所有交易编号均保留。哨兵的 19 个生成字符完整保留，零失焦、零激活。驱动仍报告了初始对话框导致的后台窗口换序。见基准测试工作树的 `artifacts/cdb-g03-reconcile-finish-i1wkeb6t/report.json` 和截图。
+
 | 待办 | 已有逐轮证据 |
 | --- | --- |
 | MB-09 `790113` | 投递前拦截消除了已验证表格行拖动路径上的干扰，后台原生列表重排仍缺少可验证的投递方式。加入预检前，手势全程保留 Command 也会失败。见 `artifacts/mb09-drag-threshold-34DwfW/report.json` 和 `artifacts/mb09-command-drag-igkzdF/report.json` |
 | IR-01 `147201`、`517139` 和 IR-02 `487371` | 无视觉光标时直接通过 AX 按 Next，仍复现了原生 sheet 让目标越过另一后台窗口，哨兵始终保持键焦点。此前打开菜单则单独造成过失焦。在应用内聚焦的 AppKit 下拉框发送普通按键，选值未改变，显式 `appkit` 按键准备的对照也是如此。原生选项选择与 sheet 堆叠仍待解决。见 `artifacts/ir-popup-typeahead-TLnRd8/report.json` 和 `artifacts/ir02-popup-scoped-letter-6TMHum/report.json` |
 | CDB-G02 `909557` | 运行器的 Electron 遮挡开关恢复了邮件 AXPress，未测得干扰。独立对照验证了日历和 Calc 对应记录均能保存。最高计分为 0.80，最近一轮为 0.20，完整工作簿一致性仍待验证 |
-| CDB-G03 `99589` | 独立对照已验证 Calc 工具栏编辑和保存、GnuCash 账簿导航及拆分备注保存。打开正式对账仍会让账簿越过其他后台窗口。计分轮工作簿一致性和 `y` 状态的安全写入仍待验证 |
+| CDB-G03 `99589` | 独立对照已验证 Calc 编辑保存、GnuCash 导航、拆分备注保存和一条 `y` 状态落盘。初始对账对话框仍改变已有后台窗口的相对顺序。计分轮的工作簿一致性、异常备注和正式对账仍未通过 |
