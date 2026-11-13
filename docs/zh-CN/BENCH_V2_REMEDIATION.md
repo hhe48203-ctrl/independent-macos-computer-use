@@ -134,6 +134,8 @@ Benchmark MCP 现已提供 `getAXNodes`，Calc 循环可以直接筛选节点对
 
 工作簿评估器指出只剩最后一条阻塞记录及其证据引用未完成。同种子 F2 对照打开了单元格编辑器，但 AX 未报告焦点。对通过工具栏取得焦点的编辑器直接调用 `setValue` 返回 `AX_VALUE_UNCHANGED`。沿用 Formula 和 Enter 路径时，`typeText(newText,{target:index,replaceAll:oldText})` 能在该编辑器上核对原值并验证写入。三格对照耗时 13.99 秒，显式选中文本后输入的对照耗时 16.26 秒。恰有三格按预期落盘，Controls 和无关记录完整保留，哨兵的 27 个字符全部保留，零失焦、零升层。见基准测试工作树的 `artifacts/cdb-g02-calc-f2-yqir66ce/report.json`、`artifacts/cdb-g02-calc-set-editor-t4x0ujz9/report.json` 和 `artifacts/cdb-g02-calc-replace-all-ki0ynmki/report.json`。
 
+使用整段替换和 `high` 档后，`909557` 复测通过全部七项检查，包括工作簿的阻塞行，得 1.00，A22 八项全过。34 次 GUI 调用、292.20 秒内完成，未触及轮次上限。从一次 JavaScript 语法错误恢复，提供方错误、GUI-only 违规和驱动隔离错误均为零。293 个生成字符完整保留。见基准测试工作树的 `artifacts/bench-v2-pi-20261113T043440241224Z/summary.json`。
+
 较早的一轮 G03 Pi 同种子复测得 0.45。模型读取了邮件和工作簿，关闭 GnuCash 启动提示，随后展开账户时收到 `BACKGROUND_KEYBOARD_FOCUS_CHANGED` 并停止。哨兵同时记录到升层、激活变化和打字中断。同种子对照在两个鼠标包上保留 Command，仍记录到升层、激活变化和失焦。见 `artifacts/bench-v2-pi-20261110T010224956905Z/summary.json` 和 `artifacts/cdb-g03-command-disclosure-0OONBK/report.json`。
 
 加入 Calc 提示后的 G03 仍得 0.45，在 GnuCash 账户点击处停止。本机 GDK 二进制在应用不活跃时调用 `activateIgnoringOtherApps:`，与 [GTK Quartz 鼠标按下处理](https://github.com/GNOME/gtk/blob/bac4a949b151eedada8bc60a97429d2176b0b28b/gdk/quartz/gdkevents-quartz.c#L1622-L1650)一致。实验性应用内焦点路由可以投递点击且未测到干扰，但账户仍折叠。在该路由下，依次发送 `+`、Down、Enter 打开了 Checking Account 账簿，哨兵未记录失焦、升层或打字中断。默认路由的 `+` 没有展开账户，两组省去准备点击的对照也未能展开。见 `artifacts/bench-v2-pi-20261110T012051583955Z/summary.json`、`artifacts/cdb-gnucash-register-keys-s90EgT/report.json`、`artifacts/cdb-gnucash-default-key-zZ0Unj/report.json` 和 `artifacts/cdb-gnucash-notice-ablation-{iKEFFW,tM5Nrv}/report.json`。
@@ -168,6 +170,8 @@ G03 同种子对照再次发现，第一个 Reconcile 对话框把登记簿移�
 
 采用逐行批量引导的 G03 复测中，Pi 通过 AX 关闭了启动提示，绑定 Accounts 并获取截图。随后提交一格 Calc 编辑并按下工具栏 Save，在更新账本前结束。得分 0.45，A22 八项通过，109 个生成字符完整保留。见基准测试工作树的 `artifacts/bench-v2-pi-20261113T010402738776Z/summary.json`。
 
+`high` 档与整段替换引导的复测进入了 GnuCash 登记簿，保存了差异备注，并让多行 Calc 编辑落盘。达到 45 轮上限后得 0.45，A22 八项通过，334 个生成字符完整保留。评估器发现两条应对账的拆分仍未对账、一条重复付款备注缺失、四格工作簿证据格式有误。提供方和驱动隔离错误均为零。见基准测试工作树的 `artifacts/bench-v2-pi-20261113T043440241224Z/summary.json` 及其 G03 评估输出。
+
 另一轮同种子对照中，第二个 Reconcile 窗口在已观察交易行与 OCR 定位的 R 列交点接收了定向点击。Funds Out 合计从 $73.10 升至 $1,321.70，再次点击恢复 $73.10。哨兵保留全部 17 个生成字符，零失焦。第一个对话框仍改变了与其他测试后台窗口的相对顺序。对照在 Finish 前结束，确认了可撤销的行勾选。见基准测试工作树的 `artifacts/cdb-g03-reconcile-row-8glk4mao/report.json`。
 
 另一轮 `99589` 对照在一次性账本完成并保存了一笔诊断性对账。定向数字编辑保留原有小数分隔符。Finish 前通过 OCR 和截图核对了勾选金额、两项余额相等及差额为零。只读 XML 观察器确认一条 Checking Account 拆分从 `n` 变为 `y`，对账日期随之写入，所有交易编号均保留。哨兵的 19 个生成字符完整保留，零失焦、零激活。驱动仍报告了初始对话框导致的后台窗口换序。见基准测试工作树的 `artifacts/cdb-g03-reconcile-finish-i1wkeb6t/report.json` 和截图。
@@ -176,5 +180,4 @@ G03 同种子对照再次发现，第一个 Reconcile 对话框把登记簿移�
 | --- | --- |
 | MB-09 `790113` | 投递前拦截消除了已验证表格行拖动路径上的干扰，后台原生列表重排仍缺少可验证的投递方式。加入预检前，手势全程保留 Command 也会失败。见 `artifacts/mb09-drag-threshold-34DwfW/report.json` 和 `artifacts/mb09-command-drag-igkzdF/report.json` |
 | IR-01 `147201`、`517139` 和 IR-02 `487371` | 无视觉光标时直接通过 AX 按 Next，仍复现了原生 sheet 让目标越过另一后台窗口，哨兵始终保持键焦点。此前打开菜单则单独造成过失焦。在应用内聚焦的 AppKit 下拉框发送普通按键，选值未改变，显式 `appkit` 按键准备的对照也是如此。原生选项选择与 sheet 堆叠仍待解决。见 `artifacts/ir-popup-typeahead-TLnRd8/report.json` 和 `artifacts/ir02-popup-scoped-letter-6TMHum/report.json` |
-| CDB-G02 `909557` | 运行器的 Electron 遮挡开关恢复了邮件 AXPress，未测得干扰。独立对照验证了日历和 Calc 对应记录均能保存。最高计分为 0.80，最近一轮为 0.20，完整工作簿一致性仍待验证 |
 | CDB-G03 `99589` | 独立对照已验证 Calc 编辑保存、GnuCash 导航、拆分备注保存和一条 `y` 状态落盘。初始对账对话框仍改变已有后台窗口的相对顺序。计分轮的工作簿一致性、异常备注和正式对账仍未通过 |
