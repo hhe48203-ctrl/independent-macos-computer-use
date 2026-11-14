@@ -216,6 +216,8 @@ MB-09 `790113` 回归确认，从原生行内及相邻边框开始拖动均返�
 
 IR-03 `410255` 以 Pi `high` 和仅公开 API 模式复跑，得分 1.00，A22 八项通过，两次保存提示均完成。哨兵保留全部 49 个生成字符。选择第二条笔记时，驱动记录一次 `BACKGROUND_WINDOW_REORDERED`。同种子对照确认首个保存 sheet 和父窗口均越过另一扇自有后台遮挡窗，哨兵保持在两者上方并保有焦点。见 `artifacts/bench-v2-pi-20261114T015856177473Z/summary.json` 和 `artifacts/ir03-public-save-order-cHyl13cs/report.json`。[锁定版保存处理器](https://github.com/trycua/cua/blob/22a67eacd15dc71811e330ed88951dd615bb395d/libs/cua-driver-bench/automated-eval/macos_bench/swift/BenchLabInterrupts.swift#L608-L627)
 
+IR-04 `816494` 以 Pi `high` 和仅公开 API 复跑，五项检查全部通过。模型拒绝同意弹层并准确提交一次，得分从锁定基线的 0.45 升至 1.00，A22 八项通过，哨兵保留全部 35 个字符。显式前台条件下，MB-10 `227159` 和 MB-11 `160721` 也都用公开 API 得分 1.00。评估器验证了 MB-10 的真实悬停和单次正确点击，以及 MB-11 的原生工具提示显示和单次正确提交。见 `artifacts/bench-v2-pi-20261114T064304582314Z/summary.json` 和 `artifacts/bench-v2-pi-20261114T064355337470Z/summary.json`。
+
 仅公开 API 的 G02 `909557` 在额度恢复后续跑唯一剩余种子，第二次尝试得分 0.65，A22 八项通过。日历检查通过。运行达到 45 次 GUI 调用时，工作簿一致性和聊天中的阻塞记录仍未通过，哨兵保留全部 170 个字符。聊天表单提交按钮位于视口外，最后一次调用前未将其滚入可见区。Calc 标签没有 `AXPress`，聚焦操作后工作表未切换。见 `artifacts/bench-v2-pi-20261114T020206000655Z/summary.json`。
 
 Calc 同种子对照中，公开定向按键 Command–Page Down 和 Enter 均返回事件投递确认，工作表和编辑中的单元格仍保持原状。通过公式编辑栏、Accept 和 Save 的 AX 控件，成功将一个诊断单元格保存到文件。工作表标签的父级 `AXTabGroup` 提供可写的 `AXSelectedChildren`。没有按下动作的已观察标签现在可通过该属性完成语义点击。最终对照切换至 Controls，再点击同一标签，切回 Schedule，并保存一个单元格变更。自有窗口顺序保持稳定，哨兵保留全部 23 个字符。见 `artifacts/cdb-g02-public-calc-5z8Kyyuz/report.json`、`artifacts/cdb-g02-public-tabs-Rf95hMaj/report.json` 和 `artifacts/cdb-g02-public-tab-final-KDXJSelr/report.json`。[LibreOffice 选中子元素的实现](https://github.com/LibreOffice/core/blob/libreoffice-26.8.2.2/vcl/osx/a11yselectionwrapper.mm#L65-L90)
