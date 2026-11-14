@@ -216,6 +216,8 @@ MB-09 `790113` 以 Pi `high` 和仅公开 API 复跑，仍在投递前返回 `BA
 
 同种子另一次仅公开 API 复跑中，BenchLab 记录打开 sheet 后约 16 毫秒成为前台应用。哨兵记录一次失焦、一次升层和 22 次输入受阻，A22 只有四项通过。驱动在 Next 点击中报告 `BACKGROUND_ACCESSIBILITY_FOCUS_CHANGED`。同次试验的 IR-02 得分 0.45，A22 八项通过。基准现在会在每次后续输入前检查初始哨兵，并在确认焦点变化后停止输入。自有应用主动激活对照中，后续按钮未收到调用，仍可读取新 AX 快照。应用回调可在缺少提前 AX 信号的情况下打开 sheet，这条路径的隔离问题仍存在。见 `artifacts/bench-v2-pi-20261114T064925200793Z/summary.json` 和 `artifacts/ir01-witness-guard-XRGNDS0p/report.json`。
 
+加入哨兵保护后，Pi 复现了 IR-01 的首次失焦，仍能读取新 sheet。后续决定按钮点击在投递前返回 `BENCH_WITNESS_FOCUS_CHANGED`，测试应用未记录决定。A22 按原规则为 4/8，任务得分 0.15。IR-02 关闭通知横幅，得分 0.45，A22 八项通过。见 `artifacts/bench-v2-pi-20261114T065429236501Z/summary.json`。新 IOKit 读数检查下，IR-04 同种子复测仍得 1.00，A22 八项通过。见 `artifacts/bench-v2-pi-20261114T064824146323Z/summary.json`。
+
 仅公开 API 的后台模式会在投递前拒绝显式 `AXShowMenu`，包括识别范围之外的控件。自有 AppKit 对照按钮同时公开 `AXShowMenu` 和 `AXPress`。菜单回调未触发，普通按下仍投递到同一控件，哨兵无失焦或窗口升层。见 `artifacts/public-menu-guard-eSDxMTEV/report.json`。
 
 IR-03 `410255` 以 Pi `high` 和仅公开 API 模式复跑，得分 1.00，A22 八项通过，两次保存提示均完成。哨兵保留全部 49 个生成字符。选择第二条笔记时，驱动记录一次 `BACKGROUND_WINDOW_REORDERED`。同种子对照确认首个保存 sheet 和父窗口均越过另一扇自有后台遮挡窗，哨兵保持在两者上方并保有焦点。见 `artifacts/bench-v2-pi-20261114T015856177473Z/summary.json` 和 `artifacts/ir03-public-save-order-cHyl13cs/report.json`。[锁定版保存处理器](https://github.com/trycua/cua/blob/22a67eacd15dc71811e330ed88951dd615bb395d/libs/cua-driver-bench/automated-eval/macos_bench/swift/BenchLabInterrupts.swift#L608-L627)
@@ -245,5 +247,5 @@ G03 `99589` 以 Pi `high` 和仅公开 API 复跑，得分 0.45，A22 八项通�
 | 待办 | 已有逐轮证据 |
 | --- | --- |
 | MB-09 `790113` | 投递前拦截消除了已验证表格行拖动路径上的干扰，后台原生列表重排仍缺少可验证的投递方式。加入预检前，手势全程保留 Command 也会失败。见 `artifacts/mb09-drag-threshold-34DwfW/report.json` 和 `artifacts/mb09-command-drag-igkzdF/report.json` |
-| IR-01 `147201`、`517139` 和 IR-02 `487371` | 关闭状态下的原生 AppKit 下拉框选值属于已知后台限制，首字母输入及打开菜单会在投递前拒绝。IR-01 原生 sheet 仍可能使父窗口越过另一后台窗口，哨兵保持焦点 |
+| IR-01 `147201`、`517139` 和 IR-02 `487371` | 关闭状态下的原生 AppKit 下拉框选值属于已知后台限制，首字母输入及打开菜单会在投递前拒绝。IR-01 原生 sheet 仍可能升层并夺取焦点，哨兵保护会停止后续输入 |
 | CDB-G03 `99589` | 此前的实验路径已验证两条异常备注。仅公开 API 的轮次未能在账户树中导航。后台打开正式对账属于已知限制，实测的 Reconcile 按钮及溢出入口会在投递前拒绝 |
