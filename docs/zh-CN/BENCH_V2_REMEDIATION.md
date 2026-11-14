@@ -222,6 +222,8 @@ Calc 同种子对照中，公开定向按键 Command–Page Down 和 Enter 均�
 
 加入标签选择和仅公开 API 的操作引导后，G02 `909557` 得分 0.85，A22 八项通过，日历及工作簿一致性均通过。运行在 43 次 GUI 调用后达到 360 秒限制，Signal Quay Chat 的阻塞记录尚未提交。哨兵保留全部 361 个字符，驱动隔离、GUI-only 和提供方均无报错。同种子聊天对照将首个字段滚入可见区，回读五个字段后点击观察到的 AX 提交按钮。界面显示审计确认，自有观察器读到已保存的阻塞记录，哨兵未失焦或升层。运行器现在引导模型在耗时的目标编辑前先保存已核实的阻塞记录。见 `artifacts/bench-v2-pi-20261114T061614031408Z/summary.json` 和 `artifacts/cdb-g02-public-chat-BdNOvhSu/report.json`。
 
+随后使用 Pi GPT-6.1 Terra、`high` 和 `--public-api-only` 重跑 G02 `909557`。Pi 在第八次调用提交阻塞记录，共 33 次 GUI 调用，耗时 292.67 秒。阻塞记录、日历和已保存工作簿等七项检查全部通过，得分 1.00，A22 八项通过。哨兵保留全部 293 个字符，驱动隔离、GUI-only 和提供方均无报错。同种子锁定基线为 0.20。见 `artifacts/bench-v2-pi-20261114T062427582654Z/summary.json`。
+
 仅用公开 API 的 G03 `99589` 对照在投递前拒绝了工具栏溢出入口、无法确认的工具栏坐标和显式实验点击。账本与可见窗口列表保持原样，哨兵生成文字完整，零失焦、零升层。运行器在 GnuCash 试验中都会说明这项对账限制。见基准测试工作树的 `artifacts/cdb-g03-public-toolbar-4_o8lzbo/report.json`。
 
 另一轮同种子对照中，第二个 Reconcile 窗口在已观察交易行与 OCR 定位的 R 列交点接收了定向点击。Funds Out 合计从 $73.10 升至 $1,321.70，再次点击恢复 $73.10。哨兵保留全部 17 个生成字符，零失焦。第一个对话框仍改变了与其他测试后台窗口的相对顺序。对照在 Finish 前结束，确认了可撤销的行勾选。见基准测试工作树的 `artifacts/cdb-g03-reconcile-row-8glk4mao/report.json`。
