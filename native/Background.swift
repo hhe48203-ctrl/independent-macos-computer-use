@@ -18,6 +18,7 @@ import ApplicationServices
     var targetGainedKeyboardFocus=false
     var unexpectedKeyboardRecipient=false
     var scopedInputInterrupted=false
+    var publicFocusChanged=false
     var maxSampleGap:Double=0
     var lastSampleTime:Double=0
     var transitions:[[String:Any]]=[]
@@ -36,7 +37,7 @@ import ApplicationServices
             }
         }
         sample()
-        timer=Timer.scheduledTimer(withTimeInterval:0.005,repeats:true) { [weak self] _ in
+        timer=Timer.scheduledTimer(withTimeInterval:SystemInputFocus.publicAPIOnly ? 0.025 : 0.005,repeats:true) { [weak self] _ in
             MainActor.assumeIsolated {self?.sample()}
         }
     }
@@ -45,6 +46,10 @@ import ApplicationServices
         if samples>0 {maxSampleGap=max(maxSampleGap,now-lastSampleTime)}
         lastSampleTime=now;samples += 1
         let current=SystemInputFocus.observe()
+        if SystemInputFocus.publicAPIOnly {
+            publicFocusChanged = publicFocusChanged || current.foregroundPID != before.foregroundPID ||
+                current.accessibilityPID != before.accessibilityPID
+        }
         typingRawAfter=ExperimentalTypingFocus.read(forScopedInput: scopedInput != nil)
         if scopedInput != nil && (current.foregroundPID != before.foregroundPID || current.keyboardPID == nil || typingRawAfter == nil || typingRawAfter == 0) {
             scopedInputInterrupted=true
@@ -54,7 +59,8 @@ import ApplicationServices
         let change=current.change(from:before,targetPID:targetPID)
         if change == .targetGainedFocus {targetGainedKeyboardFocus=true}
         if change == .unexpectedRecipient {unexpectedKeyboardRecipient=true}
-        if current.keyboardPID != after.keyboardPID || current.foregroundPID != after.foregroundPID || current.queryError != after.queryError {
+        if current.keyboardPID != after.keyboardPID || current.foregroundPID != after.foregroundPID ||
+            current.accessibilityPID != after.accessibilityPID || current.queryError != after.queryError {
             if transitions.count<128 {var row=current.json;row["t"]=now;transitions.append(row)}
         }
         after=current
@@ -62,6 +68,12 @@ import ApplicationServices
     func stop() {timer?.invalidate();timer=nil}
     func validate() throws {
         sample()
+        if SystemInputFocus.publicAPIOnly, (before.foregroundPID == nil || before.accessibilityPID == nil) {
+            throw BridgeError("BACKGROUND_ACCESSIBILITY_FOCUS_UNAVAILABLE", "Could not establish foreground and system Accessibility focus before background input. No action was sent.")
+        }
+        if publicFocusChanged {
+            throw BridgeError("BACKGROUND_ACCESSIBILITY_FOCUS_CHANGED", "Foreground or system Accessibility focus changed during background input. Observe before retrying.")
+        }
         if typingRouteChanged {throw BridgeError("BACKGROUND_TYPING_ROUTE_CHANGED","The experimental typing-focus reply changed while foreground stayed the same. Isolation could not be confirmed; no route restoration was attempted")}
         if targetGainedKeyboardFocus {throw BridgeError("BACKGROUND_KEYBOARD_FOCUS_CHANGED","The target obtained actual system keyboard focus during the operation. Background isolation failed; no foreground-restoration workaround was attempted.")}
         if unexpectedKeyboardRecipient {throw BridgeError("BACKGROUND_KEYBOARD_ROUTE_CHANGED","The actual keyboard recipient changed while the foreground app stayed the same. Isolation could not be confirmed; no focus restoration was attempted. This observation alone does not identify which process caused the change.")}
@@ -74,7 +86,7 @@ import ApplicationServices
          "unresolvedSampleCount":unresolved,"keyboardFocusObserved":before.keyboardPID != nil && unresolved == 0,
          "targetGainedKeyboardFocus":targetGainedKeyboardFocus,"unexpectedKeyboardRecipient":unexpectedKeyboardRecipient,"maxSampleGapMs":maxSampleGap*1000,
          "experimentalTypingFocusRawBefore":typingRawBefore as Any? ?? NSNull(),"experimentalTypingFocusRawAfter":typingRawAfter as Any? ?? NSNull(),"experimentalTypingRouteChanged":typingRouteChanged,
-         "transitions":transitions,"method":"read-only registry query, sampled; observation does not prevent focus stealing"]
+         "transitions":transitions,"method":SystemInputFocus.publicAPIOnly ? "sampled NSWorkspace and system Accessibility focus" : "read-only registry query, sampled; observation does not prevent focus stealing"]
     }
 }
 
@@ -292,7 +304,7 @@ struct HeldBackgroundMouse {
         for event in [down, up] {
             event.flags = []
             units.withUnsafeBufferPointer { event.keyboardSetUnicodeString(stringLength: $0.count, unicodeString: $0.baseAddress) }
-            event.setIntegerValueField(CGEventField(rawValue: 51)!, value: Int64(wid))
+            if !SystemInputFocus.publicAPIOnly { event.setIntegerValueField(CGEventField(rawValue: 51)!, value: Int64(wid)) }
             event.setIntegerValueField(.eventSourceUserData, value: 0x43554247)
             event.timestamp = DispatchTime.now().uptimeNanoseconds
             event.postToPid(pid)
@@ -507,7 +519,8 @@ struct HeldBackgroundMouse {
         let code = try keyCode(last); let source = try backgroundSource()
         guard let down=CGEvent(keyboardEventSource:source,virtualKey:code,keyDown:true),let up=CGEvent(keyboardEventSource:source,virtualKey:code,keyDown:false) else{throw BridgeError("EVENT_FAILED","Could not create paired keyboard events")}
         for event in [down,up] {
-            event.flags=flags;event.setIntegerValueField(CGEventField(rawValue:51)!,value:Int64(wid))
+            event.flags=flags
+            if !SystemInputFocus.publicAPIOnly { event.setIntegerValueField(CGEventField(rawValue:51)!,value:Int64(wid)) }
             event.setIntegerValueField(.eventSourceUserData,value:0x43554247)
         }
         heldBackgroundKey=(pid,up);defer{releaseBackgroundKey()}
@@ -589,20 +602,35 @@ struct HeldBackgroundMouse {
             return (text, rect)
         }
         let saveLabels = labels.filter { $0.0 == "Save" && $0.1.midX < 80 }
-        guard saveLabels.count == 1 else { return }
+        guard saveLabels.count == 1 else {
+            guard (window["title"] as? String)?.hasSuffix(" - GnuCash") == true else { return }
+            throw BridgeError("BACKGROUND_GNUCASH_TOOLBAR_UNVERIFIED", "Could not verify the GnuCash toolbar in this area. No pointer input was sent.")
+        }
         let toolbarLabel = saveLabels[0].1
         guard (toolbarLabel.minY - 4 * toolbarLabel.height...toolbarLabel.maxY + toolbarLabel.height).contains(point.y) else { return }
-        for (title, label) in labels where title.caseInsensitiveCompare("Reconcile") == .orderedSame &&
-            abs(label.midY - toolbarLabel.midY) <= toolbarLabel.height {
-            let button = label.insetBy(dx: -20, dy: -4 * label.height)
-            if button.contains(point) {
-                throw BridgeError("BACKGROUND_GNUCASH_DIALOG_UNSUPPORTED", "GnuCash Reconcile can raise its register and dialog in background. No click was sent.")
-            }
-        }
         // The unlabelled overflow chevron occupies the end of the toolbar.
-        // Use the observed Save label to locate the toolbar vertically.
         if point.x >= frame.width - 36 {
             throw BridgeError("BACKGROUND_GNUCASH_DIALOG_UNSUPPORTED", "GnuCash toolbar overflow can raise its window while opening the menu in background. No click was sent.")
+        }
+        let buttons = labels.filter { _, label in
+            abs(label.midY - toolbarLabel.midY) <= toolbarLabel.height &&
+                label.insetBy(dx: -20, dy: -4 * label.height).contains(point)
+        }
+        if buttons.contains(where: { $0.0.caseInsensitiveCompare("Reconcile") == .orderedSame }) {
+            throw BridgeError("BACKGROUND_GNUCASH_DIALOG_UNSUPPORTED", "GnuCash Reconcile can raise its register and dialog in background. No click was sent.")
+        }
+        guard buttons.count == 1, ["Save", "Show Splits"].contains(buttons[0].0) else {
+            throw BridgeError("BACKGROUND_GNUCASH_TOOLBAR_UNVERIFIED", "This GnuCash toolbar point does not match a verified background control. No pointer input was sent.")
+        }
+    }
+
+    func checkGnuCashDialogAction(_ element: AXUIElement, pid: pid_t) throws {
+        guard try app(pid).bundleIdentifier == "org.gnucash.Gnucash" else { return }
+        let isReconcile = [kAXTitleAttribute, kAXDescriptionAttribute].contains {
+            (attr(element, $0) as? String)?.caseInsensitiveCompare("Reconcile") == .orderedSame
+        }
+        if isReconcile || attr(element, kAXIdentifierAttribute) as? String == "ActionsReconcileAction" {
+            throw BridgeError("BACKGROUND_GNUCASH_DIALOG_UNSUPPORTED", "GnuCash Reconcile can raise its register and dialog in background. No AX press was sent.")
         }
     }
 
@@ -735,6 +763,11 @@ struct HeldBackgroundMouse {
             try await checkGnuCashToolbar(application, p, frame, try point(p, frame))
         }
         let scopedInput = p["strategy"] as? String == "appkit" ? ScopedAppKitInput(rawValue: method) : nil
+        if SystemInputFocus.publicAPIOnly && (scopedInput != nil || method == "scroll" ||
+            (method == "click" && p["strategy"] as? String == "event") ||
+            (method == "type_text" && p["visualCheck"] != nil)) {
+            throw BridgeError("BACKGROUND_PUBLIC_API_UNSUPPORTED", "This background input route is unavailable in public-API-only mode. No input was sent.")
+        }
         if let scopedInput {
             guard scopedInput.bundleIDs.contains(application.bundleIdentifier ?? "") else {
                 throw BridgeError(scopedInput.code("NOT_ENABLED"), "This application is not enabled for the experimental AppKit \(method) strategy. No input was sent.")
@@ -777,6 +810,7 @@ struct HeldBackgroundMouse {
                 : try? backgroundPressTarget(p, pid, frame, point)
             if let candidate { try checkBackgroundPopup(candidate) }
             if semantic, let element = candidate {
+                try checkGnuCashDialogAction(element, pid: pid)
                 try await agentCursor.move(pid:pid,windowID:wid,frame:frame,point:point,activity:"click")
                 try inputObservation.validate();try assertBackgroundIsolation(pid,wid,orderBefore,foregroundBefore)
                 if p["elementId"] != nil {
@@ -802,6 +836,9 @@ struct HeldBackgroundMouse {
                 break
             }
             guard strategy != "ax" else {throw BridgeError("BACKGROUND_CLICK_UNSUPPORTED","No semantic click equivalent at this target; no event was sent")}
+            guard !SystemInputFocus.publicAPIOnly else {
+                throw BridgeError("BACKGROUND_PUBLIC_API_UNSUPPORTED", "No semantic background click is available here. Public-API-only mode disables the raw pointer route. No input was sent.")
+            }
             try await agentCursor.move(pid:pid,windowID:wid,frame:frame,point:point,activity:"click")
             pointerDelivery=try BackgroundPointerDelivery(pid:pid,windowID:wid)
             appKitSession=try await prepareScopedAppKitFocus(pid,wid,frame,pointerDelivery!,inputObservation)
@@ -835,10 +872,14 @@ struct HeldBackgroundMouse {
         case "drag":
             let from = try point(p,frame,"fromX","fromY"); let to = try point(p,frame,"toX","toY")
             let duration = min(2,max(0.1,number(p,"duration",0.4)))
-            try await agentCursor.move(pid:pid,windowID:wid,frame:frame,point:from,activity:"drag")
             // A popup can enter native menu tracking on the initial mouse-down.
             if let candidate = try? backgroundPressTarget(p, pid, frame, from) { try checkBackgroundPopup(candidate) }
             if foregroundBefore != pid { try checkBackgroundRowDrag(pid, frame, from) }
+            guard !SystemInputFocus.publicAPIOnly else {
+                throw BridgeError("BACKGROUND_PUBLIC_API_UNSUPPORTED", "Window-routed background drag is unavailable in public-API-only mode. No pointer input was sent.")
+            }
+            try await checkGnuCashToolbar(application, p, frame, from)
+            try await agentCursor.move(pid:pid,windowID:wid,frame:frame,point:from,activity:"drag")
             pointerDelivery=try BackgroundPointerDelivery(pid:pid,windowID:wid)
             appKitSession=try await prepareScopedAppKitFocus(pid,wid,frame,pointerDelivery!,inputObservation)
             try inputObservation.validate()
@@ -875,7 +916,7 @@ struct HeldBackgroundMouse {
             }
             let textElement=try backgroundTextElement(p,pid,wid,frame)
             if let at=axFrame(textElement){try await agentCursor.move(pid:pid,windowID:wid,frame:frame,point:CGPoint(x:at.midX,y:at.midY),activity:"type")}
-            if strategy == "event",ProcessInfo.processInfo.environment["CU_EXPERIMENTAL_APPKIT_FOCUS"] == "1" {
+            if strategy == "event",!SystemInputFocus.publicAPIOnly,ProcessInfo.processInfo.environment["CU_EXPERIMENTAL_APPKIT_FOCUS"] == "1" {
                 let element=try backgroundTextElement(p,pid,wid,frame)
                 guard let focused=attr(AXUIElementCreateApplication(pid),kAXFocusedUIElementAttribute),CFGetTypeID(focused)==AXUIElementGetTypeID(),CFEqual(focused,element) else{throw BridgeError("BACKGROUND_EVENT_TEXT_FOCUS_MISMATCH","Experimental raw text still requires its exact existing editable focus; no notice was sent")}
                 let selectionBefore=attr(element,kAXSelectedTextRangeAttribute)
@@ -905,7 +946,7 @@ struct HeldBackgroundMouse {
                 }
                 if let at=axFrame(element) {try await agentCursor.move(pid:pid,windowID:wid,frame:frame,point:CGPoint(x:at.midX,y:at.midY),activity:"key")}
             }
-            if scopedInput == .key || (!semanticSelectAll && ProcessInfo.processInfo.environment["CU_EXPERIMENTAL_APPKIT_FOCUS"] == "1") {
+            if !SystemInputFocus.publicAPIOnly && (scopedInput == .key || (!semanticSelectAll && ProcessInfo.processInfo.environment["CU_EXPERIMENTAL_APPKIT_FOCUS"] == "1")) {
                 pointerDelivery=try BackgroundPointerDelivery(pid:pid,windowID:wid)
                 appKitSession=try await prepareScopedAppKitFocus(pid,wid,frame,pointerDelivery!,inputObservation)
                 if scopedInput == .key && appKitSession == nil {

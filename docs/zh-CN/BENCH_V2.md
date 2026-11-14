@@ -32,6 +32,8 @@ npm run bench:v2 -- --run --tasks benchlab
 
 在专用桌面上运行后台试验时，可重复传入 `--appkit-key-bundle BUNDLE_ID`，允许指定应用的 `pressKey` 显式使用 `strategy:'appkit'`。若要为普通左键坐标点击启用同一策略，可单独传入 `--appkit-click-bundle BUNDLE_ID`。两种选项都为指定调用启用实验性应用内焦点准备。运行器把两份应用列表写入日志，续跑时沿用。试验按 A22 和 GUI-only 计分。
 
+传入 `--public-api-only` 会以 `CU_PUBLIC_API_ONLY=1` 启动原生驱动。它与实验性 AppKit 参数互斥，续跑时沿用。驱动使用 AX 语义操作及公开的进程定向按键接口。此模式下，原始后台指针投递和视觉回读输入不可用。驱动可观察前台应用和系统 AX 焦点，实际键盘接收进程显示为未解析。A22 仍由锁定的哨兵评估。
+
 测试 Chrome 进程沿用登录会话的 `HOME`，以便在 macOS 上打开 loopback 页面。它仍使用本轮新建的 profile，并仅为本次启动关闭其更新调度器。Pi 和其他测试进程继续使用隔离的 home。[Chromium 启动参数](https://chromium.googlesource.com/chromium/src/+/refs/heads/main/chrome/common/chrome_switches.h)
 
 ```sh

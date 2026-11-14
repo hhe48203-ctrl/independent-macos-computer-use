@@ -206,6 +206,8 @@ MB-09 `790113` 回归确认，从原生行内及相邻边框开始拖动均返�
 
 加入预检后的一次 G03 Pi 复测沿用了此前实验性 AppKit 参数，发现后主动停止。运行器保留未计分记录并清理测试进程。最近的有效 G03 得分仍为 0.65。见基准测试工作树的 `artifacts/bench-v2-pi-20261114T012811451081Z/summary.json`。
 
+新的 `--public-api-only` 试验模式在启动前拒绝实验性 AppKit 参数，并禁用驱动的未公开焦点查询和原始指针投递。G04 `482045` 的两个 Chromium 下拉框仍能使用公开进程定向按键选值。IR-01 `147201` 到达第二页后，Team 的四种受保护输入均被拒绝。打开前一个 sheet 时仍测到后台窗口换序。两组对照均未记录哨兵失焦或升层。GnuCash 工具栏现在拒绝无法确认的登记簿工具栏点击，如果应用暴露带 Reconcile 标签的 AX 按钮，也会预检其语义按下。见基准测试工作树的 `artifacts/ir01-team-public-final-uvbmhmv3/report.json` 和 `artifacts/cdb-g04-popup-public-final-pvaukt9t/report.json`。
+
 另一轮同种子对照中，第二个 Reconcile 窗口在已观察交易行与 OCR 定位的 R 列交点接收了定向点击。Funds Out 合计从 $73.10 升至 $1,321.70，再次点击恢复 $73.10。哨兵保留全部 17 个生成字符，零失焦。第一个对话框仍改变了与其他测试后台窗口的相对顺序。对照在 Finish 前结束，确认了可撤销的行勾选。见基准测试工作树的 `artifacts/cdb-g03-reconcile-row-8glk4mao/report.json`。
 
 另一轮 `99589` 对照在一次性账本完成并保存了一笔诊断性对账。定向数字编辑保留原有小数分隔符。Finish 前通过 OCR 和截图核对了勾选金额、两项余额相等及差额为零。只读 XML 观察器确认一条 Checking Account 拆分从 `n` 变为 `y`，对账日期随之写入，所有交易编号均保留。哨兵的 19 个生成字符完整保留，零失焦、零激活。驱动仍报告了初始对话框导致的后台窗口换序。见基准测试工作树的 `artifacts/cdb-g03-reconcile-finish-i1wkeb6t/report.json` 和截图。

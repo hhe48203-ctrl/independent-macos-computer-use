@@ -126,8 +126,8 @@ def build_fixtures(bench):
         Path(tmp).rename(APPS)
 
 
-def inspect_bridge(bundle_ids):
-    env = dict(BASE_ENV, CU_ALLOWED_BUNDLE_IDS=",".join(sorted(bundle_ids)))
+def inspect_bridge(bundle_ids, *, public_api_only=False):
+    env = dict(BASE_ENV, CU_ALLOWED_BUNDLE_IDS=",".join(sorted(bundle_ids)), CU_PUBLIC_API_ONLY=str(int(public_api_only)))
     return json.loads(capture(NODE, str(HERE / "mcp.mjs"), "--check", env=env))
 
 
@@ -136,12 +136,12 @@ def groups():
         "/bin/ps", "-axo", "pid=,pgid=").splitlines())}
 
 
-def wait_targets(pids, bundle_ids):
+def wait_targets(pids, bundle_ids, *, public_api_only=False):
     """Resolve only windows of subprocess groups that this trial started."""
     until = time.monotonic() + 20
     while time.monotonic() < until:
         owners = groups()
-        windows = inspect_bridge(bundle_ids)["windows"]
+        windows = inspect_bridge(bundle_ids, public_api_only=public_api_only)["windows"]
         found = {w["pid"]: w["bundleId"] for w in windows
                  if w["onScreen"] and owners.get(w["pid"]) in pids}
         if set(owners[pid] for pid in found) >= set(pids):
@@ -309,7 +309,7 @@ def owned_stop(desktop, proc):
 
 
 def run_agent(pi, auth, catalog, targets, prompt, artifacts, turns, seconds, desktop, idle_seconds, stop_file,
-              *, allow_foreground_hover=False, appkit_key_bundles=(), appkit_click_bundles=()):
+              *, allow_foreground_hover=False, appkit_key_bundles=(), appkit_click_bundles=(), public_api_only=False):
     with tempfile.TemporaryDirectory(prefix="cdb-pi-") as temp:
         sandbox = Path(temp)
         agent = sandbox / "agent"
@@ -333,6 +333,7 @@ def run_agent(pi, auth, catalog, targets, prompt, artifacts, turns, seconds, des
                 "-i", f"HOME={home}", f"PATH={BASE_ENV['PATH']}", f"TMPDIR={temp}",
                 f"CU_ALLOWED_BUNDLE_IDS={bundles}", f"CU_ENABLE_FOREGROUND={int(allow_foreground_hover)}",
                 "CU_ENABLE_CLIPBOARD=0", "CU_EXPERIMENTAL_APPKIT_FOCUS=0", "CU_AGENT_CURSOR_VISIBILITY=target",
+                f"CU_PUBLIC_API_ONLY={int(public_api_only)}",
                 f"CU_EXPERIMENTAL_APPKIT_KEY_BUNDLE_IDS={','.join(sorted(scoped_key_bundles))}",
                 f"CU_EXPERIMENTAL_APPKIT_CLICK_BUNDLE_IDS={','.join(sorted(scoped_click_bundles))}",
                 NODE, str(HERE / "mcp.mjs"), "--serve", str(scope)
@@ -361,6 +362,12 @@ def run_agent(pi, auth, catalog, targets, prompt, artifacts, turns, seconds, des
             "For navigation that loads asynchronously, observe the page again in a separate call before deciding whether it succeeded. "
             "If a documented operation fails, report which required app or document you could not use and the observed error."
         )
+        if public_api_only:
+            instructions += (
+                " The native helper is restricted to public APIs. Use semantic AX controls for background clicks. "
+                "Raw background pointer actions and experimental AppKit input are unavailable. "
+                "If a required action is refused, report it and complete independent supported edits."
+            )
         if len(targets) > 1:
             instructions += (
                 " Bind selected windows with cua.getApp({pid,windowId}, {emit:false}) to suppress automatic AX output. "
@@ -540,7 +547,7 @@ def agent_facts(events, guard, v2, *, turn_cap_reached=False):
             "provider_error_count": provider_error_count, "usage": usage}
 
 
-def run_trial(entry, condition, out, task, spec, bundle_ids, login, modules, *, appkit_key_bundles=(), appkit_click_bundles=()):
+def run_trial(entry, condition, out, task, spec, bundle_ids, login, modules, *, appkit_key_bundles=(), appkit_click_bundles=(), public_api_only=False):
     pilot, v2, runner, desktop, cdb = modules
     seed = entry["seed"]
     attempt = journal.next_attempt(out, entry)
@@ -578,7 +585,7 @@ def run_trial(entry, condition, out, task, spec, bundle_ids, login, modules, *, 
                     brief, paths = pilot.prepare_probe(task, seed, trial, APPS / "BenchLab.app")
                     lab = pilot.launch_lab(task, seed, paths, APPS / "BenchLab.app", {"HOME": temp})
                     pids = [lab.pid]
-                targets = wait_targets(pids, bundle_ids)
+                targets = wait_targets(pids, bundle_ids, public_api_only=public_api_only)
                 sentinel.start()
                 sentinel.activate()
                 sentinel.toggle_armed()
@@ -592,7 +599,7 @@ def run_trial(entry, condition, out, task, spec, bundle_ids, login, modules, *, 
                 row.update(run_agent(*login, targets, prompt, artifacts, max_turns, min(360, task.timeout_s),
                                      desktop, pilot.hid_idle_seconds, out / "STOP",
                                      allow_foreground_hover=condition == "foreground", appkit_key_bundles=appkit_key_bundles,
-                                     appkit_click_bundles=appkit_click_bundles))
+                                     appkit_click_bundles=appkit_click_bundles, public_api_only=public_api_only))
                 sentinel.toggle_armed()
                 armed = False
                 row["disturbance"] = sentinel.summary()
@@ -655,12 +662,15 @@ def main():
     parser.add_argument("--resume", type=Path, help="Resume an existing report without repeating scored trials")
     parser.add_argument("--idle-seconds", type=float, default=10, help="Require this much hardware idle time before each trial")
     parser.add_argument("--allow-multi-app", action="store_true", help="Allow stock-app launches on a dedicated benchmark desktop")
+    parser.add_argument("--public-api-only", action="store_true", default=None,
+                        help="Use documented macOS APIs for the native driver during trials")
     parser.add_argument("--appkit-key-bundle", action="append", metavar="BUNDLE_ID",
                         help="Allow explicit experimental AppKit key preparation for this owned app in background trials")
     parser.add_argument("--appkit-click-bundle", action="append", metavar="BUNDLE_ID",
                         help="Allow explicit experimental AppKit click preparation for this owned app in background trials")
     args = parser.parse_args()
-    selection = (args.tasks, args.condition, args.runs, args.run_index, args.seed, args.appkit_key_bundle, args.appkit_click_bundle)
+    selection = (args.tasks, args.condition, args.runs, args.run_index, args.seed, args.appkit_key_bundle, args.appkit_click_bundle,
+                 args.public_api_only)
     if args.resume and (not args.run or any(value is not None for value in selection)):
         parser.error("--resume requires --run and uses the saved task selection, conditions, seeds and scoped input configuration")
     if args.run_index is not None and (args.runs is not None or not 0 <= args.run_index <= 4):
@@ -726,6 +736,9 @@ def main():
     appkit_key_bundles = sorted(set(saved.get("appkit_key_bundles", []) if saved else args.appkit_key_bundle or []))
     appkit_click_bundles = sorted(set(saved.get("appkit_click_bundles", []) if saved else args.appkit_click_bundle or []))
     scoped_bundles = set(appkit_key_bundles).union(appkit_click_bundles)
+    public_api_only = bool(saved.get("public_api_only", False) if saved else args.public_api_only)
+    if public_api_only and scoped_bundles:
+        parser.error("Public-API-only trials cannot enable experimental AppKit input")
     if scoped_bundles and any(entry["condition"] != "background" for entry in plan):
         parser.error("Scoped AppKit key and click options are available only for background trials")
     report = {"journal_schema": journal.SCHEMA, "benchmark_version": 2, "upstream_commit": REVISION, "upstream_tree": tree, "arm": ARM,
@@ -734,6 +747,8 @@ def main():
         report["appkit_key_bundles"] = appkit_key_bundles
     if appkit_click_bundles:
         report["appkit_click_bundles"] = appkit_click_bundles
+    if public_api_only:
+        report["public_api_only"] = True
     if args.prepare:
         build_fixtures(bench)
         print(APPS)
@@ -765,13 +780,15 @@ def main():
         except OSError as error:
             raise RuntimeError(f"Benchmark service port {host}:{port} is unavailable: {error}") from error
     login = pi_auth()
-    status = inspect_bridge(set())
+    status = inspect_bridge(set(), public_api_only=public_api_only)
+    if public_api_only and not status.get("background", {}).get("publicAPIOnly"):
+        raise RuntimeError("Build the native helper with public-API-only mode support before running this trial")
     if not all(status["permissions"].get(p) for p in ("accessibility", "screenRecording")):
         raise RuntimeError("Grant the existing native helper Accessibility and Screen Recording through macOS Settings")
     if args.doctor:
         print(json.dumps(dict(report, prerequisites="ready", node=node_version, pi_version=capture(login[0], "--version"), displays=status["displays"]), indent=2))
         return 0
-    running_apps = inspect_bridge(exclusive_bundles)["apps"]
+    running_apps = inspect_bridge(exclusive_bundles, public_api_only=public_api_only)["apps"]
     if running_apps:
         names = ", ".join(sorted({app["bundleId"] for app in running_apps}))
         raise RuntimeError(f"Benchmark or unisolated stock apps already running: {names}")
@@ -809,7 +826,8 @@ def main():
                 break
             row = run_trial(entry, entry["condition"], out, tasks[entry["task"]],
                             specs[entry["task"]], bundles[entry["task"]], login, (pilot, v2, runner, desktop, cdb),
-                            appkit_key_bundles=appkit_key_bundles, appkit_click_bundles=appkit_click_bundles)
+                            appkit_key_bundles=appkit_key_bundles, appkit_click_bundles=appkit_click_bundles,
+                            public_api_only=public_api_only)
             report["trials"].append(row)
             write_json(out / "summary.json", report)
             if row["status"] == "infrastructure_error":
