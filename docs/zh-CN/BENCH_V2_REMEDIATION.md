@@ -198,6 +198,12 @@ MCP 的 `typeText` 现可结合 `strategy:'event'` 显式使用 `visualCheck`。
 
 剩余后台工作使用公开 API。MB-09 原生行拖放和 G03 应用自激活弹窗按已知限制处理。执行前识别不支持的路径，并返回说明原因的错误。MB-09 已有被动原生行及边框预检。G03 不支持的弹窗打开路径仍需补预检。IR-01 需验证关闭的下拉框能否通过首字母选值，并核对选值、菜单可见性、焦点和窗口顺序。若选值不可用，记录限制并保留打开菜单前的拒绝。
 
+IR-01 `147201` 对照通过公开 AX 聚焦关闭的 Team 下拉框，再以公开的进程定向按键发送四个选项的首字母。选值始终为 `Choose a team`，没有出现菜单子节点，也没有测到窗口换序、前台应用或哨兵焦点变化。驱动现会在投递前拒绝已识别原生下拉框的首字母输入。同种子验证了小写、带 Shift 和默认策略，也验证了原有的 Down 预检。G04 `482045` 对照仍能在 AX 聚焦后按首字母选中两个 Chromium 选项，同时拦截了打开这两个原生菜单的请求。见基准测试工作树的 `artifacts/ir01-closed-team-public-fi3ugv9f/report.json`、`artifacts/ir01-native-team-reject-0_41h8sc/report.json` 和 `artifacts/cdb-g04-web-popup-regression-f_fo1_uk/report.json`。
+
+G03 `99589` 对照中，新窗口 OCR 预检在投递前拦截了直接 Reconcile 按钮和紧凑工具栏溢出入口，共覆盖 auto、event 和定向点击的六次请求。Show Splits 仍可操作。账本保持原样，18 个生成字符完整保留，零失焦、零升层。预检覆盖实测的英文图标加文字布局。见基准测试工作树的 `artifacts/cdb-g03-dialog-preflight-f6nr9hwt/report.json`。
+
+MB-09 `790113` 回归确认，从原生行内及相邻边框开始拖动均返回 `BACKGROUND_NATIVE_ROW_DRAG_UNSUPPORTED`。两次目标事件观察均记录零鼠标包，哨兵生成文字完整，零失焦、零升层。见基准测试工作树的 `artifacts/mb09-row-and-bezel-regression-6xy882kg/`。
+
 另一轮同种子对照中，第二个 Reconcile 窗口在已观察交易行与 OCR 定位的 R 列交点接收了定向点击。Funds Out 合计从 $73.10 升至 $1,321.70，再次点击恢复 $73.10。哨兵保留全部 17 个生成字符，零失焦。第一个对话框仍改变了与其他测试后台窗口的相对顺序。对照在 Finish 前结束，确认了可撤销的行勾选。见基准测试工作树的 `artifacts/cdb-g03-reconcile-row-8glk4mao/report.json`。
 
 另一轮 `99589` 对照在一次性账本完成并保存了一笔诊断性对账。定向数字编辑保留原有小数分隔符。Finish 前通过 OCR 和截图核对了勾选金额、两项余额相等及差额为零。只读 XML 观察器确认一条 Checking Account 拆分从 `n` 变为 `y`，对账日期随之写入，所有交易编号均保留。哨兵的 19 个生成字符完整保留，零失焦、零激活。驱动仍报告了初始对话框导致的后台窗口换序。见基准测试工作树的 `artifacts/cdb-g03-reconcile-finish-i1wkeb6t/report.json` 和截图。
@@ -205,5 +211,5 @@ MCP 的 `typeText` 现可结合 `strategy:'event'` 显式使用 `visualCheck`。
 | 待办 | 已有逐轮证据 |
 | --- | --- |
 | MB-09 `790113` | 投递前拦截消除了已验证表格行拖动路径上的干扰，后台原生列表重排仍缺少可验证的投递方式。加入预检前，手势全程保留 Command 也会失败。见 `artifacts/mb09-drag-threshold-34DwfW/report.json` 和 `artifacts/mb09-command-drag-igkzdF/report.json` |
-| IR-01 `147201`、`517139` 和 IR-02 `487371` | 无视觉光标时直接通过 AX 按 Next，仍复现了原生 sheet 让目标越过另一后台窗口，哨兵始终保持键焦点。此前打开菜单则单独造成过失焦。在应用内聚焦的 AppKit 下拉框发送普通按键，选值未改变，显式 `appkit` 按键准备的对照也是如此。原生选项选择与 sheet 堆叠仍待解决。见 `artifacts/ir-popup-typeahead-TLnRd8/report.json` 和 `artifacts/ir02-popup-scoped-letter-6TMHum/report.json` |
-| CDB-G03 `99589` | 计分复测已验证两条异常备注，独立对照也已验证一条 `y` 状态落盘。初始对账对话框仍改变已有后台窗口的相对顺序。计分轮仍有两笔正式对账及依赖它们的工作簿一致性检查待通过 |
+| IR-01 `147201`、`517139` 和 IR-02 `487371` | 关闭状态下的原生 AppKit 下拉框选值属于已知后台限制，首字母输入及打开菜单会在投递前拒绝。IR-01 原生 sheet 仍可能使父窗口越过另一后台窗口，哨兵保持焦点 |
+| CDB-G03 `99589` | 计分复测已验证两条异常备注。后台打开正式对账属于已知限制，实测的 Reconcile 按钮及溢出入口会在投递前拒绝。计分轮的对账及依赖它的工作簿检查仍未完成 |

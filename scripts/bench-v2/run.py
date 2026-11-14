@@ -453,8 +453,8 @@ def run_agent(pi, auth, catalog, targets, prompt, artifacts, turns, seconds, des
                 "commit with scoped Enter, save with scoped Command-S and verify from a fresh screenshot. "
                 "Reserve time and turns for edits and their save checks in both the ledger and workbook. "
                 "The register's R column toggles uncleared and cleared. Reconciled status requires the Reconcile workflow. "
-                "If the Reconcile command returns BACKGROUND_WINDOW_REORDERED, observe the new state, leave that "
-                "workflow pending and verify any independent workbook and ledger edits."
+                "Background mode blocks the Reconcile toolbar control and toolbar overflow because they can raise windows. "
+                "Leave formal reconciliation pending and verify the independent workbook and ledger edits."
             )
         if scoped_key_bundles or scoped_click_bundles:
             instructions += " Use the remaining turns to attempt required edits when you have an observed, supported GUI route."

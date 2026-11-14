@@ -547,7 +547,7 @@ struct HeldBackgroundMouse {
         return search(window,0)
     }
 
-    func checkBackgroundPopup(_ element: AXUIElement) throws {
+    func checkBackgroundPopup(_ element: AXUIElement, typeAhead: Bool = false) throws {
         // AppKit and Chromium can present a native menu even for an AX press.
         guard attr(element, kAXRoleAttribute) as? String == kAXPopUpButtonRole else { return }
         var actions: CFArray?
@@ -560,12 +560,50 @@ struct HeldBackgroundMouse {
         let webPopup = actionSet == [kAXPressAction, kAXShowMenuAction, "AXScrollToVisible"] &&
             items.count <= 1 && items.allSatisfy { attr($0, kAXRoleAttribute) as? String == kAXMenuItemRole } &&
             belongsToWebArea(element)
+        if typeAhead {
+            if nativePopup {
+                throw BridgeError("BACKGROUND_POPUP_UNSUPPORTED", "The closed native popup does not support verified first-letter selection in background. No key was sent.")
+            }
+            return
+        }
         guard nativePopup || webPopup else { return }
         let message = "This closed popup can open a native menu and take the user's keyboard focus. No input was sent."
         if webPopup {
             throw BridgeError("BACKGROUND_POPUP_UNSUPPORTED", message + " Try app-local AX focus and a printable key matching the option's prefix, then verify the selected value.")
         }
         throw BridgeError("BACKGROUND_POPUP_UNSUPPORTED", message)
+    }
+
+    func checkGnuCashToolbar(_ application: NSRunningApplication, _ p: Object, _ frame: CGRect, _ at: CGPoint) async throws {
+        let point = CGPoint(x: at.x-frame.minX, y: at.y-frame.minY)
+        guard application.bundleIdentifier == "org.gnucash.Gnucash", point.y <= 110 else { return }
+        let observation = try await ocr(p, languageCorrection: false)
+        let (_, window, currentFrame) = try target(p)
+        guard currentFrame == frame, window["onScreen"] as? Bool == true else {
+            throw BridgeError("WINDOW_MOVED", "GnuCash window moved during toolbar verification. No click was sent.")
+        }
+        let labels = (observation["lines"] as? [Object] ?? []).compactMap { line -> (String, CGRect)? in
+            guard let text = line["text"] as? String, let bounds = line["frame"] as? Object else { return nil }
+            let rect = CGRect(x: number(bounds,"x"), y: number(bounds,"y"), width: number(bounds,"width"), height: number(bounds,"height"))
+            guard rect.midY < 110 else { return nil }
+            return (text, rect)
+        }
+        let saveLabels = labels.filter { $0.0 == "Save" && $0.1.midX < 80 }
+        guard saveLabels.count == 1 else { return }
+        let toolbarLabel = saveLabels[0].1
+        guard (toolbarLabel.minY - 4 * toolbarLabel.height...toolbarLabel.maxY + toolbarLabel.height).contains(point.y) else { return }
+        for (title, label) in labels where title.caseInsensitiveCompare("Reconcile") == .orderedSame &&
+            abs(label.midY - toolbarLabel.midY) <= toolbarLabel.height {
+            let button = label.insetBy(dx: -20, dy: -4 * label.height)
+            if button.contains(point) {
+                throw BridgeError("BACKGROUND_GNUCASH_DIALOG_UNSUPPORTED", "GnuCash Reconcile can raise its register and dialog in background. No click was sent.")
+            }
+        }
+        // The unlabelled overflow chevron occupies the end of the toolbar.
+        // Use the observed Save label to locate the toolbar vertically.
+        if point.x >= frame.width - 36 {
+            throw BridgeError("BACKGROUND_GNUCASH_DIALOG_UNSUPPORTED", "GnuCash toolbar overflow can raise its window while opening the menu in background. No click was sent.")
+        }
     }
 
     // A row label is often exposed as AXStaticText with no AXPress. Use the
@@ -693,6 +731,9 @@ struct HeldBackgroundMouse {
         }
         let orderBefore = backgroundWindowOrder()
         let foregroundBefore = NSWorkspace.shared.frontmostApplication?.processIdentifier
+        if method == "click" {
+            try await checkGnuCashToolbar(application, p, frame, try point(p, frame))
+        }
         let scopedInput = p["strategy"] as? String == "appkit" ? ScopedAppKitInput(rawValue: method) : nil
         if let scopedInput {
             guard scopedInput.bundleIDs.contains(application.bundleIdentifier ?? "") else {
@@ -857,6 +898,10 @@ struct HeldBackgroundMouse {
                 let unmodifiedActivation = chord.flags.isEmpty && ["space", "enter", "return"].contains(chord.name)
                 if verticalArrow || unmodifiedActivation {
                     try checkBackgroundPopup(element)
+                }
+                if chord.flags.isEmpty || chord.flags == .maskShift,
+                   chord.name.utf8.count == 1, let key = chord.name.utf8.first, (97...122).contains(key) {
+                    try checkBackgroundPopup(element, typeAhead: true)
                 }
                 if let at=axFrame(element) {try await agentCursor.move(pid:pid,windowID:wid,frame:frame,point:CGPoint(x:at.midX,y:at.midY),activity:"key")}
             }
