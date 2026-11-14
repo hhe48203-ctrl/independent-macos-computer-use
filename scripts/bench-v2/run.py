@@ -366,6 +366,8 @@ def run_agent(pi, auth, catalog, targets, prompt, artifacts, turns, seconds, des
             instructions += (
                 " The native helper is restricted to public APIs. Use semantic AX controls for background clicks. "
                 "Raw background pointer actions and experimental AppKit input are unavailable. "
+                "On web forms, select buttons by role and AXPress as well as title. If the control's frame has zero height "
+                "or is outside the window, use its AXScrollToVisible action when available and re-observe before clicking. "
                 "If a required action is refused, report it and complete independent supported edits."
             )
         if len(targets) > 1:
@@ -437,6 +439,13 @@ def run_agent(pi, auth, catalog, targets, prompt, artifacts, turns, seconds, des
                     "Pass the full observed editor value as replaceAll and check the returned verified field. "
                     "Check the editor value before committing. Read back the committed cell and stop the loop at the first failed check. "
                     "Print the compact results and save finished groups before moving to another app."
+                )
+            elif public_api_only:
+                instructions += (
+                    " To switch Calc sheets, click the exact observed AXRadioButton tab with {strategy:'ax'} "
+                    "and verify the new Sheet title. When editing multiple cells, batch at most one observed row per JS call. "
+                    "Verify the address, editor and committed value for each cell. Stop the loop at the first failed check "
+                    "and save completed groups. A key event acknowledgement alone does not verify a Calc edit."
                 )
         if "org.gnucash.Gnucash" in owned_bundles:
             instructions += (
