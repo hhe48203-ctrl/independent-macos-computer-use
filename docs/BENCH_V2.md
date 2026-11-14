@@ -54,6 +54,8 @@ When Pi ends a trial with OpenAI's usage-limit error, the runner records `agent.
 
 `driver_isolation` lists isolation errors observed by the native driver, including crossings between existing background windows. The same events are saved in `driver-isolation.jsonl` when present. Each record contains the error code and native operation. The A22 score continues to use the pinned sentinel measurements.
 
+Public-API-only background trials check the original witness's foreground and system AX focus before each input. After a reported focus loss or a missing witness focus sample, further input returns `BENCH_WITNESS_FOCUS_CHANGED`. Read-only observations remain available. This stops later actions if an app has raised itself or taken focus.
+
 `turn_cap_reached` records a local stop confirmed by Pi's benchmark extension. Pi's synthetic abort for that stop is excluded from `provider_error_count`. A trial stopped at the cap retains its evaluator score when its evidence is usable and cannot pass the task.
 
 Pi gets only the two MCP tools. A benchmark JS gate blocks OS, file and network operations, and native requests are scoped by bundle, owned PID and observed snapshot. Capture is limited to the owned windows. In foreground trials, explicit `app.hover` can deliver real pointer movement for MB-10 and MB-11. `app.move` moves the visual overlay only. The upstream sentinel measures the eight A22 criteria.

@@ -214,6 +214,8 @@ MB-09 `790113` 以 Pi `high` 和仅公开 API 复跑，仍在投递前返回 `BA
 
 在 IR-01 `147201` 上，公开 AX 探针在投递前枚举了 Next 的普通属性、带参数属性、动作及描述。按钮只公开了描述为 “press” 的 `AXPress`，没有帮助文本或标识符，窗口也没有默认按钮或已附加的 sheet。锁定版源码用普通 `NSButton` 创建该按钮，点击回调再调用 `NSAlert.beginSheetModal(for:)`。自有窗口对照中，sheet 和父窗口同时越过遮挡窗，哨兵保持键焦点。这组对照里，公开 AX 元数据没有提供可在执行前识别该弹窗的信号。见 `artifacts/ir01-public-ax-metadata-zzDvesJ5/report.json`。[锁定版 AppKit 测试应用](https://github.com/trycua/cua/blob/22a67eacd15dc71811e330ed88951dd615bb395d/libs/cua-driver-bench/automated-eval/macos_bench/swift/BenchLabInterrupts.swift#L243-L267)
 
+同种子另一次仅公开 API 复跑中，BenchLab 记录打开 sheet 后约 16 毫秒成为前台应用。哨兵记录一次失焦、一次升层和 22 次输入受阻，A22 只有四项通过。驱动在 Next 点击中报告 `BACKGROUND_ACCESSIBILITY_FOCUS_CHANGED`。同次试验的 IR-02 得分 0.45，A22 八项通过。基准现在会在每次后续输入前检查初始哨兵，并在确认焦点变化后停止输入。自有应用主动激活对照中，后续按钮未收到调用，仍可读取新 AX 快照。应用回调可在缺少提前 AX 信号的情况下打开 sheet，这条路径的隔离问题仍存在。见 `artifacts/bench-v2-pi-20261114T064925200793Z/summary.json` 和 `artifacts/ir01-witness-guard-XRGNDS0p/report.json`。
+
 仅公开 API 的后台模式会在投递前拒绝显式 `AXShowMenu`，包括识别范围之外的控件。自有 AppKit 对照按钮同时公开 `AXShowMenu` 和 `AXPress`。菜单回调未触发，普通按下仍投递到同一控件，哨兵无失焦或窗口升层。见 `artifacts/public-menu-guard-eSDxMTEV/report.json`。
 
 IR-03 `410255` 以 Pi `high` 和仅公开 API 模式复跑，得分 1.00，A22 八项通过，两次保存提示均完成。哨兵保留全部 49 个生成字符。选择第二条笔记时，驱动记录一次 `BACKGROUND_WINDOW_REORDERED`。同种子对照确认首个保存 sheet 和父窗口均越过另一扇自有后台遮挡窗，哨兵保持在两者上方并保有焦点。见 `artifacts/bench-v2-pi-20261114T015856177473Z/summary.json` 和 `artifacts/ir03-public-save-order-cHyl13cs/report.json`。[锁定版保存处理器](https://github.com/trycua/cua/blob/22a67eacd15dc71811e330ed88951dd615bb395d/libs/cua-driver-bench/automated-eval/macos_bench/swift/BenchLabInterrupts.swift#L608-L627)

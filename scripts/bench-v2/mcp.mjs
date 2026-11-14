@@ -7,15 +7,42 @@ import {BenchPolicyError, createGuiValidator} from './guard.mjs';
 const windowMethods = new Set(['snapshot', 'screenshot', 'ocr', 'click', 'drag', 'scroll', 'type_text', 'key', 'cursor', 'hover']);
 const referenceMethods = new Set(['click', 'ax_action', 'select_text']);
 const metadataMethods = new Set(['status', 'apps', 'windows', 'cursor_state', 'cursor_hide']);
+const inputMethods = new Set(['click', 'drag', 'scroll', 'type_text', 'key', 'ax_action', 'select_text']);
+const focusIsolationErrors = new Set([
+  'BACKGROUND_APP_ACTIVATED', 'BACKGROUND_KEYBOARD_FOCUS_CHANGED', 'BACKGROUND_KEYBOARD_ROUTE_CHANGED',
+  'BACKGROUND_TYPING_ROUTE_CHANGED', 'BACKGROUND_ACCESSIBILITY_FOCUS_CHANGED'
+]);
 const isolationErrors = new Set([
-  'BACKGROUND_APP_ACTIVATED', 'BACKGROUND_WINDOW_REORDERED', 'BACKGROUND_KEYBOARD_FOCUS_CHANGED',
-  'BACKGROUND_KEYBOARD_ROUTE_CHANGED', 'BACKGROUND_TYPING_ROUTE_CHANGED', 'BACKGROUND_ACCESSIBILITY_FOCUS_CHANGED'
+  ...focusIsolationErrors, 'BACKGROUND_WINDOW_REORDERED', 'BENCH_WITNESS_FOCUS_CHANGED'
 ]);
 
 export function createScopedRequest(request, targets, reject = message => { throw new BenchPolicyError(message, true); },
-  {allowForegroundHover = false, reportIsolation = () => {}} = {}) {
+  {allowForegroundHover = false, backgroundWitnessPID, reportIsolation = () => {}} = {}) {
   const pids = new Set(targets.map(target => target.pid));
   const snapshots = new Set();
+  let inputStopped = false;
+  let inputQueue = Promise.resolve();
+  const dispatch = async (method, params, options) => {
+    try {
+      if (backgroundWitnessPID !== undefined && inputMethods.has(method)) {
+        if (!inputStopped) {
+          const {inputFocus} = await request('status', {}, options);
+          inputStopped = inputFocus?.foregroundPID !== backgroundWitnessPID ||
+            inputFocus?.accessibilityFocusedPID !== backgroundWitnessPID;
+        }
+        if (inputStopped) {
+          throw Object.assign(new Error('Background trial input stopped because the witness focus changed or became unobservable. No input was sent. Read-only observations remain available.'), {
+            code:'BENCH_WITNESS_FOCUS_CHANGED'
+          });
+        }
+      }
+      return await request(method, params, options);
+    } catch (error) {
+      if (focusIsolationErrors.has(error?.code)) inputStopped = true;
+      if (isolationErrors.has(error?.code)) reportIsolation({code:error.code,method});
+      throw error;
+    }
+  };
   return async (method, params = {}, options) => {
     const foregroundHover = allowForegroundHover && method === 'hover' && params.mode === 'foreground';
     if ((params.mode === 'foreground' && !foregroundHover) || (method === 'hover' && !foregroundHover) ||
@@ -32,12 +59,12 @@ export function createScopedRequest(request, targets, reject = message => { thro
       (windowMethods.has(method) && pids.has(params.pid) && Number.isSafeInteger(params.windowId)) ||
       (referenceMethods.has(method) && snapshots.has(params.snapshotId));
     if (!allowed) return reject(`Native method ${method} has no authorized benchmark target.`);
-    let result;
-    try { result = await request(method, params, options); }
-    catch (error) {
-      if (isolationErrors.has(error?.code)) reportIsolation({code:error.code,method});
-      throw error;
+    if (backgroundWitnessPID !== undefined && inputMethods.has(method)) {
+      const result = inputQueue.then(() => dispatch(method, params, options));
+      inputQueue = result.catch(() => {});
+      return result;
     }
+    const result = await dispatch(method, params, options);
     if (method === 'apps' || method === 'windows') {
       return {[method]: result[method].filter(item => pids.has(item.pid))};
     }
@@ -63,6 +90,7 @@ if (process.argv[2] === '--check') {
     throw new BenchPolicyError(message, true);
   }, {
     allowForegroundHover: scope.allowForegroundHover === true,
+    backgroundWitnessPID: scope.backgroundWitnessPID,
     reportIsolation: scope.isolationAudit ? event => {
       appendFileSync(scope.isolationAudit, JSON.stringify(event)+'\n', {mode:0o600});
     } : undefined

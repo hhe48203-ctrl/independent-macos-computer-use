@@ -309,7 +309,8 @@ def owned_stop(desktop, proc):
 
 
 def run_agent(pi, auth, catalog, targets, prompt, artifacts, turns, seconds, desktop, stop_file,
-              *, allow_foreground_hover=False, appkit_key_bundles=(), appkit_click_bundles=(), public_api_only=False):
+              *, allow_foreground_hover=False, background_witness_pid=None, appkit_key_bundles=(),
+              appkit_click_bundles=(), public_api_only=False):
     with tempfile.TemporaryDirectory(prefix="cdb-pi-") as temp:
         sandbox = Path(temp)
         agent = sandbox / "agent"
@@ -323,7 +324,8 @@ def run_agent(pi, auth, catalog, targets, prompt, artifacts, turns, seconds, des
         scope = artifacts / "scope.json"
         write_json(scope, {"targets": targets, "audit": str(artifacts / "gui-guard.jsonl"),
                            "isolationAudit": str(artifacts / "driver-isolation.jsonl"),
-                           "allowForegroundHover": allow_foreground_hover})
+                           "allowForegroundHover": allow_foreground_hover,
+                           **({"backgroundWitnessPID": background_witness_pid} if background_witness_pid is not None else {})})
         owned_bundles = {t["bundleId"] for t in targets}
         bundles = ",".join(sorted(owned_bundles))
         scoped_key_bundles = owned_bundles.intersection(appkit_key_bundles)
@@ -369,6 +371,11 @@ def run_agent(pi, auth, catalog, targets, prompt, artifacts, turns, seconds, des
                 "On web forms, select buttons by role and AXPress as well as title. If the control's frame has zero height "
                 "or is outside the window, use its AXScrollToVisible action when available and re-observe before clicking. "
                 "If a required action is refused, report it and complete independent supported edits."
+            )
+        if background_witness_pid is not None:
+            instructions += (
+                " BENCH_WITNESS_FOCUS_CHANGED means this trial has stopped accepting further input after a focus change. "
+                "Use read-only observations to report the current state and end the trial."
             )
         if len(targets) > 1:
             instructions += (
@@ -636,7 +643,9 @@ def run_trial(entry, condition, out, task, spec, bundle_ids, login, modules, *, 
                 max_turns = min(45, int(spec.get("max_turns", 45)))
                 row.update(run_agent(*login, targets, prompt, artifacts, max_turns, min(360, task.timeout_s),
                                      desktop, out / "STOP",
-                                     allow_foreground_hover=condition == "foreground", appkit_key_bundles=appkit_key_bundles,
+                                     allow_foreground_hover=condition == "foreground",
+                                     background_witness_pid=sentinel.proc.pid if public_api_only and condition == "background" else None,
+                                     appkit_key_bundles=appkit_key_bundles,
                                      appkit_click_bundles=appkit_click_bundles, public_api_only=public_api_only))
                 sentinel.toggle_armed()
                 armed = False

@@ -77,3 +77,38 @@ test('benchmark records native isolation errors and propagates the original erro
   await assert.rejects(request('click', {snapshotId:'observed',elementId:'e2'}), error => error === prevented);
   assert.deepEqual(observations, [{code:'BACKGROUND_WINDOW_REORDERED',method:'ax_action'}]);
 });
+
+test('public background witness loss stops later input and keeps observations available', async () => {
+  for (const nativeError of [false, true]) {
+    const calls = [];
+    const observations = [];
+    let foreground = 51;
+    const request = createScopedRequest(async method => {
+      calls.push(method);
+      if (method === 'status') return {inputFocus:{foregroundPID:foreground,accessibilityFocusedPID:foreground}};
+      if (method === 'snapshot') return {snapshotId:'observed'};
+      if (method === 'click' && nativeError) {
+        throw Object.assign(new Error('AX focus changed'), {code:'BACKGROUND_ACCESSIBILITY_FOCUS_CHANGED'});
+      }
+      return {ok:true};
+    }, [{pid:42}], undefined, {backgroundWitnessPID:51, reportIsolation:event=>observations.push(event)});
+
+    await request('snapshot', {pid:42,windowId:8});
+    const target = {snapshotId:'observed',elementId:'node'};
+    if (nativeError) {
+      await Promise.all([
+        assert.rejects(request('click', target), {code:'BACKGROUND_ACCESSIBILITY_FOCUS_CHANGED'}),
+        assert.rejects(request('ax_action', target), {code:'BENCH_WITNESS_FOCUS_CHANGED'}),
+      ]);
+    } else {
+      await request('click', target);
+      foreground = 42;
+      await assert.rejects(request('ax_action', target), {code:'BENCH_WITNESS_FOCUS_CHANGED'});
+    }
+    foreground = 51;
+    await assert.rejects(request('key', {pid:42,windowId:8,key:'enter'}), {code:'BENCH_WITNESS_FOCUS_CHANGED'});
+    assert.deepEqual(await request('snapshot', {pid:42,windowId:8}), {snapshotId:'observed'});
+    assert.deepEqual(calls, nativeError ? ['snapshot','status','click','snapshot'] : ['snapshot','status','click','status','snapshot']);
+    assert.deepEqual(observations.at(-1), {code:'BENCH_WITNESS_FOCUS_CHANGED',method:'key'});
+  }
+});
