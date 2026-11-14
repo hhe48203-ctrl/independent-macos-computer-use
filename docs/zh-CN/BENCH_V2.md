@@ -60,4 +60,6 @@ Pi 只获得两个 MCP 工具。benchmark 的 JS 限制阻止系统、文件和�
 
 试验期间分别观测实体 HID 事件计数和 IOKit 空闲时长。HID 计数变化或无法归因的空闲计时回落会中断本轮。只有核实可执行文件、MCP scope 和 Pi 父进程链都指向本轮 helper，并且 HID 计数保持不变时，才允许带着新的 WindowServer 活动记录继续。上游哨兵的测量和 A22 计分保持原规则。
 
+IOKit 读数缺失、有歧义或读取失败时，运行器会说明测量错误并停止。已中断的轮次会保存为未计分尝试。
+
 这是使用锁定任务集的本地 Pi 实验组。解读成绩时请注明显示器、任务、重复数和工具策略。上游横评使用不同的 agent、桌面和运行计划。[上游方法](https://github.com/trycua/cua/blob/22a67eacd15dc71811e330ed88951dd615bb395d/libs/cua-driver-bench/METHOD.md)

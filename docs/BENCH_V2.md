@@ -60,4 +60,6 @@ Pi gets only the two MCP tools. A benchmark JS gate blocks OS, file and network 
 
 During a trial the idle guard checks HID event counters separately from IOKit idle time. A counter change or unexplained idle reset interrupts the run. It can continue after a fresh WindowServer tickle only when the executable, MCP scope and Pi ancestry identify the trial's own helper and the HID counters stayed unchanged. This affects runner interruption handling only. The upstream sentinel and A22 retain their original measurements and scoring.
 
+A missing, ambiguous or failed IOKit reading stops the runner with an explicit measurement error. An interrupted trial is saved without a score.
+
 This is a local Pi arm using the pinned task set. Report the display, selected tasks, repetitions and backend policy alongside results. The upstream comparison uses different agents, desktop setup and trial schedules. [Upstream method](https://github.com/trycua/cua/blob/22a67eacd15dc71811e330ed88951dd615bb395d/libs/cua-driver-bench/METHOD.md)

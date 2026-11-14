@@ -308,7 +308,7 @@ def owned_stop(desktop, proc):
     proc.wait(timeout=5)
 
 
-def run_agent(pi, auth, catalog, targets, prompt, artifacts, turns, seconds, desktop, idle_seconds, stop_file,
+def run_agent(pi, auth, catalog, targets, prompt, artifacts, turns, seconds, desktop, stop_file,
               *, allow_foreground_hover=False, appkit_key_bundles=(), appkit_click_bundles=(), public_api_only=False):
     with tempfile.TemporaryDirectory(prefix="cdb-pi-") as temp:
         sandbox = Path(temp)
@@ -509,7 +509,7 @@ def run_agent(pi, auth, catalog, targets, prompt, artifacts, turns, seconds, des
         interrupted = None
         read_counters = activity.hid_counter_reader()
         previous_counters = read_counters()
-        previous_idle = idle_seconds()
+        previous_idle = activity.hid_idle_seconds()
         with (artifacts / "pi.jsonl").open("wb") as log, (artifacts / "pi.stderr").open("wb") as stderr:
             proc = sp.Popen(command, cwd=temp, env=env, stdout=log, stderr=stderr,
                             stdin=sp.DEVNULL, start_new_session=True)
@@ -522,7 +522,7 @@ def run_agent(pi, auth, catalog, targets, prompt, artifacts, turns, seconds, des
                     try:
                         proc.wait(timeout=min(1, remaining))
                     except sp.TimeoutExpired:
-                        now_idle = idle_seconds()
+                        now_idle = activity.hid_idle_seconds()
                         now_counters = read_counters()
                         decision, changed, tickle_pid = activity.activity_decision(
                             previous_idle, now_idle, previous_counters, now_counters,
@@ -635,7 +635,7 @@ def run_trial(entry, condition, out, task, spec, bundle_ids, login, modules, *, 
                 (artifacts / "prompt.txt").write_text(prompt, "utf-8")
                 max_turns = min(45, int(spec.get("max_turns", 45)))
                 row.update(run_agent(*login, targets, prompt, artifacts, max_turns, min(360, task.timeout_s),
-                                     desktop, pilot.hid_idle_seconds, out / "STOP",
+                                     desktop, out / "STOP",
                                      allow_foreground_hover=condition == "foreground", appkit_key_bundles=appkit_key_bundles,
                                      appkit_click_bundles=appkit_click_bundles, public_api_only=public_api_only))
                 sentinel.toggle_armed()
@@ -861,7 +861,12 @@ def main():
         for entry in plan:
             if entry["order_index"] in done:
                 continue
-            if pilot.wait_for_idle(args.idle_seconds, 60, out / "STOP") is None:
+            try:
+                idle = activity.wait_for_idle(args.idle_seconds, 60, out / "STOP")
+            except RuntimeError as error:
+                report["stop_reason"] = str(error)
+                break
+            if idle is None:
                 report["stop_reason"] = "Desktop was not idle or STOP file was created"
                 break
             row = run_trial(entry, entry["condition"], out, tasks[entry["task"]],
