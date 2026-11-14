@@ -32,6 +32,7 @@
     "test:reconnect": "node scripts/repl-reconnect-test.mjs",
     "test:scroll": "node scripts/scroll-calibration-test.mjs --independent",
     "check:docs": "node scripts/check-docs.mjs",
+    "docs:visuals": "node scripts/render-readme-visuals.mjs",
     "docs:bilingual": "node scripts/build-bilingual.mjs",
     "test:focus": "node scripts/focus-cause-test.mjs --without-appkit --regular",
     "test:document:cooperative": "CU_TEST_SCOPED_FOCUS=0 node scripts/repl-document-test.mjs",

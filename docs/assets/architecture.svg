@@ -1,0 +1,127 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1000" height="528" viewBox="0 0 1000 528" role="img">
+  <title>From an MCP client to the Mac desktop</title>
+  <desc>Public path: an MCP client calls js or js_reset over stdio. Both tools run in one Node.js process, in a persistent REPL that keeps cua, app objects, and bindings until js_reset. A Swift child process speaks NDJSON, not MCP, and uses macOS Accessibility (AXUIElement and AXPress), ScreenCaptureKit screenshots, Vision OCR, and background-first input. Foreground input is an explicit opt-in.</desc>
+  <rect x="0.5" y="0.5" width="999" height="527" rx="18" fill="#f3f6f7" stroke="#d0d8dc"/>
+  <g font-family="Inter, ui-sans-serif, system-ui, -apple-system, Segoe UI, Helvetica, Arial, sans-serif">
+    <text x="28" y="40" fill="#1a2b30" font-size="20" font-weight="650">From an MCP client to the Mac desktop</text>
+    <text x="28" y="64" fill="#5d7178" font-size="14">Only js and js_reset are public tools. Protocol traffic stays on stdout.</text>
+
+    <rect x="236" y="88" width="512" height="176" rx="16" fill="#e7f4f2"/>
+    <text x="252" y="110" fill="#0f5c56" font-size="12" font-weight="700">Node.js process</text>
+
+    <g fill="#ffffff" stroke="#d3dde1">
+      <rect x="24" y="96" width="176" height="160" rx="12"/>
+      <rect x="248" y="122" width="188" height="128" rx="12"/>
+      <rect x="472" y="122" width="260" height="128" rx="12"/>
+      <rect x="784" y="96" width="192" height="160" rx="12"/>
+    </g>
+    <g fill="#0f766e">
+      <rect x="36" y="112" width="3" height="128" rx="1.5"/>
+      <rect x="260" y="136" width="3" height="100" rx="1.5"/>
+      <rect x="484" y="136" width="3" height="100" rx="1.5"/>
+      <rect x="796" y="112" width="3" height="128" rx="1.5"/>
+    </g>
+
+    <g fill="#0f766e">
+      <circle cx="52" cy="128" r="11"/>
+      <circle cx="276" cy="148" r="11"/>
+      <circle cx="500" cy="148" r="11"/>
+      <circle cx="812" cy="128" r="11"/>
+    </g>
+    <g fill="#ffffff" font-size="12" font-weight="700" text-anchor="middle">
+      <text x="52" y="132">1</text>
+      <text x="276" y="152">2</text>
+      <text x="500" y="152">3</text>
+      <text x="812" y="132">4</text>
+    </g>
+
+    <g fill="#1a2b30" font-size="16" font-weight="650">
+      <text x="70" y="133">MCP client</text>
+      <text x="294" y="153">Two tools</text>
+      <text x="518" y="153">Persistent REPL</text>
+      <text x="830" y="133">Swift helper</text>
+    </g>
+    <g fill="#5d7178" font-size="13">
+      <text x="40" y="174">stdio JSON-RPC</text>
+      <text x="40" y="198">calls js or js_reset</text>
+
+      <text x="488" y="182">cua and app objects</text>
+      <text x="488" y="204">bindings stay across calls</text>
+      <text x="488" y="226">js_reset clears them</text>
+
+      <text x="812" y="168">child process, NDJSON</text>
+      <text x="812" y="190">main actor</text>
+      <text x="812" y="222">does not speak MCP</text>
+    </g>
+
+    <g font-size="13">
+      <rect x="264" y="170" width="156" height="28" rx="8" fill="#e5f6f4" stroke="#b7e0db"/>
+      <text x="276" y="188" fill="#0f5c56" font-weight="700">js</text>
+      <text x="396" y="188" fill="#5d7178" text-anchor="end">{code}</text>
+      <rect x="264" y="206" width="156" height="28" rx="8" fill="#fbf3e8" stroke="#ead7bf"/>
+      <text x="276" y="224" fill="#8a4e16" font-weight="700">js_reset</text>
+      <text x="396" y="224" fill="#8a4e16" text-anchor="end">{}</text>
+    </g>
+
+    <g fill="none" stroke="#0f766e" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M208 176 H232"/>
+      <path d="M226 170 L234 176 L226 182"/>
+      <path d="M444 186 H464"/>
+      <path d="M458 180 L466 186 L458 192"/>
+      <path d="M740 176 H776"/>
+      <path d="M770 170 L778 176 L770 182"/>
+    </g>
+    <text x="220" y="164" fill="#0f766e" font-size="11" font-weight="650" text-anchor="middle">stdio</text>
+
+    <rect x="24" y="284" width="952" height="216" rx="14" fill="#ffffff" stroke="#d3dde1"/>
+    <text x="44" y="318" fill="#1a2b30" font-size="16" font-weight="650">macOS</text>
+    <text x="112" y="318" fill="#5d7178" font-size="13">Normal TCC grants in the signed-in user's GUI session. Background is the default.</text>
+
+    <g fill="#5d7178" stroke="#c5d2d6" stroke-width="1.25">
+      <g transform="translate(48 346)">
+        <line x1="2" y1="4" x2="18" y2="4"/>
+        <line x1="2" y1="10" x2="14" y2="10"/>
+        <line x1="2" y1="16" x2="18" y2="16"/>
+      </g>
+      <g transform="translate(238 344)">
+        <circle cx="10" cy="10" r="6" fill="none"/>
+        <circle cx="10" cy="10" r="2" fill="#0f766e" stroke="none"/>
+      </g>
+      <g transform="translate(428 344)" stroke-linejoin="round" stroke-linecap="round">
+        <rect x="1.5" y="3" width="17" height="14" rx="2" fill="none"/>
+        <circle cx="6.5" cy="7.5" r="1.5" fill="#5d7178" stroke="none"/>
+        <path d="M3.2 15.2 L7.6 10.4 L10.6 13.2 L13.4 10 L16.8 15.2" fill="none"/>
+      </g>
+      <g transform="translate(618 345)" stroke-linecap="round">
+        <path d="M2 4 H7 M4.5 4 V15 M2 15 H7" fill="none"/>
+        <path d="M11 6 H18 M11 10 H18 M11 14 H15" fill="none"/>
+      </g>
+      <g transform="translate(808 344)">
+        <rect x="2" y="3" width="16" height="14" rx="2" fill="none"/>
+        <path d="M6 10 H14" fill="none" stroke-linecap="round"/>
+        <path d="M11 7 L14 10 L11 13" fill="none"/>
+      </g>
+    </g>
+
+    <g fill="#1a2b30" font-size="14" font-weight="650">
+      <text x="74" y="360">AX tree</text>
+      <text x="264" y="360">AXPress</text>
+      <text x="454" y="360">Screenshots</text>
+      <text x="644" y="360">OCR</text>
+      <text x="834" y="360">Background-first</text>
+    </g>
+    <g fill="#5d7178" font-size="13">
+      <text x="48" y="390">AXUIElement snapshot</text>
+      <text x="48" y="410">text or a diff</text>
+      <text x="238" y="390">plain click default</text>
+      <text x="238" y="410">inside the target window</text>
+      <text x="428" y="390">ScreenCaptureKit</text>
+      <text x="428" y="410">MCP image blocks</text>
+      <text x="618" y="390">Vision, same capture</text>
+      <text x="618" y="410">logical-point boxes</text>
+      <text x="808" y="390">does not activate</text>
+      <text x="808" y="410">does not move the pointer</text>
+    </g>
+    <text x="44" y="470" fill="#3e555c" font-size="13">Foreground input is an explicit opt-in. The overlay cursor does not move the hardware pointer.</text>
+  </g>
+</svg>

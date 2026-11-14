@@ -4,6 +4,14 @@
 
 Script macOS apps from a persistent JavaScript session — through just two MCP tools.
 
+![Real recording: the default arrow cursor travels to Freight invoice SVL-119, and background AXPress opens that message and its attachment.](docs/assets/demo.gif)
+
+One real-time run of the pinned Ledger Lantern Mail fixture. The default arrow cursor travels to each target. `js` reads the Accessibility tree, then background `AXPress` opens Freight invoice SVL-119 and its SVL-119.txt attachment. Record it again with `node scripts/record-readme-demo.mjs` after `npm run build` and `npm run bench:v2 -- --prepare`.
+
+![Public path from an MCP client through the js and js_reset tools, a persistent Node.js REPL, and the Swift helper, to macOS Accessibility, screenshots, OCR, and background-first input.](docs/assets/architecture.svg)
+
+Public path from the MCP client through `js` and `js_reset` into one persistent REPL and the Swift helper. Internal pieces are named in the [architecture notes](docs/ARCHITECTURE.md).
+
 Variables, functions, and app handles persist across tool calls. Observe a window in one call, then continue working with the same objects in the next. A native Swift helper provides Accessibility trees, screenshots, OCR, and background-first interaction.
 
 Inspired by Codex-style JavaScript computer-use sessions. Independent implementation; not an official Codex integration. Runs as a trusted local Node.js process, not a security sandbox.
@@ -79,6 +87,10 @@ That setup leaves synthetic AppKit activation off, including when the legacy `--
 
 ## Persistent session
 
+![API illustration: one js call binds state and app, a later js call reuses app, and js_reset clears those bindings. Not a screen recording.](docs/assets/session-illustration.gif)
+
+API illustration of the calls below, not a screen recording. `pid`, `windowId`, and index `7` are placeholders, and the figure shows no app output.
+
 The first `js` call reads the live inventory and binds one window. `state.windows` entries include `pid`, `windowId`, `title`, `app`, `bundleId`, `path`, `frame`, and `onScreen`. `cua.listWindows()` returns that window array by itself. Copy one real pair. The constants below are placeholders, not a window on your Mac.
 
 ```js
@@ -104,7 +116,7 @@ Element indexes refer to the latest observation on that app object. They are not
 
 Background operation does not activate the target, move the system pointer, or fall back to the foreground by default. The window may be fully covered. It still has to be on the current unlocked desktop and not minimized. Lock screen, other Spaces, and hidden desktops are outside the supported guarantees. Default actions prefer `AXPress` and verified Accessibility text. Real mouse and keyboard events are optional and depend on undocumented system behavior, including `CGEventSetWindowLocation`. An app may ignore those events or reorder its own windows. An isolation error stops the operation so the caller can observe again.
 
-`CU_ALLOWED_BUNDLE_IDS` limits which apps can be targeted. An empty value rejects every target and disables display capture. `CU_AGENT_CURSOR=0` hides the overlay. `CU_AGENT_CURSOR_STYLE` is `ring` (default) or `arrow`. `CU_AGENT_CURSOR_VISIBILITY` is read when the helper starts: `target` (default) hides or clips the glyph when the anchor is covered, and `always` keeps the earlier progress overlay. Motion and background input continue while the glyph is hidden. Ordinary screenshots omit the cursor; `cua.getScreenshot({region, includeAgentCursor:true})` can include it for a visual check. See [cursor visibility](docs/CURSOR_OCCLUSION.md).
+`CU_ALLOWED_BUNDLE_IDS` limits which apps can be targeted. An empty value rejects every target and disables display capture. `CU_AGENT_CURSOR=0` hides the overlay. `CU_AGENT_CURSOR_STYLE` is `arrow` (default, a standard macOS pointer) or `ring`. `CU_AGENT_CURSOR_VISIBILITY` is read when the helper starts: `target` (default) hides or clips the glyph when the anchor is covered, and `always` keeps the earlier progress overlay. Motion and background input continue while the glyph is hidden. Ordinary screenshots omit the cursor; `cua.getScreenshot({region, includeAgentCursor:true})` can include it for a visual check. See [cursor visibility](docs/CURSOR_OCCLUSION.md).
 
 The experimental app-local AppKit focus route is off unless `CU_EXPERIMENTAL_APPKIT_FOCUS=1` or the pi flag above is set. It was verified on the recorded macOS 26.6.2 arm64 machine and is not a promise about arbitrary apps. There is no browser API and no rich-text paste; unsupported options fail explicitly. Plain-text paste uses Accessibility insertion and does not use the clipboard. Only one physical Retina display was measured. Multi-display coordinate-formula tests are not multi-display acceptance. TCC bypass and credential extraction are not part of this project.
 

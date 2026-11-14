@@ -4,6 +4,14 @@
 
 用持久的 JavaScript 会话编写 macOS 应用脚本——只需两个 MCP 工具。
 
+![真实录制：默认箭头光标移到 Freight invoice SVL-119，后台 AXPress 打开该邮件及其附件。](../assets/demo.gif)
+
+这是钉选的 Ledger Lantern Mail 夹具的一次实时运行。默认箭头光标会移到每个目标。`js` 读取辅助功能树，再用后台 `AXPress` 打开 Freight invoice SVL-119 和附件 SVL-119.txt。重新录制：`node scripts/record-readme-demo.mjs`（需先 `npm run build` 和 `npm run bench:v2 -- --prepare`）。
+
+![公开路径：MCP 客户端经 js 与 js_reset 进入持久的 Node.js REPL，再由 Swift helper 使用 macOS Accessibility、截图、OCR 和以后台为先的输入。](../assets/architecture.svg)
+
+公开路径：MCP 客户端经 `js` 和 `js_reset` 进入同一个持久 REPL，再由 Swift helper 接触 macOS。内部结构见[架构说明](../ARCHITECTURE.md)（仅英文）。
+
 变量、函数和应用句柄在多次工具调用之间保留。一次调用观察窗口，下一次调用继续使用同一批对象。原生 Swift helper 提供 Accessibility 树、截图、OCR，以及以后台为先的交互。
 
 灵感来自 Codex 风格的 JavaScript computer-use 会话。这是独立实现，不是官方 Codex 集成。它作为可信的本地 Node.js 进程运行，不是安全沙箱。
@@ -79,6 +87,10 @@ pi --approve --extension builtin:mcp
 
 ## 持久会话
 
+![API 示意：一次 js 调用绑定 state 和 app，之后的 js 调用继续使用 app，js_reset 清除这些绑定。不是屏幕录制。](../assets/session-illustration.gif)
+
+下面这段调用的 API 示意，不是屏幕录制。`pid`、`windowId` 和索引 `7` 都是占位符，图中没有应用输出。
+
 第一次 `js` 调用读取当前清单并绑定一个窗口。`state.windows` 的每一项包含 `pid`、`windowId`、`title`、`app`、`bundleId`、`path`、`frame` 和 `onScreen`。`cua.listWindows()` 只返回这个窗口数组。请复制一对真实的值。下面的常量是占位符，不是你这台 Mac 上的窗口。
 
 ```js
@@ -104,7 +116,7 @@ await app.click(EXAMPLE_ELEMENT_INDEX);
 
 后台操作默认不激活目标、不移动系统指针，也不回退到前台。窗口可以完全被挡住，但仍须在当前已解锁的桌面且未最小化。锁屏、其他 Space 和隐藏桌面不在支持保证内。默认动作优先使用 `AXPress` 和经过读回校验的 Accessibility 文本。真实鼠标和键盘事件是可选项，依赖未公开的系统行为，包括 `CGEventSetWindowLocation`。应用可能忽略这些事件，或自行重排窗口。隔离错误会停止操作，以便调用方重新观察。
 
-`CU_ALLOWED_BUNDLE_IDS` 限制可操作的应用。空值拒绝所有目标，并禁用显示器截图。`CU_AGENT_CURSOR=0` 隐藏覆盖层。`CU_AGENT_CURSOR_STYLE` 为 `ring`（默认）或 `arrow`。`CU_AGENT_CURSOR_VISIBILITY` 在 helper 启动时读取：`target`（默认）在锚点被挡住时隐藏或裁剪图形，`always` 保留较早的进度覆盖层。图形隐藏时，移动和后台输入继续。普通截图不含光标；`cua.getScreenshot({region, includeAgentCursor:true})` 可以把它包含进来做视觉检查。见[光标可见性](CURSOR_OCCLUSION.md)。
+`CU_ALLOWED_BUNDLE_IDS` 限制可操作的应用。空值拒绝所有目标，并禁用显示器截图。`CU_AGENT_CURSOR=0` 隐藏覆盖层。`CU_AGENT_CURSOR_STYLE` 为 `arrow`（默认，标准 macOS 指针）或 `ring`。`CU_AGENT_CURSOR_VISIBILITY` 在 helper 启动时读取：`target`（默认）在锚点被挡住时隐藏或裁剪图形，`always` 保留较早的进度覆盖层。图形隐藏时，移动和后台输入继续。普通截图不含光标；`cua.getScreenshot({region, includeAgentCursor:true})` 可以把它包含进来做视觉检查。见[光标可见性](CURSOR_OCCLUSION.md)。
 
 除非设置 `CU_EXPERIMENTAL_APPKIT_FOCUS=1` 或上面的 pi 参数，实验性的应用内 AppKit 焦点路径保持关闭。它只在已记录的 macOS 26.6.2 arm64 机器上验证过，不能承诺任意应用。没有浏览器 API，也没有富文本粘贴；不支持的选项会明确失败。纯文本粘贴走 Accessibility 插入，不使用剪贴板。只测量过一块物理 Retina 显示器。多显示器坐标公式测试不是多显示器验收。TCC 绕过和凭证提取不属于本项目。
 
