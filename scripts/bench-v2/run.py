@@ -408,6 +408,17 @@ def run_agent(pi, auth, catalog, targets, prompt, artifacts, turns, seconds, des
                 "and break if a field is missing or unverified. Use the observed enabled AXButton with AXPress to submit. "
                 "Verify the saved record and audit confirmation in a fresh AX tree."
             )
+        if public_api_only and "com.trycua.cdbbench.rillwatch-cases" in owned_bundles:
+            instructions += (
+                " In Rillwatch Cases, review the needed report details and verify each candidate against the manual, "
+                "browser and log. Keep each report's own reproduction URL and matching log reference together. "
+                "Once a case is verified, use one GUI call for its two observed selects, verifying each value after "
+                "AX focus and the scoped prefix key. Batch that case's evidence fields in a separate call. "
+                "Find each field by its observed title in a fresh AX tree, reveal it when needed, click it, "
+                "verify focus, replace its observed value, and verify the new value before the next field. "
+                "Save using the observed AXButton and reopen that same case to verify status, link and evidence. "
+                "Keep enough calls to save and read back every confirmed case. Leave unsupported cases unchanged."
+            )
         if "com.trycua.cdbbench.daymark-calendar" in owned_bundles:
             instructions += (
                 " In Daymark Calendar, click the observed event button with {strategy:'ax'} and verify its ID in the editor. "
