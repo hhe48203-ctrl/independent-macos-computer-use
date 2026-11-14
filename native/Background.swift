@@ -716,6 +716,39 @@ struct HeldBackgroundMouse {
         throw BridgeError("TABLE_SELECTION_UNVERIFIED", "The table did not report the requested selection or a dialog. Observe the window before retrying.")
     }
 
+    func backgroundTabGroup(_ tab: AXUIElement) -> AXUIElement? {
+        guard attr(tab, kAXRoleAttribute) as? String == kAXRadioButtonRole,
+              (attr(tab, kAXEnabledAttribute) as? Bool) == true,
+              let value = attr(tab, kAXParentAttribute), CFGetTypeID(value) == AXUIElementGetTypeID() else { return nil }
+        let group = value as! AXUIElement
+        var writable = DarwinBoolean(false)
+        guard attr(group, kAXRoleAttribute) as? String == kAXTabGroupRole,
+              children(group, kAXTabsAttribute).contains(where: { CFEqual($0, tab) }),
+              children(group).contains(where: { CFEqual($0, tab) }),
+              AXUIElementIsAttributeSettable(group, kAXSelectedChildrenAttribute as CFString, &writable) == .success,
+              writable.boolValue else { return nil }
+        return group
+    }
+
+    func selectBackgroundTab(_ tab: AXUIElement, in group: AXUIElement,
+                             observation: BackgroundFocusObservation) async throws -> Object {
+        let selected = children(group, kAXSelectedChildrenAttribute)
+        guard selected.count == 1, children(group, kAXTabsAttribute).contains(where: { CFEqual($0, selected[0]) }) else {
+            throw BridgeError("BACKGROUND_TAB_SELECTION_UNSUPPORTED", "The tab group does not report a single selected child. No selection was sent.")
+        }
+        let result: Object = ["ok": true, "mode": "background", "method": "AXSelectedChildren", "verified": true]
+        if CFEqual(selected[0], tab) { return result }
+        try axCheck(AXUIElementSetAttributeValue(group, kAXSelectedChildrenAttribute as CFString, [tab] as CFArray),
+                    "Background tab selection")
+        for _ in 0..<15 {
+            try await Task.sleep(nanoseconds: 20_000_000)
+            try observation.validate()
+            let current = children(group, kAXSelectedChildrenAttribute)
+            if current.count == 1, CFEqual(current[0], tab) { return result }
+        }
+        throw BridgeError("TAB_SELECTION_UNVERIFIED", "The tab group did not report the requested selection. Observe the window before retrying.")
+    }
+
     func backgroundWindowOrder() -> NormalWindowOrder {
         let rows = CGWindowListCopyWindowInfo([.optionOnScreenOnly,.excludeDesktopElements],kCGNullWindowID) as? [Object] ?? []
         return rows.compactMap { row in
@@ -834,6 +867,21 @@ struct HeldBackgroundMouse {
                 }
                 result = try await selectBackgroundTableRow(current, window: try axWindow(pid, frame), observation: inputObservation)
                 break
+            }
+            if semantic, p["elementId"] != nil {
+                let tab = try ref(p).element
+                if let group = backgroundTabGroup(tab) {
+                    try await agentCursor.move(pid:pid,windowID:wid,frame:frame,point:point,activity:"click")
+                    try inputObservation.validate()
+                    try assertBackgroundIsolation(pid,wid,orderBefore,foregroundBefore)
+                    let liveTab = try ref(p).element
+                    guard CFEqual(liveTab, tab), let liveGroup = backgroundTabGroup(liveTab), CFEqual(liveGroup, group),
+                          belongsToWindow(liveGroup, try axWindow(pid, frame)) else {
+                        throw BridgeError("STALE_ELEMENT", "The tab group changed during cursor approach. Observe it before selecting a tab.")
+                    }
+                    result = try await selectBackgroundTab(liveTab, in: liveGroup, observation: inputObservation)
+                    break
+                }
             }
             guard strategy != "ax" else {throw BridgeError("BACKGROUND_CLICK_UNSUPPORTED","No semantic click equivalent at this target; no event was sent")}
             guard !SystemInputFocus.publicAPIOnly else {
