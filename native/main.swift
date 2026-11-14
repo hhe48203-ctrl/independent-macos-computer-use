@@ -59,6 +59,7 @@ struct Snapshot {
     let allowed: Set<String>?
     let clipboardEnabled: Bool
     let foregroundEnabled: Bool
+    let backgroundWitnessPID: pid_t?
     init() {
         let env = ProcessInfo.processInfo.environment
         if let raw = env["CU_ALLOWED_BUNDLE_IDS"] {
@@ -66,6 +67,7 @@ struct Snapshot {
         } else { allowed = nil }
         clipboardEnabled = env["CU_ENABLE_CLIPBOARD"] == "1"
         foregroundEnabled = env["CU_ENABLE_FOREGROUND"] == "1"
+        backgroundWitnessPID = env["CU_PUBLIC_API_ONLY"] == "1" ? env["CU_BACKGROUND_WITNESS_PID"].flatMap(pid_t.init) : nil
     }
     func requireAX() throws {
         guard AXIsProcessTrusted() else { throw BridgeError("ACCESSIBILITY_DENIED", "Grant Accessibility to Local Computer Use or the launching terminal/agent in System Settings > Privacy & Security, then restart the MCP client.") }
@@ -356,9 +358,9 @@ struct Snapshot {
         guard let data = rep.representation(using: .png, properties: [:]) else { throw BridgeError("PNG_FAILED", "PNG encoding failed") }
         return ["data": data.base64EncodedString(), "mimeType": "image/png", "width": image.width, "height": image.height, "frame": rectJSON(frame), "scaleX": Double(image.width)/frame.width, "scaleY": Double(image.height)/frame.height, "kind": kind, "coordinateSpace": "image pixels; divide by scaleX/scaleY for window-relative input points"]
     }
-    func ocr(_ p: Object) async throws -> Object {
+    func ocr(_ p: Object, languageCorrection: Bool = true) async throws -> Object {
         let (image, frame, _) = try await capture(p)
-        let request = VNRecognizeTextRequest(); request.recognitionLevel = .accurate; request.usesLanguageCorrection = true
+        let request = VNRecognizeTextRequest(); request.recognitionLevel = .accurate; request.usesLanguageCorrection = languageCorrection
         try VNImageRequestHandler(cgImage: image).perform([request])
         let lines: [Object] = (request.results ?? []).compactMap { observation in
             guard let text = observation.topCandidates(1).first else { return nil }
@@ -474,6 +476,9 @@ struct Snapshot {
         if method == "type_text" {
             let strategy=p["strategy"] as? String ?? "auto"
             guard ["auto","ax","event"].contains(strategy),backgroundMode || strategy == "auto" else {throw BridgeError("INVALID_ARGUMENT","Text strategy must be auto, ax or event in background mode; foreground accepts auto only")}
+            if p["visualCheck"] != nil, (!backgroundMode || strategy != "event" || p["snapshotId"] != nil || p["elementId"] != nil || p["replaceAll"] != nil) {
+                throw BridgeError("INVALID_ARGUMENT", "visualCheck requires background event text without an AX reference or replaceAll")
+            }
         }
         if method == "key" {
             let strategy = p["strategy"] as? String ?? "auto"
@@ -507,7 +512,9 @@ struct Snapshot {
                 let id = (screen.deviceDescription[NSDeviceDescriptionKey("NSScreenNumber")] as? NSNumber)?.uint32Value ?? 0
                 return ["displayId": id, "name": screen.localizedName, "frame": rectJSON(CGDisplayBounds(id)), "backingScale": screen.backingScaleFactor]
             }
-            return ["platform": "macOS", "osVersion": ProcessInfo.processInfo.operatingSystemVersionString, "bridgeVersion": bridgeVersion, "permissions": ["accessibility": AXIsProcessTrusted(), "screenRecording": CGPreflightScreenCaptureAccess()], "displays": displays, "allowedBundleIds": allowed.map { Array($0).sorted() } as Any? ?? NSNull(), "clipboardEnabled": clipboardEnabled, "foregroundEnabled":foregroundEnabled, "inputFocus":SystemInputFocus.observe().json, "backend": "independent-macos-apis", "background": ["default":true,"experimentalAppKitFocus":ProcessInfo.processInfo.environment["CU_EXPERIMENTAL_APPKIT_FOCUS"] == "1","appKitFocusPolicy":ProcessInfo.processInfo.environment["CU_EXPERIMENTAL_APPKIT_FOCUS"] == "1" ? "experimental activation; may activate target text input context":"no synthetic activation; prefer semantic shortcuts", "AXRaiseRequestsInBackground":false,"windowLocationSPIAvailable":windowLocationSetter != nil,"click":"AXPress preferred; optional window-scoped postToPid","pointer":"window-scoped postToPid with source-filtered routing-flag removal and packet acknowledgements; apps can still reorder","text":"verified AX by default; strategy:event verifies process-directed Unicode keyboard events","keys":"CMD+A verified AX; others process-directed, observe result","foregroundFallback":false], "pid": ProcessInfo.processInfo.processIdentifier]
+            let publicOnly = SystemInputFocus.publicAPIOnly
+            let experimentalFocus = !publicOnly && ProcessInfo.processInfo.environment["CU_EXPERIMENTAL_APPKIT_FOCUS"] == "1"
+            return ["platform": "macOS", "osVersion": ProcessInfo.processInfo.operatingSystemVersionString, "bridgeVersion": bridgeVersion, "permissions": ["accessibility": AXIsProcessTrusted(), "screenRecording": CGPreflightScreenCaptureAccess()], "displays": displays, "allowedBundleIds": allowed.map { Array($0).sorted() } as Any? ?? NSNull(), "clipboardEnabled": clipboardEnabled, "foregroundEnabled":foregroundEnabled, "inputFocus":SystemInputFocus.observe().json, "backend": "independent-macos-apis", "background": ["default":true,"publicAPIOnly":publicOnly,"experimentalAppKitFocus":experimentalFocus,"appKitFocusPolicy":experimentalFocus ? "experimental activation; may activate target text input context":"no synthetic activation; prefer semantic shortcuts", "AXRaiseRequestsInBackground":false,"windowLocationSPIAvailable":!publicOnly && windowLocationSetter != nil,"click":publicOnly ? "semantic AX click only" : "AXPress preferred; optional window-scoped postToPid","pointer":publicOnly ? "raw background pointer disabled" : "window-scoped postToPid with source-filtered routing-flag removal and packet acknowledgements; apps can still reorder","text":"verified AX by default; strategy:event verifies process-directed Unicode keyboard events","keys":"CMD+A verified AX; others process-directed, observe result","foregroundFallback":false], "pid": ProcessInfo.processInfo.processIdentifier]
         case "request_permissions":
             if p["accessibility"] as? Bool == true { _ = AXIsProcessTrustedWithOptions([kAXTrustedCheckOptionPrompt.takeUnretainedValue() as String: true] as CFDictionary) }
             if p["screenRecording"] as? Bool == true { _ = CGRequestScreenCaptureAccess() }
@@ -538,7 +545,7 @@ struct Snapshot {
             let semanticOrder = backgroundMode ? backgroundWindowOrder() : []
             let semanticFront = NSWorkspace.shared.frontmostApplication?.processIdentifier
             let r = try ref(p)
-            let inputObservation=backgroundMode ? try BackgroundFocusObservation(targetPID:r.pid):nil
+            let inputObservation=backgroundMode ? try BackgroundFocusObservation(targetPID:r.pid, expectedForegroundPID:backgroundWitnessPID):nil
             defer {inputObservation?.stop()}
             guard r.scope == "window", let value = attr(r.element, kAXValueAttribute) as? String else { throw BridgeError("NOT_TEXT", "Element has no editable text value") }
             let text = try string(p, "text")
@@ -580,13 +587,26 @@ struct Snapshot {
             let semanticOrder = backgroundMode ? backgroundWindowOrder() : []
             let semanticFront = NSWorkspace.shared.frontmostApplication?.processIdentifier
             let r = try ref(p); let action = try string(p, "action")
-            let inputObservation=backgroundMode ? try BackgroundFocusObservation(targetPID:r.pid):nil
+            let inputObservation=backgroundMode ? try BackgroundFocusObservation(targetPID:r.pid, expectedForegroundPID:backgroundWitnessPID):nil
             var valueWrite: (before: String, requested: String)?
             defer {inputObservation?.stop()}
             if r.scope == "menu", backgroundMode { throw BridgeError("BACKGROUND_MENU_UNSUPPORTED", "Global application menus can interfere with the foreground session. Use explicit foreground mode only when authorized.") }
+            if action == "scrollToVisible" {
+                var available: CFArray?
+                try axCheck(AXUIElementCopyActionNames(r.element, &available), "Read supported actions")
+                guard (available as? [String])?.contains("AXScrollToVisible") == true else {
+                    throw BridgeError("AX_ACTION_UNSUPPORTED", "This element does not expose AXScrollToVisible.")
+                }
+            }
             if backgroundMode, action == "press" || action == "showMenu" { try checkBackgroundPopup(r.element) }
+            if backgroundMode, SystemInputFocus.publicAPIOnly, action == "showMenu" {
+                throw BridgeError("BACKGROUND_MENU_UNSUPPORTED", "Public-API-only mode cannot isolate native menu tracking from the user's session. No AXShowMenu action was sent.")
+            }
+            if backgroundMode, action == "press" || action == "showMenu" || action == "confirm" {
+                try checkGnuCashDialogAction(r.element, pid: r.pid)
+            }
             if r.scope == "menu" { _ = try await focus(["pid": Int(r.pid), "windowId": Int(r.windowID)]) }
-            if backgroundMode,let at=axFrame(r.element) {
+            if backgroundMode, action != "scrollToVisible", let at=axFrame(r.element) {
                 let (_,_,frame)=try target(["pid":Int(r.pid),"windowId":Int(r.windowID)])
                 try await agentCursor.move(pid:r.pid,windowID:r.windowID,frame:frame,point:CGPoint(x:at.midX,y:at.midY),activity:action)
             }
@@ -607,7 +627,7 @@ struct Snapshot {
                 if !backgroundMode { _ = try await focus(["pid": Int(r.pid), "windowId": Int(r.windowID)]) }
                 try axCheck(AXUIElementSetAttributeValue(r.element, kAXFocusedAttribute as CFString, kCFBooleanTrue), "Focus element")
             } else {
-                let actions = ["press": kAXPressAction, "showMenu": kAXShowMenuAction, "increment": kAXIncrementAction, "decrement": kAXDecrementAction, "confirm": kAXConfirmAction]
+                let actions = ["press": kAXPressAction, "showMenu": kAXShowMenuAction, "increment": kAXIncrementAction, "decrement": kAXDecrementAction, "confirm": kAXConfirmAction, "scrollToVisible": "AXScrollToVisible"]
                 guard let name = actions[action] else { throw BridgeError("INVALID_ARGUMENT", "Unsupported AX action") }
                 try axCheck(AXUIElementPerformAction(r.element, name as CFString), action)
                 if action == "press" {agentCursor.pulse()}
@@ -657,6 +677,7 @@ struct Snapshot {
             for i in 1...count { try assertFocus(a.processIdentifier); try mouse(down, at, button, i); try mouse(up, at, button, i) }
             return ["ok": true, "point": ["x": at.x-f.minX, "y": at.y-f.minY]]
         case "type_text":
+            guard p["replaceAll"] == nil else { throw BridgeError("INVALID_ARGUMENT", "replaceAll requires a background AX text target.") }
             let (a, _, _) = try await focus(p); try ensureEditableNotSecure(a.processIdentifier)
             let text = p["text"] as? String ?? ""
             // Chunk on Character boundaries to keep composed Unicode sequences intact.

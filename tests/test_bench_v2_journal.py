@@ -76,3 +76,29 @@ class ProviderOutcomeTest(unittest.TestCase):
         facts = agent_facts(events, [], None)
         self.assertFalse(facts["provider_error"])
         self.assertFalse(facts["model_verified"])
+
+    def test_local_turn_cap_excludes_only_the_confirmed_abort(self):
+        events = [{"type": "message_end", "message": {
+            "role": "assistant", "provider": PROVIDER, "model": MODEL,
+            "stopReason": reason, "errorMessage": message,
+        }} for reason, message in (("error", "Provider overloaded"), ("toolUse", None),
+                                   ("error", "This operation was aborted"))]
+        facts = agent_facts(events, [], None, turn_cap_reached=True)
+        self.assertTrue(facts["model_verified"])
+        self.assertFalse(facts["provider_error"])
+        self.assertEqual(facts["provider_error_count"], 1)
+        self.assertTrue(agent_facts(events, [], None)["provider_error"])
+        events[-1]["message"]["errorMessage"] = "The usage limit has been reached"
+        self.assertTrue(agent_facts(events, [], None, turn_cap_reached=True)["provider_error"])
+
+    def test_terminal_pi_usage_limit_is_distinct_from_overload_and_recovery(self):
+        def event(reason, error=None, model=MODEL):
+            return {"type": "message_end", "message": {"role": "assistant", "provider": PROVIDER,
+                    "model": model, "stopReason": reason, "errorMessage": error}}
+
+        quota = "Codex error: The usage limit has been reached"
+        self.assertTrue(agent_facts([event("error", quota)], [], None)["provider_usage_limit"])
+        for events in ([event("error", "Provider overloaded")],
+                       [event("error", quota, model="other-model")],
+                       [event("error", quota), event("stop")]):
+            self.assertFalse(agent_facts(events, [], None)["provider_usage_limit"])

@@ -10,12 +10,14 @@ struct InputFocusObservation {
     let queryError: Int32?
     let conversionError: Int32?
     let systemFlag: Bool?
+    var accessibilityPID: pid_t? = nil
     var json: [String:Any] {
         ["foregroundPID":foregroundPID.map { Int($0) } as Any? ?? NSNull(),
          "keyboardPID":keyboardPID.map { Int($0) } as Any? ?? NSNull(),
          "keyboardFocusResolved":keyboardPID != nil,
          "keyFocusPID":keyboardPID.map {Int($0)} as Any? ?? NSNull(),
-         "keyboardFocusQuery":"CPSGetKeyFocusProcess then GetProcessPID; typing-focus routing is a separate diagnostic",
+         "keyboardFocusQuery":queryAvailable ? "CPSGetKeyFocusProcess then GetProcessPID; typing-focus routing is a separate diagnostic" : "unavailable",
+         "accessibilityFocusedPID":accessibilityPID.map { Int($0) } as Any? ?? NSNull(),
          "queryAvailable":queryAvailable,
          "queryError":queryError as Any? ?? NSNull(),
          "conversionError":conversionError as Any? ?? NSNull(),
@@ -40,8 +42,21 @@ struct InputFocusObservation {
     private typealias Convert = @convention(c) (UnsafePointer<ProcessSerialNumber>,UnsafeMutablePointer<pid_t>) -> Int32
     private static let query: Query? = dlsym(UnsafeMutableRawPointer(bitPattern:-2),"CPSGetKeyFocusProcess").map { unsafeBitCast($0,to:Query.self) }
     private static let convert: Convert? = dlsym(UnsafeMutableRawPointer(bitPattern:-2),"GetProcessPID").map { unsafeBitCast($0,to:Convert.self) }
+    static var publicAPIOnly: Bool { ProcessInfo.processInfo.environment["CU_PUBLIC_API_ONLY"] == "1" }
     static func observe() -> InputFocusObservation {
         let foreground=NSWorkspace.shared.frontmostApplication?.processIdentifier
+        if publicAPIOnly {
+            let system = AXUIElementCreateSystemWide()
+            var app: CFTypeRef?
+            var pid: pid_t = 0
+            if AXUIElementCopyAttributeValue(system, kAXFocusedApplicationAttribute as CFString, &app) == .success,
+               let app, CFGetTypeID(app) == AXUIElementGetTypeID() {
+                _ = AXUIElementGetPid(app as! AXUIElement, &pid)
+            }
+            return InputFocusObservation(foregroundPID: foreground, keyboardPID: nil, queryAvailable: false,
+                                         queryError: nil, conversionError: nil, systemFlag: nil,
+                                         accessibilityPID: pid > 0 ? pid : nil)
+        }
         guard let query,let convert else{return InputFocusObservation(foregroundPID:foreground,keyboardPID:nil,queryAvailable:false,queryError:nil,conversionError:nil,systemFlag:nil)}
         var psn=ProcessSerialNumber(highLongOfPSN:0,lowLongOfPSN:0)
         var flag=DarwinBoolean(false)

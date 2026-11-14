@@ -37,6 +37,7 @@ NATIVE = ROOT / ".build/Local Computer Use.app/Contents/MacOS/computer-use-bridg
 NODE = os.environ["CU_BENCH_NODE"]
 PROVIDER = "openai-codex"
 MODEL = "gpt-6.1-terra"
+THINKING = "high"
 ARM = "pi-terra-independent-macos"
 TOOLS = ("mcp__cua__js", "mcp__cua__js_reset")
 BASE_ENV = {"PATH": os.environ["PATH"], "LANG": "en_US.UTF-8"}
@@ -125,8 +126,8 @@ def build_fixtures(bench):
         Path(tmp).rename(APPS)
 
 
-def inspect_bridge(bundle_ids):
-    env = dict(BASE_ENV, CU_ALLOWED_BUNDLE_IDS=",".join(sorted(bundle_ids)))
+def inspect_bridge(bundle_ids, *, public_api_only=False):
+    env = dict(BASE_ENV, CU_ALLOWED_BUNDLE_IDS=",".join(sorted(bundle_ids)), CU_PUBLIC_API_ONLY=str(int(public_api_only)))
     return json.loads(capture(NODE, str(HERE / "mcp.mjs"), "--check", env=env))
 
 
@@ -135,12 +136,12 @@ def groups():
         "/bin/ps", "-axo", "pid=,pgid=").splitlines())}
 
 
-def wait_targets(pids, bundle_ids):
+def wait_targets(pids, bundle_ids, *, public_api_only=False):
     """Resolve only windows of subprocess groups that this trial started."""
     until = time.monotonic() + 20
     while time.monotonic() < until:
         owners = groups()
-        windows = inspect_bridge(bundle_ids)["windows"]
+        windows = inspect_bridge(bundle_ids, public_api_only=public_api_only)["windows"]
         found = {w["pid"]: w["bundleId"] for w in windows
                  if w["onScreen"] and owners.get(w["pid"]) in pids}
         if set(owners[pid] for pid in found) >= set(pids):
@@ -307,8 +308,9 @@ def owned_stop(desktop, proc):
     proc.wait(timeout=5)
 
 
-def run_agent(pi, auth, catalog, targets, prompt, artifacts, turns, seconds, desktop, idle_seconds, stop_file,
-              *, allow_foreground_hover=False, appkit_key_bundles=(), appkit_click_bundles=()):
+def run_agent(pi, auth, catalog, targets, prompt, artifacts, turns, seconds, desktop, stop_file,
+              *, allow_foreground_hover=False, background_witness_pid=None, appkit_key_bundles=(),
+              appkit_click_bundles=(), public_api_only=False):
     with tempfile.TemporaryDirectory(prefix="cdb-pi-") as temp:
         sandbox = Path(temp)
         agent = sandbox / "agent"
@@ -321,7 +323,9 @@ def run_agent(pi, auth, catalog, targets, prompt, artifacts, turns, seconds, des
             (agent / model_catalog.name).symlink_to(model_catalog.resolve())
         scope = artifacts / "scope.json"
         write_json(scope, {"targets": targets, "audit": str(artifacts / "gui-guard.jsonl"),
-                           "allowForegroundHover": allow_foreground_hover})
+                           "isolationAudit": str(artifacts / "driver-isolation.jsonl"),
+                           "allowForegroundHover": allow_foreground_hover,
+                           **({"backgroundWitnessPID": background_witness_pid} if background_witness_pid is not None else {})})
         owned_bundles = {t["bundleId"] for t in targets}
         bundles = ",".join(sorted(owned_bundles))
         scoped_key_bundles = owned_bundles.intersection(appkit_key_bundles)
@@ -331,6 +335,7 @@ def run_agent(pi, auth, catalog, targets, prompt, artifacts, turns, seconds, des
                 "-i", f"HOME={home}", f"PATH={BASE_ENV['PATH']}", f"TMPDIR={temp}",
                 f"CU_ALLOWED_BUNDLE_IDS={bundles}", f"CU_ENABLE_FOREGROUND={int(allow_foreground_hover)}",
                 "CU_ENABLE_CLIPBOARD=0", "CU_EXPERIMENTAL_APPKIT_FOCUS=0", "CU_AGENT_CURSOR_VISIBILITY=target",
+                f"CU_PUBLIC_API_ONLY={int(public_api_only)}",
                 f"CU_EXPERIMENTAL_APPKIT_KEY_BUNDLE_IDS={','.join(sorted(scoped_key_bundles))}",
                 f"CU_EXPERIMENTAL_APPKIT_CLICK_BUNDLE_IDS={','.join(sorted(scoped_click_bundles))}",
                 NODE, str(HERE / "mcp.mjs"), "--serve", str(scope)
@@ -359,23 +364,74 @@ def run_agent(pi, auth, catalog, targets, prompt, artifacts, turns, seconds, des
             "For navigation that loads asynchronously, observe the page again in a separate call before deciding whether it succeeded. "
             "If a documented operation fails, report which required app or document you could not use and the observed error."
         )
+        if public_api_only:
+            instructions += (
+                " The native helper is restricted to public APIs. Use semantic AX controls for background clicks. "
+                "Raw background pointer actions and experimental AppKit input are unavailable. "
+                "On web forms, select buttons by role and AXPress as well as title. If the control's frame has zero height "
+                "or is outside the window, use its AXScrollToVisible action when available and re-observe before clicking. "
+                "If a required action is refused, report it and complete independent supported edits."
+            )
+        if background_witness_pid is not None:
+            instructions += (
+                " BENCH_WITNESS_FOCUS_CHANGED means this trial has stopped accepting further input after a focus change. "
+                "Use read-only observations to report the current state and end the trial."
+            )
         if len(targets) > 1:
             instructions += (
                 " Bind selected windows with cua.getApp({pid,windowId}, {emit:false}) to suppress automatic AX output. "
-                "Inspect current state with getAXState({disableDiffing:true,emit:false}) and use nodeRepl.write to show the relevant lines. "
+                "Inspect (await app.getAXNodes({emit:false})).nodes. Filter by role, title, label or value and print only the relevant fields. "
+                "AX descriptions appear as node.label. Filter before projecting compact output fields. "
+                "Use node.index for GUI actions. "
                 "Use await app.getScreenshot(); undefined; to emit a screenshot without echoing its byte array. "
                 "Let tool errors end the call. Use the next call to observe the new state. "
                 "Use a single variable in each for-of loop, for example for (const item of items) with item[0] and item[1]. "
-                " Track the required source reads, updates and save checks across all task windows. "
+                "Collect results with results = [...results, result]. The JS subset rejects .push() and .concat(). "
+                "Track the required source reads, updates and save checks across all task windows. "
+                "Read any visible rules, vocabulary and evidence columns in a destination before writing it. "
+                "Use the exact formats specified by the task or the observed destination, including when a field requires only an identifier. "
+                "When the same exception text is required in two destinations, keep one verified string and reuse it. "
+                "After each verified update, continue to the next unfinished step while you have a supported GUI route. "
+                "Correct a rejected JavaScript expression and retry after observing current state. "
                 "If one step is blocked, continue the independent steps that you can verify. "
                 "If a save has no visible confirmation, reopen the item and read its saved fields before retrying. "
-                "Before ending, verify every required destination or state which step blocked it."
+                "Before ending, check each required destination against the task and identify the observed blocker for any unfinished step."
+            )
+        if "com.trycua.cdbbench.ledger-lantern-mail" in owned_bundles:
+            instructions += (
+                " In Ledger Lantern Mail, read the current AXCheckBox message titles and select those needed for the task. "
+                "Batch up to three observed message titles per call with an inline for-of loop. For each title, use a fresh AX tree "
+                "to find its unique message and click it with {strategy:'ax'}. Re-observe the unique AXButton labeled "
+                "Open read-only attachment followed by the attachment name and click it with {strategy:'ax'}. "
+                "Re-observe, verify the preview and capture its AXStaticText values, then close it with the observed Close attachment AXButton. "
+                "Break if any expected control is missing or ambiguous. Print only the relevant attachment content and keep going with the destination edits."
+            )
+        if public_api_only and "com.trycua.cdbbench.signal-quay-chat" in owned_bundles:
+            instructions += (
+                " When Signal Quay Chat requires a blocker record, save and verify it as soon as the source facts are confirmed. "
+                "Reveal the first form field with AXScrollToVisible if its frame has zero height. In one GUI call, "
+                "loop over the observed field titles and values, taking a fresh AX tree before each click and before "
+                "typeText(value,{target:field.index,replaceAll:field.value}). Check focused:true and each updated value, "
+                "and break if a field is missing or unverified. Use the observed enabled AXButton with AXPress to submit. "
+                "Verify the saved record and audit confirmation in a fresh AX tree."
+            )
+        if public_api_only and "com.trycua.cdbbench.rillwatch-cases" in owned_bundles:
+            instructions += (
+                " In Rillwatch Cases, review the needed report details and verify each candidate against the manual, "
+                "browser and log. Keep each report's own reproduction URL and matching log reference together. "
+                "Once a case is verified, use one GUI call for its two observed selects, verifying each value after "
+                "AX focus and the scoped prefix key. Batch that case's evidence fields in a separate call. "
+                "Find each field by its observed title in a fresh AX tree, reveal it when needed, click it, "
+                "verify focus, replace its observed value, and verify the new value before the next field. "
+                "Save using the observed AXButton and reopen that same case to verify status, link and evidence. "
+                "Keep enough calls to save and read back every confirmed case. Leave unsupported cases unchanged."
             )
         if "com.trycua.cdbbench.daymark-calendar" in owned_bundles:
             instructions += (
                 " In Daymark Calendar, click the observed event button with {strategy:'ax'} and verify its ID in the editor. "
-                "If the editor is offscreen, scroll the current AXWebArea down and observe again. For each visible text field, "
-                "click it, verify focused:true, select its exact current text if nonempty with selectText, then typeText with the current field index. "
+                "If the editor is offscreen, use performSecondaryAction(index, 'scrollToVisible') on an observed editor control that exposes AXScrollToVisible. "
+                "Observe the editor again before using an index. For each visible text field, "
+                "click it, observe focused:true, then use typeText(newText,{target:field.index,replaceAll:field.value}). "
                 "Verify the new value, click Update event with {strategy:'ax'}, then reopen the event to verify the saved fields. "
                 "For any event you cite in another app, use the exact ID from the calendar editor's ID field."
             )
@@ -386,11 +442,13 @@ def run_agent(pi, auth, catalog, targets, prompt, artifacts, turns, seconds, des
                 "Use performSecondaryAction on the Accept button with action 'press' to commit. "
             )
             instructions += (
-                " In LibreOffice Calc, use the observed cell index with performSecondaryAction(index, 'focus') "
-                "and verify the selected address in the Name Box. The cell's AXValue setter may leave it unchanged. "
-                "For toolbar controls and the editor, use getAXState({maxNodes:2000,maxDepth:5,disableDiffing:true,emit:false}) "
-                "and print just the relevant lines. Use performSecondaryAction on the Formula button with action 'press'. "
-                "Re-observe the unique focused AXTextArea and its current selection, then use typeText(text, {target:index}) "
+                " Bind LibreOffice Calc with {emit:false,autoObserve:false}. Take getAXNodes after every action before using another index. "
+                "Use the observed cell index with performSecondaryAction(index, 'focus') "
+                "and verify the selected address in the Name Box (AXComboBox with identifier pos_window). The cell's AXValue setter may leave it unchanged. "
+                "For toolbar controls and the editor, use (await app.getAXNodes({maxNodes:2000,maxDepth:5,emit:false})).nodes "
+                "and print just the relevant controls. Use node.index for GUI actions. "
+                "Use performSecondaryAction on the Formula button with action 'press'. "
+                "Re-observe the unique focused AXTextArea, then use typeText(text,{target:editor.index,replaceAll:editor.value}) "
                 "and verify the editor value. " + calc_commit +
                 "Verify the actual cell value. Look for the Save AXMenuButton in a shallow AX tree and use its AX press to save."
             )
@@ -398,20 +456,35 @@ def run_agent(pi, auth, catalog, targets, prompt, artifacts, turns, seconds, des
                 instructions += (
                     " Use app.pressKey('cmd+pagedown', {strategy:'appkit'}) and "
                     "app.pressKey('cmd+pageup', {strategy:'appkit'}) to switch sheets. Verify the new Sheet title. "
+                    "If a Controls sheet is present, read it before editing and return to the observed data sheet. "
                     "Use app.pressKey('forwarddelete', {strategy:'appkit'}) after verifying the selected cell when clearing it. "
                     "Time values can display with seconds and AM/PM. Compare the logical time on readback. "
                     "Use app.pressKey('cmd+s', {strategy:'appkit'}) to save after leaving the editor. "
-                    "For several verified edits in the same row, use an array of observed addresses and desired values "
-                    "with an inline for-of loop in one JS call. Use string matching, a regex literal or RegExp(pattern). "
-                    "The JS subset rejects new RegExp and calls to named local helpers. "
+                    "Batch at most one row of observed addresses and desired values per JS call. Long batches can time out. "
+                    "Use an inline for-of loop and find cells with nodes.filter(n=>n.role==='AXTextField'&&n.title===address). "
                     "For each cell, take fresh AX observations, check the intended address in the Name Box, and check for a unique focused editor. "
-                    "If the editor contains text, select the exact current value and verify the selection before typing. "
+                    "Pass the full observed editor value as replaceAll and check the returned verified field. "
                     "Check the editor value before committing. Read back the committed cell and stop the loop at the first failed check. "
                     "Print the compact results and save finished groups before moving to another app."
                 )
+            elif public_api_only:
+                instructions += (
+                    " To switch Calc sheets, click the exact observed AXRadioButton tab with {strategy:'ax'} "
+                    "and verify the new Sheet title. When editing multiple cells, batch at most one observed row per JS call. "
+                    "Verify the address, editor and committed value for each cell. Stop the loop at the first failed check "
+                    "and save completed groups. A key event acknowledgement alone does not verify a Calc edit."
+                )
+        if "org.gnucash.Gnucash" in owned_bundles:
+            instructions += (
+                " GnuCash background mode blocks the Reconcile toolbar control and toolbar overflow because they can raise windows. "
+                "The register's R column toggles uncleared and cleared. Leave formal reconciliation pending and verify the independent edits."
+            )
         if "org.gnucash.Gnucash" in scoped_key_bundles:
             instructions += (
-                " In GnuCash, a pointer click in the account tree can activate the app. Read the current selection in the screenshot. "
+                " If GnuCash opens a separate Tip of the Day window, bind its exact PID and window ID. "
+                "In getAXNodes, find the single node with n.subrole === 'AXCloseButton', n.enabled and n.actions?.includes('AXPress'). "
+                "Use performSecondaryAction(node.index, 'press') and refresh listWindows to confirm the tip closed before binding Accounts. "
+                "In GnuCash, a pointer click in the account tree can activate the app. Read the current selection in the screenshot. "
                 "With the desired parent row selected, use pressKey('shift+=', {strategy:'appkit'}) to expand it. "
                 "Use scoped Down and Enter to select and open the observed child account, verifying the screenshot after each key."
             )
@@ -420,12 +493,13 @@ def run_agent(pi, auth, catalog, targets, prompt, artifacts, turns, seconds, des
                 " For an observed GnuCash register row, scoped Up and Down move the current transaction. "
                 "Use a fresh screenshot and app.click([x,y], {strategy:'appkit'}) on the Show Splits toolbar button. "
                 "Re-observe, then use another scoped click in the Memo column of the observed split row. "
-                "If AX omits the editor, use small batches of scoped printable keys, using 'space' for a space "
-                "and Shift chords for capitals and shifted punctuation. Verify the memo on the intended row, "
+                "If AX omits the editor, use app.ocr({emit:false}) to read its current register status line after the click. "
+                "Use typeText(memo,{strategy:'event',visualCheck:{before,region}}) with the exact observed line and a "
+                "window-relative logical-point rectangle covering that status line. Extend the rectangle horizontally "
+                "so the complete new line can fit and keep it inside the window. Expect visualVerified:true. "
+                "Check the complete memo in the register status line and verify that the intended row is still selected, "
                 "commit with scoped Enter, save with scoped Command-S and verify from a fresh screenshot. "
-                "The register's R column toggles uncleared and cleared. Reconciled status requires the Reconcile workflow. "
-                "If the Reconcile command returns BACKGROUND_WINDOW_REORDERED, observe the new state, leave that "
-                "workflow pending and verify any independent workbook and ledger edits."
+                "Reserve time and turns for edits and their save checks in both the ledger and workbook."
             )
         if scoped_key_bundles or scoped_click_bundles:
             instructions += " Use the remaining turns to attempt required edits when you have an observed, supported GUI route."
@@ -433,7 +507,7 @@ def run_agent(pi, auth, catalog, targets, prompt, artifacts, turns, seconds, des
             instructions += (" This foreground trial permits app.hover([x,y], {durationMs:1500,screenshot:true}) "
                              "when the task needs real mouse hover. It activates the bound window and captures its own transient UI.")
         command = [pi, "--print", "--mode", "json", "--no-session", "--provider", PROVIDER, "--model", MODEL,
-                   "--thinking", "low", "--approve", "--no-extensions", "-e", "builtin:mcp", "-e",
+                   "--thinking", THINKING, "--approve", "--no-extensions", "-e", "builtin:mcp", "-e",
                    str(HERE / "pi-gate.mjs"), "--no-skills", "--no-context-files", "--no-prompt-templates",
                    "--no-themes", "--no-builtin-tools", "--tools", ",".join(TOOLS),
                    "--system-prompt", instructions, "--", prompt]
@@ -442,7 +516,7 @@ def run_agent(pi, auth, catalog, targets, prompt, artifacts, turns, seconds, des
         interrupted = None
         read_counters = activity.hid_counter_reader()
         previous_counters = read_counters()
-        previous_idle = idle_seconds()
+        previous_idle = activity.hid_idle_seconds()
         with (artifacts / "pi.jsonl").open("wb") as log, (artifacts / "pi.stderr").open("wb") as stderr:
             proc = sp.Popen(command, cwd=temp, env=env, stdout=log, stderr=stderr,
                             stdin=sp.DEVNULL, start_new_session=True)
@@ -455,7 +529,7 @@ def run_agent(pi, auth, catalog, targets, prompt, artifacts, turns, seconds, des
                     try:
                         proc.wait(timeout=min(1, remaining))
                     except sp.TimeoutExpired:
-                        now_idle = idle_seconds()
+                        now_idle = activity.hid_idle_seconds()
                         now_counters = read_counters()
                         decision, changed, tickle_pid = activity.activity_decision(
                             previous_idle, now_idle, previous_counters, now_counters,
@@ -475,11 +549,12 @@ def run_agent(pi, auth, catalog, targets, prompt, artifacts, turns, seconds, des
                         previous_counters = now_counters
             finally:
                 owned_stop(desktop, proc)
+        turn_cap_reached = "CU_BENCH_TURN_CAP_REACHED" in (artifacts / "pi.stderr").read_text("utf-8", errors="replace").splitlines()
         return {"exit_code": proc.returncode, "seconds": round(time.monotonic() - started, 2),
-                "timed_out": timed_out, "interrupted": interrupted}
+                "timed_out": timed_out, "turn_cap_reached": turn_cap_reached, "interrupted": interrupted}
 
 
-def agent_facts(events, guard, v2):
+def agent_facts(events, guard, v2, *, turn_cap_reached=False):
     assistant = [e["message"] for e in events if e.get("type") == "message_end"
                  and e.get("message", {}).get("role") == "assistant"]
     identities = sorted({(msg.get("provider", ""), msg.get("model", "")) for msg in assistant if msg.get("model")})
@@ -495,17 +570,29 @@ def agent_facts(events, guard, v2):
             violations.update(v2.scan_tool_use(name, item.get("arguments", {}))[0])
     usage = {key: sum(msg.get("usage", {}).get(key, 0) for msg in assistant)
              for key in ("input", "output", "cacheRead", "cacheWrite")}
-    provider_error_count = sum(msg.get("stopReason") == "error" for msg in assistant)
-    normal_end = bool(assistant) and assistant[-1].get("stopReason") == "stop"
+    # Pi 1.5 emits a synthetic assistant error for the turn hook's local abort.
+    cap_abort = (turn_cap_reached and bool(assistant) and assistant[-1].get("stopReason") == "error"
+                 and assistant[-1].get("errorMessage") == "This operation was aborted")
+    responses = assistant[:-1] if cap_abort else assistant
+    provider_error_count = sum(msg.get("stopReason") == "error" for msg in responses)
+    normal_end = bool(responses) and (responses[-1].get("stopReason") == "stop" or
+                                      cap_abort and responses[-1].get("stopReason") == "toolUse")
+    last_response = responses[-1] if responses else {}
+    provider_usage_limit = (
+        last_response.get("stopReason") == "error"
+        and (last_response.get("provider"), last_response.get("model")) == (PROVIDER, MODEL)
+        and "the usage limit has been reached" in str(last_response.get("errorMessage", "")).lower()
+    )
     return {"model_verified": identities == [(PROVIDER, MODEL)], "observed_models": identities,
             "turns": sum(e.get("type") == "turn_start" for e in events), "tool_calls": len(starts),
             "tool_errors": sum(e.get("type") == "tool_execution_end" and bool(e.get("isError")) for e in events),
             "gui_only_violations": sorted(violations), "gui_only": not violations and all(e.get("toolName") in TOOLS for e in starts),
             "provider_error": provider_error_count > 0 and not normal_end,
+            "provider_usage_limit": provider_usage_limit,
             "provider_error_count": provider_error_count, "usage": usage}
 
 
-def run_trial(entry, condition, out, task, spec, bundle_ids, login, modules, *, appkit_key_bundles=(), appkit_click_bundles=()):
+def run_trial(entry, condition, out, task, spec, bundle_ids, login, modules, *, appkit_key_bundles=(), appkit_click_bundles=(), public_api_only=False):
     pilot, v2, runner, desktop, cdb = modules
     seed = entry["seed"]
     attempt = journal.next_attempt(out, entry)
@@ -543,7 +630,7 @@ def run_trial(entry, condition, out, task, spec, bundle_ids, login, modules, *, 
                     brief, paths = pilot.prepare_probe(task, seed, trial, APPS / "BenchLab.app")
                     lab = pilot.launch_lab(task, seed, paths, APPS / "BenchLab.app", {"HOME": temp})
                     pids = [lab.pid]
-                targets = wait_targets(pids, bundle_ids)
+                targets = wait_targets(pids, bundle_ids, public_api_only=public_api_only)
                 sentinel.start()
                 sentinel.activate()
                 sentinel.toggle_armed()
@@ -555,13 +642,19 @@ def run_trial(entry, condition, out, task, spec, bundle_ids, login, modules, *, 
                 (artifacts / "prompt.txt").write_text(prompt, "utf-8")
                 max_turns = min(45, int(spec.get("max_turns", 45)))
                 row.update(run_agent(*login, targets, prompt, artifacts, max_turns, min(360, task.timeout_s),
-                                     desktop, pilot.hid_idle_seconds, out / "STOP",
-                                     allow_foreground_hover=condition == "foreground", appkit_key_bundles=appkit_key_bundles,
-                                     appkit_click_bundles=appkit_click_bundles))
+                                     desktop, out / "STOP",
+                                     allow_foreground_hover=condition == "foreground",
+                                     background_witness_pid=sentinel.proc.pid if public_api_only and condition == "background" else None,
+                                     appkit_key_bundles=appkit_key_bundles,
+                                     appkit_click_bundles=appkit_click_bundles, public_api_only=public_api_only))
                 sentinel.toggle_armed()
                 armed = False
                 row["disturbance"] = sentinel.summary()
-                row["agent"] = agent_facts(json_lines(artifacts / "pi.jsonl"), json_lines(artifacts / "gui-guard.jsonl"), v2)
+                row["driver_isolation"] = json_lines(artifacts / "driver-isolation.jsonl")
+                row["agent"] = agent_facts(json_lines(artifacts / "pi.jsonl"), json_lines(artifacts / "gui-guard.jsonl"), v2,
+                                           turn_cap_reached=row["turn_cap_reached"])
+                if row["agent"]["provider_usage_limit"]:
+                    raise RuntimeError("OpenAI usage limit reached. The run can resume after quota is available.")
                 row["evaluation"] = pack.evaluate(row["exit_code"]) if pack else runner.evaluate_probe(
                     task, seed, paths, artifacts, sentinel.log)
                 if row["interrupted"]:
@@ -571,7 +664,8 @@ def run_trial(entry, condition, out, task, spec, bundle_ids, login, modules, *, 
                 if not row["disturbance"].get("available") or "error" in row["evaluation"]:
                     raise RuntimeError("Sentinel or evaluator did not produce usable measurements")
                 row["passed"] = bool(row["evaluation"]["passed"] and row["agent"]["gui_only"] and
-                                     not row["timed_out"] and row["agent"]["turns"] <= max_turns and row["exit_code"] == 0)
+                                     not row["timed_out"] and not row["turn_cap_reached"] and
+                                     row["agent"]["turns"] <= max_turns and row["exit_code"] == 0)
                 row["background"] = v2.background_score(row["disturbance"], True)
                 row["multiplayer"] = v2.multiplayer_score(row["disturbance"], row["background"]["measured"], row["passed"], condition)
                 row["interruption"] = v2.interruption_of(row["evaluation"])
@@ -617,12 +711,15 @@ def main():
     parser.add_argument("--resume", type=Path, help="Resume an existing report without repeating scored trials")
     parser.add_argument("--idle-seconds", type=float, default=10, help="Require this much hardware idle time before each trial")
     parser.add_argument("--allow-multi-app", action="store_true", help="Allow stock-app launches on a dedicated benchmark desktop")
+    parser.add_argument("--public-api-only", action="store_true", default=None,
+                        help="Use documented macOS APIs for the native driver during trials")
     parser.add_argument("--appkit-key-bundle", action="append", metavar="BUNDLE_ID",
                         help="Allow explicit experimental AppKit key preparation for this owned app in background trials")
     parser.add_argument("--appkit-click-bundle", action="append", metavar="BUNDLE_ID",
                         help="Allow explicit experimental AppKit click preparation for this owned app in background trials")
     args = parser.parse_args()
-    selection = (args.tasks, args.condition, args.runs, args.run_index, args.seed, args.appkit_key_bundle, args.appkit_click_bundle)
+    selection = (args.tasks, args.condition, args.runs, args.run_index, args.seed, args.appkit_key_bundle, args.appkit_click_bundle,
+                 args.public_api_only)
     if args.resume and (not args.run or any(value is not None for value in selection)):
         parser.error("--resume requires --run and uses the saved task selection, conditions, seeds and scoped input configuration")
     if args.run_index is not None and (args.runs is not None or not 0 <= args.run_index <= 4):
@@ -688,14 +785,19 @@ def main():
     appkit_key_bundles = sorted(set(saved.get("appkit_key_bundles", []) if saved else args.appkit_key_bundle or []))
     appkit_click_bundles = sorted(set(saved.get("appkit_click_bundles", []) if saved else args.appkit_click_bundle or []))
     scoped_bundles = set(appkit_key_bundles).union(appkit_click_bundles)
+    public_api_only = bool(saved.get("public_api_only", False) if saved else args.public_api_only)
+    if public_api_only and scoped_bundles:
+        parser.error("Public-API-only trials cannot enable experimental AppKit input")
     if scoped_bundles and any(entry["condition"] != "background" for entry in plan):
         parser.error("Scoped AppKit key and click options are available only for background trials")
     report = {"journal_schema": journal.SCHEMA, "benchmark_version": 2, "upstream_commit": REVISION, "upstream_tree": tree, "arm": ARM,
-              "provider": PROVIDER, "model": MODEL, "thinking": "low", "schedule_seed": args.seed, "plan": plan}
+              "provider": PROVIDER, "model": MODEL, "thinking": THINKING, "schedule_seed": args.seed, "plan": plan}
     if appkit_key_bundles:
         report["appkit_key_bundles"] = appkit_key_bundles
     if appkit_click_bundles:
         report["appkit_click_bundles"] = appkit_click_bundles
+    if public_api_only:
+        report["public_api_only"] = True
     if args.prepare:
         build_fixtures(bench)
         print(APPS)
@@ -727,13 +829,15 @@ def main():
         except OSError as error:
             raise RuntimeError(f"Benchmark service port {host}:{port} is unavailable: {error}") from error
     login = pi_auth()
-    status = inspect_bridge(set())
+    status = inspect_bridge(set(), public_api_only=public_api_only)
+    if public_api_only and not status.get("background", {}).get("publicAPIOnly"):
+        raise RuntimeError("Build the native helper with public-API-only mode support before running this trial")
     if not all(status["permissions"].get(p) for p in ("accessibility", "screenRecording")):
         raise RuntimeError("Grant the existing native helper Accessibility and Screen Recording through macOS Settings")
     if args.doctor:
         print(json.dumps(dict(report, prerequisites="ready", node=node_version, pi_version=capture(login[0], "--version"), displays=status["displays"]), indent=2))
         return 0
-    running_apps = inspect_bridge(exclusive_bundles)["apps"]
+    running_apps = inspect_bridge(exclusive_bundles, public_api_only=public_api_only)["apps"]
     if running_apps:
         names = ", ".join(sorted({app["bundleId"] for app in running_apps}))
         raise RuntimeError(f"Benchmark or unisolated stock apps already running: {names}")
@@ -766,12 +870,18 @@ def main():
         for entry in plan:
             if entry["order_index"] in done:
                 continue
-            if pilot.wait_for_idle(args.idle_seconds, 60, out / "STOP") is None:
+            try:
+                idle = activity.wait_for_idle(args.idle_seconds, 60, out / "STOP")
+            except RuntimeError as error:
+                report["stop_reason"] = str(error)
+                break
+            if idle is None:
                 report["stop_reason"] = "Desktop was not idle or STOP file was created"
                 break
             row = run_trial(entry, entry["condition"], out, tasks[entry["task"]],
                             specs[entry["task"]], bundles[entry["task"]], login, (pilot, v2, runner, desktop, cdb),
-                            appkit_key_bundles=appkit_key_bundles, appkit_click_bundles=appkit_click_bundles)
+                            appkit_key_bundles=appkit_key_bundles, appkit_click_bundles=appkit_click_bundles,
+                            public_api_only=public_api_only)
             report["trials"].append(row)
             write_json(out / "summary.json", report)
             if row["status"] == "infrastructure_error":

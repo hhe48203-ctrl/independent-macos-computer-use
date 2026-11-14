@@ -24,5 +24,22 @@ import AppKit
         precondition(unresolved.json["keyboardPID"] is NSNull)
         precondition(unresolved.json["keyboardFocusResolved"] as? Bool == false)
         print("PASS stable route, target theft, auxiliary theft, user foreground transition, unresolved query")
+
+        let witness = (id: 10, pid: pid_t(100))
+        let cover = (id: 11, pid: pid_t(101))
+        let parent = (id: 12, pid: pid_t(200))
+        let child = (id: 13, pid: pid_t(200))
+        let initialOrder = [witness, cover, parent]
+        func crossing(_ after: NormalWindowOrder) -> BackgroundWindowCrossing? {
+            backgroundWindowCrossing(pid: parent.pid, windowId: parent.id, before: initialOrder, after: after)
+        }
+        precondition(crossing([witness, cover, child, parent]) == nil)
+        precondition(crossing([witness, child, cover, parent]) == .newWindow)
+        precondition(crossing([witness, child, cover]) == .newWindow)
+        precondition(crossing([witness, child, parent, cover]) == .existingWindow)
+        precondition(crossing([witness, child, parent]) == nil)
+        precondition(crossing([witness, cover, parent, (id: 18, pid: 300)]) == nil)
+        precondition(crossing([witness, child, (id: cover.id, pid: 300), parent]) == nil)
+        print("PASS new and existing window order, closed parent, safe child, unrelated windows")
     }
 }

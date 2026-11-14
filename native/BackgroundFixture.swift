@@ -108,6 +108,12 @@ final class BackgroundFixture: NSObject, NSApplicationDelegate, NSTextFieldDeleg
         let button = NSButton(title: "Apply message", target: self, action: #selector(apply))
         button.frame = NSRect(x: 440, y: height-112, width: 170, height: 34); button.setAccessibilityIdentifier("apply-message"); content.addSubview(button)
         result.frame = NSRect(x: 20, y: height-160, width: rect.width-40, height: 30); result.setAccessibilityIdentifier("result-label"); content.addSubview(result)
+        if !cover, CommandLine.arguments.contains("--popup") {
+            let popup = NSPopUpButton(frame: NSRect(x: 440, y: height-187, width: 155, height: 26), pullsDown: false)
+            popup.addItems(withTitles: ["First", "Second"])
+            popup.setAccessibilityIdentifier("fixture-popup")
+            content.addSubview(popup)
+        }
         pad.frame = NSRect(x: 20, y: height-330, width: 580, height: 140); pad.setAccessibilityIdentifier("event-pad"); pad.setAccessibilityElement(true); pad.setAccessibilityRole(.group)
         pad.changed = { [weak self] in self?.save() }; content.addSubview(pad)
         let scroll = NSScrollView(frame: NSRect(x: cover ? 650 : 20, y: 20, width: cover ? 600 : 580, height: cover ? 600 : 100))

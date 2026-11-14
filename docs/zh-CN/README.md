@@ -120,13 +120,34 @@ await app.click(EXAMPLE_ELEMENT_INDEX);
 
 除非设置 `CU_EXPERIMENTAL_APPKIT_FOCUS=1` 或上面的 pi 参数，实验性的应用内 AppKit 焦点路径保持关闭。它只在已记录的 macOS 26.6.2 arm64 机器上验证过，不能承诺任意应用。没有浏览器 API，也没有富文本粘贴；不支持的选项会明确失败。纯文本粘贴走 Accessibility 插入，不使用剪贴板。只测量过一块物理 Retina 显示器。多显示器坐标公式测试不是多显示器验收。TCC 绕过和凭证提取不属于本项目。
 
+## 基准测试
+
+### Cua Driver Bench v2
+
+`--public-api-only` 复测只使用有文档的 macOS API。SkyLight 焦点查询、原始后台指针投递和实验性 AppKit 路径保持关闭。已复测的 9 个后台种子里，4 个达到综合通过（任务通过、GUI-only，以及 A22 八项全满足）：CDB-G02、CDB-G04、IR-03 和 IR-04。基线中这 9 个种子均未综合通过。每一次复测和基线全部 90 轮都满足 GUI-only。前台的 MB-10 和 MB-11 在下表种子上也达到 1.00。
+
+| 任务 | 条件 | 种子 | 基线 | 复测 |
+| --- | --- | --- | --- | --- |
+| CDB-G02 | 后台 | `909557` | 0.20 | 1.00 |
+| CDB-G04 | 后台 | `482045` | 0.15 | 1.00 |
+| IR-03 | 后台 | `410255` | 0.40 | 1.00 |
+| IR-04 | 后台 | `816494` | 0.45 | 1.00 |
+| MB-10 | 前台 | `227159` | 0.10 | 1.00 |
+| MB-11 | 前台 | `160721` | 0.05 | 1.00 |
+
+没有不打扰用户的公开 API 投递路径时，驱动在投递前拒绝并返回明确错误码，而不是报告成功。MB-09 的原生表格行拖动返回 `BACKGROUND_NATIVE_ROW_DRAG_UNSUPPORTED`（种子 `790113` 仍为 0.05，A22 八项通过）。CDB-G03 的 GnuCash 对账对话框返回 `BACKGROUND_GNUCASH_DIALOG_UNSUPPORTED`（种子 `99589` 仍为 0.45，A22 八项通过）。IR-01/02 关闭状态的原生下拉框返回 `BACKGROUND_POPUP_UNSUPPORTED`；显式 `AXShowMenu` 返回 `BACKGROUND_MENU_UNSUPPORTED`。IR-01 `147201` 仍为 0.15，测试应用打开 sheet 时自行激活，A22 从 8/8 降到 4/8。驱动对该次点击返回错误，并停止后续输入。
+
+这些是单次同种子复测（thinking `high`，基线为 thinking `low`，运行器另加按应用注入的操作引导），不是完整的 90 轮验收。逐种子证据和已知限制见[修复前后对比总结](BENCH_V2_GOAL_SUMMARY.md)。
+
+trycua 的 [Cua Driver Bench 文章](https://cua.ai/blog/cua-driver-bench)仍把 cua-driver 在 macOS 上的两项缺口列为待修：弹出菜单会在用户窗口上方显示约 50 毫秒，以及后台拖放（MB-09 为 0/5）。本仓库在投递前拒绝这两类路径。同一篇文章写到 cua-driver 能让后台 sheet 留在用户窗口之后，因此 IR-01 的 sheet 换序是本仓库在仅公开 API 下的限制。截至 2026-11-14，相关上游 pull request 均未合并，其中的拖放改动依赖未写入文档的 WindowServer 行为，本仓库不采用。
+
 ## 开发、验证与许可证
 
 [文档索引](INDEX.md)列出 [JS API](../JS_API.md)、[架构](../ARCHITECTURE.md)（仅英文）、[验证](VALIDATION.md)、[开发状态](DEVELOPMENT_STATUS.md)和[发行说明](RELEASE_NOTES.md)。`npm run check:docs` 检查相对链接，以及 [docs/zh-CN](INDEX.md) 下的中文对应页。
 
 开发前请阅读[仓库开发指南](AGENTS.md)。运行 `npm run check` 执行 lint 和通用测试，或用 `npm run lint` 单独执行 lint。在 macOS 上运行 `npm run check:native` 构建 helper 并执行完整的 Node 回归测试。PR 检查在对应的 runner 上执行通用检查和原生检查。按改动范围选择下列桌面和打包检查。
 
-`npm run bench:v2` 输出锁定版本的 Cua Driver Bench v2 计划，使用 Pi 和 `openai-codex/gpt-6.1-terra`。加 `--run` 才启动桌面试验。[Benchmark 安装与结果说明](BENCH_V2.md)
+`npm run bench:v2` 输出锁定版本的 Cua Driver Bench v2 计划，使用 Pi 和 `openai-codex/gpt-6.1-terra`。加 `--run` 才启动桌面试验。同种子结果见[基准测试](#基准测试)。安装说明见 [Benchmark 安装与结果说明](BENCH_V2.md)。
 
 ```sh
 npm run test:desktop

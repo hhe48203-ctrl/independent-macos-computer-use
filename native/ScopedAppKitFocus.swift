@@ -8,6 +8,7 @@ import ApplicationServices
     typealias Query=@convention(c)()->UInt32
     static let query:Query?=dlsym(UnsafeMutableRawPointer(bitPattern:-2),"SLPSGetTypingFocusProcess").map{unsafeBitCast($0,to:Query.self)}
     static func read(forScopedInput: Bool = false)->UInt32? {
+        guard !SystemInputFocus.publicAPIOnly else { return nil }
         guard forScopedInput || ProcessInfo.processInfo.environment["CU_EXPERIMENTAL_APPKIT_FOCUS"] == "1" else{return nil}
         #if arch(arm64)
         let os=ProcessInfo.processInfo.operatingSystemVersion
@@ -67,6 +68,7 @@ enum ScopedAppKitInput: String {
 
 @MainActor extension Desktop {
     func prepareScopedAppKitFocus(_ pid:pid_t,_ wid:CGWindowID,_ frame:CGRect,_ delivery:BackgroundPointerDelivery,_ observation:BackgroundFocusObservation) async throws -> ScopedAppKitFocus? {
+        guard !SystemInputFocus.publicAPIOnly else { return nil }
         let scoped = observation.scopedInput != nil
         guard scoped || ProcessInfo.processInfo.environment["CU_EXPERIMENTAL_APPKIT_FOCUS"] == "1" else{return nil}
         guard let typing=ExperimentalTypingFocus.read(forScopedInput: scoped),typing>0 else{throw BridgeError("EXPERIMENTAL_FOCUS_OS_UNVERIFIED","App-local focus is experimental and currently requires the investigated macOS 26.6.2 typing-focus query. No notice was sent")}

@@ -35,6 +35,10 @@ getAXState 返回文字，后续默认按树行索引输出差分；加 disableD
 
 `getAXState` 和 `getAXStateAndScreenshot` 支持单次观察指定 `maxNodes`（1–2000，默认 500）和 `maxDepth`（1–30，默认 16）。树很大时可传 `emit:false`，筛选返回文字后再显示相关行。
 
+`getAXNodes({emit:false,maxNodes:500,maxDepth:16})` 返回 `{nodes,truncated,coordinates}`，支持完整或限量的纯 AX 观察。每个节点有 `index`、`parentIndex`（根节点为 `null`）、`depth` 及其可用的 AX 属性。可按 `role`、`title`、`label` 或 `value` 等字段筛选，用最新的 `index` 执行动作。此观察会刷新索引并应用绑定的纯 AX 坐标规则，下一次文字差分仍与上一次文字观察比较。传入 `emit:false` 可隐藏整个结果的自动输出。
+
+如果脚本在每次动作后都显式读取和核验 AX 状态，可用 `getApp(reference,{emit:false,autoObserve:false})` 跳过动作后的自动快照。即使原生动作报错，原有 AX 索引也会失效。再次使用索引前请调用 `getAXNodes` 或 `getAXState`。坐标数组保留上次观察的映射，仍需与窗口当前尺寸匹配。初始绑定和显式重连仍会获取快照，重连会继承 `autoObserve`。
+
 getScreenshot 返回 PNG Buffer，getAXStateAndScreenshot 返回 {state,coordinates,screenshot?}。默认以 MCP image 块显示；emit:false 只返回。可用 nodeRepl.write(value) 输出文本，nodeRepl.emitImage(PNG或JPEG字节) 输出图像。以 undefined 结束调用可避免重复检查返回值。
 
 普通窗口截图只截取绑定窗口。单独的子窗口可能扩大合成图像，导致坐标比例失效。若独立弹窗出现在 `listWindows` 中，可用它自己的 PID 和窗口 ID 绑定。显式悬停截图可以包含绑定范围内的同进程临时窗口。
@@ -66,19 +70,27 @@ let replacement=await app.reconnect({pid:789,windowId:1011});
 | 方法 | 说明 |
 |---|---|
 | click(index或[x,y],options?) | mouseButton、clickCount、strategy:auto/ax/event/appkit、key、durationMs；普通点击默认 AXPress 优先 |
-| typeText(text,{strategy?,target?}) | 支持验证后的 AX 插入或真实进程定向 Unicode。target 可指定当前窗口的可编辑 AX 索引 |
+| typeText(text,{strategy?,target?,replaceAll?,visualCheck?}) | 支持验证后的 AX 插入或进程定向 Unicode，可选择视觉回读 |
 | pressKey('CMD+A',{strategy?,durationMs?}) | auto 可用 AX 选择；event 强制真实键包 |
 | drag(from,to,{duration?}) | duration0.1..2秒，默认0.4；后台真实事件 |
 | scroll(index或point,direction,pages?,{distanceMode?}) | up/down/left/right，pages默认1、范围>0..10；calibrated默认，legacy可选 |
 | selectText(index,text,{prefix?,suffix?,selectionType?}) | text/cursor_before/cursor_after，UTF-16选择范围 |
 | setValue(index,text) | AXValue 语义设置，可读时回读字符串 |
-| performSecondaryAction(index,action) | focus/press/showMenu/increment/decrement/confirm |
+| performSecondaryAction(index,action) | focus/press/showMenu/increment/decrement/confirm/scrollToVisible |
 | paste(text,{format:'text'}) | 纯文本 AX 插入，不用剪贴板 |
 | ocr({emit?,maxDimension?}) | 本机 Vision OCR，矩形为窗口内逻辑点 |
 | move([x,y]) | 只移动独立覆盖光标，不产生鼠标输入 |
 | hover([x,y],{durationMs?,screenshot?}) | 显式前台悬停，移动系统鼠标 |
 
+控件支持 `AXScrollToVisible` 时，可调用 `performSecondaryAction(index,'scrollToVisible')` 请求应用将它滚动到可见区域。后续操作前请重新观察窗口，确认控件可见并获取最新索引。
+
+后台 AX 字段取得焦点后，可用 `typeText(newText,{target:index,replaceAll:oldText})` 传入最新索引及观察到的完整原值。驱动会先核对当前值，再替换并回读文字。原值已变化时返回 `STALE_TEXT_VALUE`。后续提交或保存仍需重新观察应用来确认结果。
+
+如果已确认的后台窗口中，编辑器可见但 AX 未提供该控件，先聚焦编辑器，再调用 `typeText(text,{strategy:'event',visualCheck:{before,region}})`。`before` 取自 `app.ocr()` 回读的完整原行。`region` 为窗口内逻辑点矩形 `{x,y,width,height}`，需容纳完整的原行和新行。驱动确认原行唯一，并通过 OCR 确认该区域显示所请求的新行。两个字符串均须为 1–160 个 UTF-16 单元的单行文字。返回的 `visualVerified` 表示该区域的显示文字已核对。提交前检查目标编辑器，保存后再确认文件结果。遇到 `STALE_VISUAL_TEXT` 或 `TEXT_VERIFICATION_FAILED` 时先刷新观察。
+
 普通后台元素点击在目标是可观察的表格行或行文本、没有 `AXPress` 时，可用表格可写的 `AXSelectedRows`。`selectionOutcome:"dialogOpened"` 表示出现了附属弹窗，应读取新的 AX 树后再操作弹窗按钮。
+
+已观察到的标签没有按下动作时，普通后台点击可使用父级 `AXTabGroup` 可写的 `AXSelectedChildren`。驱动要求当前只有一个选中项，并回读新选中的标签。请重新观察以确认展示内容。
 
 当静态文字是按钮或复选框的直接子元素时，普通后台点击可以使用父控件的 `AXPress`。父控件必须包含点击位置，光标到达后还会再次核对。`strategy:'event'` 可显式请求指针投递。
 
@@ -96,7 +108,7 @@ click/pressKey 的 `durationMs` 为0..5000毫秒，控制每个 down/up 对之�
 
 垂直默认距离已校准为 `round(windowHeight*pages)`；两种自建应用、两档尺寸和连续滚动的实测一致。水平保留 `round(windowWidth*0.8*pages)`：原版本轮水平输入未产生位移，不能声称水平兼容。第四个参数 `{distanceMode:'legacy'}` 保留 v1.0 两轴的0.8算法。返回 `scrollDistance` 给出发送的逻辑点增量；实际位移仍由应用决定。完整数据见 [兼容改进验收](COMPATIBILITY_V1_1.md)。
 
-字符串 `AXValue` 可读时，`setValue` 用 `valueVerified` 报告回读是否与请求完全一致。请求修改后仍读到原值会报 `AX_VALUE_UNCHANGED`。应用格式化了结果或回读不可用时，应重新观察。后台打开值只读、没有子节点且只暴露原生菜单动作的关闭下拉框时，会报 `BACKGROUND_POPUP_UNSUPPORTED`。真实事件需要应用支持。`event` 文本要求控件已经具有可读的非安全文本焦点和选择范围。
+字符串 `AXValue` 可读时，`setValue` 用 `valueVerified` 报告回读是否与请求完全一致。请求修改后仍读到原值会报 `AX_VALUE_UNCHANGED`。应用格式化了结果或回读不可用时，应重新观察。后台打开值只读、没有子节点且只暴露原生菜单动作的关闭下拉框时，会报 `BACKGROUND_POPUP_UNSUPPORTED`。从这类下拉框开始拖动，或聚焦后发送上下方向键，都会触发同一预检，带修饰键的方向键也适用。真实事件需要应用支持。`event` 文本默认使用已聚焦的可读非安全文本及选择范围，也可用 `visualCheck` 显式选择视觉回读。
 
 在实测的 Chrome 地址栏中，`typeText` 会改变显示值，但地址未进入可提交状态。导航时先聚焦当前地址栏，调用 `setValue(index,address)`，再按 Enter，并通过新的观察核对已加载的页面。
 
@@ -145,5 +157,11 @@ await cua.getScreenshot({
 ## 真人并用配置（v1.2）
 
 真实事件策略与局部AppKit激活是两回事。pi setup默认设置 `CU_EXPERIMENTAL_APPKIT_FOCUS=0`，`--background-events` 不再开启它；只有 `--experimental-appkit-focus` 才明确开启。`cua.status().background.appKitFocusPolicy` 报告所选策略。
+
+`BACKGROUND_WINDOW_REORDERED` 表示目标应用的已有普通窗口越过了另一应用的窗口，或新出现的普通窗口越过了原本盖在操作目标上方的窗口。普通 `AXPress` 元数据可能不包含应用将打开 sheet 的信息。这种情况下，收到错误时对话框可能已经打开，应先观察当前窗口再继续操作。
+
+后台预检识别到关闭的原生 AppKit 下拉框时，会拒绝打开菜单或按首字母选值，返回 `BACKGROUND_POPUP_UNSUPPORTED`。支持首字母选值的 Chromium 网页控件取得应用内 AX 焦点后仍可接收可打印按键。对已观察到的 GnuCash 英文 Reconcile 工具栏按钮及工具栏溢出入口，后台点击会在投递前返回 `BACKGROUND_GNUCASH_DIALOG_UNSUPPORTED`。检查使用精确窗口的 OCR，覆盖已测量的图标加文字工具栏布局。其他布局和对话框命令仍需独立验证。
+
+启动服务时设置 `CU_PUBLIC_API_ONLY=1`，将驱动限制在有文档的 macOS API。后台点击需要 AX 语义路径。后台指针事件和实验性 AppKit 准备返回 `BACKGROUND_PUBLIC_API_UNSUPPORTED`。显式后台 `showMenu` 会在投递前拒绝，因为原生菜单可能干扰前台会话。进程定向按键要求目标窗口与应用内 AX 焦点一致。驱动采样前台应用和系统 AX 焦点，此模式无法查询实际键盘接收进程，因此 `keyboardFocusResolved` 为 `false`。
 
 未内部激活的AppKit应用可能忽略原生CMD+A/菜单快捷键和文本拖选。优先用 `pressKey('CMD+A')`、`selectText(...)`、`click(index)` 的语义等价操作，不在失败后自动激活重试。可选激活路径会在系统焦点仍属别处时激活后台文本输入上下文。[输入隔离调查](INPUT_ISOLATION.md)记录了因果追踪、原版AX Raise及边界；新增的单人并用对照已获接受，不外推到实验长按。

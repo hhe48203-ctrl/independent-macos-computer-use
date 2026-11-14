@@ -18,14 +18,19 @@ import ApplicationServices
     var targetGainedKeyboardFocus=false
     var unexpectedKeyboardRecipient=false
     var scopedInputInterrupted=false
+    var publicFocusChanged=false
     var maxSampleGap:Double=0
     var lastSampleTime:Double=0
     var transitions:[[String:Any]]=[]
     var timer:Timer?
-    init(targetPID:pid_t, scopedInput: ScopedAppKitInput? = nil) throws {
+    init(targetPID:pid_t, scopedInput: ScopedAppKitInput? = nil, expectedForegroundPID: pid_t? = nil) throws {
         self.targetPID=targetPID;after=before
         self.scopedInput=scopedInput
         typingRawBefore=ExperimentalTypingFocus.read(forScopedInput: scopedInput != nil)
+        if let expectedForegroundPID,
+           before.foregroundPID != expectedForegroundPID || before.accessibilityPID != expectedForegroundPID {
+            throw BridgeError("BENCH_WITNESS_FOCUS_CHANGED", "The original witness no longer has both foreground and system Accessibility focus. No input was sent.")
+        }
         guard !before.hasKeyboardFocusWithoutForeground(targetPID) else {
             throw BridgeError("BACKGROUND_KEYBOARD_FOCUS_ALREADY_TARGET", "The target already receives system keyboard input while another app is foreground. Background input was stopped before delivery. Observe the current state before continuing.")
         }
@@ -36,7 +41,7 @@ import ApplicationServices
             }
         }
         sample()
-        timer=Timer.scheduledTimer(withTimeInterval:0.005,repeats:true) { [weak self] _ in
+        timer=Timer.scheduledTimer(withTimeInterval:SystemInputFocus.publicAPIOnly ? 0.025 : 0.005,repeats:true) { [weak self] _ in
             MainActor.assumeIsolated {self?.sample()}
         }
     }
@@ -45,6 +50,10 @@ import ApplicationServices
         if samples>0 {maxSampleGap=max(maxSampleGap,now-lastSampleTime)}
         lastSampleTime=now;samples += 1
         let current=SystemInputFocus.observe()
+        if SystemInputFocus.publicAPIOnly {
+            publicFocusChanged = publicFocusChanged || current.foregroundPID != before.foregroundPID ||
+                current.accessibilityPID != before.accessibilityPID
+        }
         typingRawAfter=ExperimentalTypingFocus.read(forScopedInput: scopedInput != nil)
         if scopedInput != nil && (current.foregroundPID != before.foregroundPID || current.keyboardPID == nil || typingRawAfter == nil || typingRawAfter == 0) {
             scopedInputInterrupted=true
@@ -54,7 +63,8 @@ import ApplicationServices
         let change=current.change(from:before,targetPID:targetPID)
         if change == .targetGainedFocus {targetGainedKeyboardFocus=true}
         if change == .unexpectedRecipient {unexpectedKeyboardRecipient=true}
-        if current.keyboardPID != after.keyboardPID || current.foregroundPID != after.foregroundPID || current.queryError != after.queryError {
+        if current.keyboardPID != after.keyboardPID || current.foregroundPID != after.foregroundPID ||
+            current.accessibilityPID != after.accessibilityPID || current.queryError != after.queryError {
             if transitions.count<128 {var row=current.json;row["t"]=now;transitions.append(row)}
         }
         after=current
@@ -62,6 +72,12 @@ import ApplicationServices
     func stop() {timer?.invalidate();timer=nil}
     func validate() throws {
         sample()
+        if SystemInputFocus.publicAPIOnly, (before.foregroundPID == nil || before.accessibilityPID == nil) {
+            throw BridgeError("BACKGROUND_ACCESSIBILITY_FOCUS_UNAVAILABLE", "Could not establish foreground and system Accessibility focus before background input. No action was sent.")
+        }
+        if publicFocusChanged {
+            throw BridgeError("BACKGROUND_ACCESSIBILITY_FOCUS_CHANGED", "Foreground or system Accessibility focus changed during background input. Observe before retrying.")
+        }
         if typingRouteChanged {throw BridgeError("BACKGROUND_TYPING_ROUTE_CHANGED","The experimental typing-focus reply changed while foreground stayed the same. Isolation could not be confirmed; no route restoration was attempted")}
         if targetGainedKeyboardFocus {throw BridgeError("BACKGROUND_KEYBOARD_FOCUS_CHANGED","The target obtained actual system keyboard focus during the operation. Background isolation failed; no foreground-restoration workaround was attempted.")}
         if unexpectedKeyboardRecipient {throw BridgeError("BACKGROUND_KEYBOARD_ROUTE_CHANGED","The actual keyboard recipient changed while the foreground app stayed the same. Isolation could not be confirmed; no focus restoration was attempted. This observation alone does not identify which process caused the change.")}
@@ -74,7 +90,7 @@ import ApplicationServices
          "unresolvedSampleCount":unresolved,"keyboardFocusObserved":before.keyboardPID != nil && unresolved == 0,
          "targetGainedKeyboardFocus":targetGainedKeyboardFocus,"unexpectedKeyboardRecipient":unexpectedKeyboardRecipient,"maxSampleGapMs":maxSampleGap*1000,
          "experimentalTypingFocusRawBefore":typingRawBefore as Any? ?? NSNull(),"experimentalTypingFocusRawAfter":typingRawAfter as Any? ?? NSNull(),"experimentalTypingRouteChanged":typingRouteChanged,
-         "transitions":transitions,"method":"read-only registry query, sampled; observation does not prevent focus stealing"]
+         "transitions":transitions,"method":SystemInputFocus.publicAPIOnly ? "sampled NSWorkspace and system Accessibility focus" : "read-only registry query, sampled; observation does not prevent focus stealing"]
     }
 }
 
@@ -228,21 +244,45 @@ struct HeldBackgroundMouse {
         guard let original = attr(element, kAXValueAttribute) as? String else { throw BridgeError("BACKGROUND_TEXT_UNSUPPORTED", "Element has no readable AX text value; no global input fallback was attempted") }
         let ns = original as NSString
         guard ns.length <= 1_000_000 else { throw BridgeError("TEXT_TOO_LARGE", "Background insertion is bounded to one million existing UTF-16 units") }
+        let observed = p["replaceAll"] as? String
+        if let observed {
+            guard attr(element, kAXFocusedAttribute) as? Bool == true else {
+                throw BridgeError("BACKGROUND_TEXT_TARGET_REQUIRED", "Focus the observed text target and confirm its focus before replacing its value.")
+            }
+            guard original.utf16.elementsEqual(observed.utf16) else {
+                throw BridgeError("STALE_TEXT_VALUE", "The current text differs from the observed replacement value. No text was sent.")
+            }
+        }
         var selection = CFRange(location: ns.length, length: 0)
         if let value = attr(element, kAXSelectedTextRangeAttribute), CFGetTypeID(value) == AXValueGetTypeID() {
             guard AXValueGetValue(value as! AXValue, .cfRange, &selection) else { throw BridgeError("BACKGROUND_TEXT_UNSUPPORTED", "Cannot read current text selection") }
         } else if !original.isEmpty { throw BridgeError("BACKGROUND_TEXT_UNSUPPORTED", "No AX text selection; refusing to guess insertion position") }
         guard selection.location >= 0, selection.length >= 0, selection.location <= ns.length, selection.length <= ns.length-selection.location else { throw BridgeError("STALE_SELECTION", "Text selection is no longer valid") }
-        let expected = ns.replacingCharacters(in: NSRange(location: selection.location, length: selection.length), with: text)
         var selectedSettable: DarwinBoolean = false
         _ = AXUIElementIsAttributeSettable(element, kAXSelectedTextAttribute as CFString, &selectedSettable)
         var valueSettable: DarwinBoolean = false
         _ = AXUIElementIsAttributeSettable(element, kAXValueAttribute as CFString, &valueSettable)
-        let mechanism: String
         // Focused web inputs can advertise AXSelectedText and acknowledge its
         // setter without changing the page. Prefer writable AXValue there,
         // using the same observed UTF-16 range and exact readback.
-        if selectedSettable.boolValue && !(webField && valueSettable.boolValue) {
+        let useSelectedText = selectedSettable.boolValue && !(webField && valueSettable.boolValue)
+        if observed != nil {
+            if useSelectedText, selection.location != 0 || selection.length != ns.length {
+                var all = CFRange(location: 0, length: ns.length)
+                guard let encoded = AXValueCreate(.cfRange, &all) else { throw BridgeError("AX_ERROR", "Could not encode full selection") }
+                try axCheck(AXUIElementSetAttributeValue(element, kAXSelectedTextRangeAttribute as CFString, encoded), "Select full text")
+                guard let current = attr(element, kAXSelectedTextRangeAttribute), CFGetTypeID(current) == AXValueGetTypeID(),
+                      AXValueGetValue(current as! AXValue, .cfRange, &selection), selection.location == 0, selection.length == ns.length,
+                      let value = attr(element, kAXValueAttribute) as? String, value.utf16.elementsEqual(original.utf16),
+                      attr(element, kAXFocusedAttribute) as? Bool == true else {
+                    throw BridgeError("STALE_SELECTION", "Could not verify the full selection and its current text. No text was sent.")
+                }
+            }
+            selection = CFRange(location: 0, length: ns.length)
+        }
+        let expected = ns.replacingCharacters(in: NSRange(location: selection.location, length: selection.length), with: text)
+        let mechanism: String
+        if useSelectedText {
             mechanism = "AXSelectedText insertion"
             try axCheck(AXUIElementSetAttributeValue(element, kAXSelectedTextAttribute as CFString, text as CFString), "Background text insertion")
         } else {
@@ -259,6 +299,20 @@ struct HeldBackgroundMouse {
             try await Task.sleep(nanoseconds: 20_000_000)
         }
         throw BridgeError("TEXT_VERIFICATION_FAILED", "\(mechanism) did not produce the expected readable value. It may have partly completed; refresh state before retrying.")
+    }
+    func postBackgroundUnicode(_ units: [UniChar], source: CGEventSource, pid: pid_t, wid: CGWindowID) throws {
+        guard let down = CGEvent(keyboardEventSource: source, virtualKey: 0, keyDown: true),
+              let up = CGEvent(keyboardEventSource: source, virtualKey: 0, keyDown: false) else {
+            throw BridgeError("EVENT_FAILED", "Could not create paired Unicode keyboard events")
+        }
+        for event in [down, up] {
+            event.flags = []
+            units.withUnsafeBufferPointer { event.keyboardSetUnicodeString(stringLength: $0.count, unicodeString: $0.baseAddress) }
+            if !SystemInputFocus.publicAPIOnly { event.setIntegerValueField(CGEventField(rawValue: 51)!, value: Int64(wid)) }
+            event.setIntegerValueField(.eventSourceUserData, value: 0x43554247)
+            event.timestamp = DispatchTime.now().uptimeNanoseconds
+            event.postToPid(pid)
+        }
     }
     func insertBackgroundEventText(_ p:Object,_ pid:pid_t,_ wid:CGWindowID,_ frame:CGRect,_ observation:BackgroundFocusObservation) async throws -> Object {
         let root=AXUIElementCreateApplication(pid)
@@ -291,15 +345,7 @@ struct HeldBackgroundMouse {
         for units in packets {
             try observation.validate()
             try checkFocus()
-            for down in [true,false] {
-                guard let event=CGEvent(keyboardEventSource:source,virtualKey:0,keyDown:down) else {throw BridgeError("EVENT_FAILED","Could not create Unicode keyboard event")}
-                event.flags=[]
-                units.withUnsafeBufferPointer{event.keyboardSetUnicodeString(stringLength:units.count,unicodeString:$0.baseAddress)}
-                event.setIntegerValueField(CGEventField(rawValue:51)!,value:Int64(wid))
-                event.setIntegerValueField(.eventSourceUserData,value:0x43554247)
-                event.timestamp=DispatchTime.now().uptimeNanoseconds
-                event.postToPid(pid)
-            }
+            try postBackgroundUnicode(units, source: source, pid: pid, wid: wid)
             deliveredText += String(utf16CodeUnits:units,count:units.count)
             let partial=ns.replacingCharacters(in:NSRange(location:selected.location,length:selected.length),with:deliveredText)
             var acknowledged=false
@@ -319,6 +365,89 @@ struct HeldBackgroundMouse {
             try await Task.sleep(nanoseconds:20_000_000)
         }
         throw BridgeError("TEXT_VERIFICATION_FAILED","Raw Unicode events did not produce the exact expected text. The application may ignore or transform them; the operation may be partial. No AX or foreground fallback was attempted. Observe before retrying.")
+    }
+    func insertVisuallyCheckedText(_ p: Object, _ pid: pid_t, _ wid: CGWindowID, _ frame: CGRect,
+                                   _ observation: BackgroundFocusObservation, _ order: NormalWindowOrder, _ foreground: pid_t?) async throws -> Object {
+        func singleLine(_ value: String) -> Bool {
+            (1...160).contains(value.utf16.count) && value.unicodeScalars.allSatisfy {
+                ![.control, .lineSeparator, .paragraphSeparator].contains($0.properties.generalCategory)
+            }
+        }
+        guard let check = p["visualCheck"] as? Object, let before = check["before"] as? String,
+              let text = p["text"] as? String, singleLine(before), singleLine(text), !before.utf16.elementsEqual(text.utf16),
+              let bounds = check["region"] as? Object else {
+            throw BridgeError("INVALID_ARGUMENT", "visualCheck requires distinct observed and requested single lines of 1–160 UTF-16 units")
+        }
+        let region = CGRect(x: number(bounds, "x", -1), y: number(bounds, "y", -1),
+                            width: number(bounds, "width"), height: number(bounds, "height"))
+        guard [region.minX, region.minY, region.width, region.height].allSatisfy(\.isFinite),
+              number(bounds, "width") > 0, number(bounds, "height") > 0,
+              CGRect(origin: .zero, size: frame.size).contains(region) else {
+            throw BridgeError("INVALID_ARGUMENT", "Visual check region must fit inside the window in logical points")
+        }
+        let packets = text.map { Array(String($0).utf16) }
+        guard packets.allSatisfy({ $0.count <= 16 }) else {
+            throw BridgeError("INVALID_ARGUMENT", "Visual text input requires each character to fit in one Unicode event")
+        }
+        let root = AXUIElementCreateApplication(pid)
+        let window = try axWindow(pid, frame)
+        guard attr(window, kAXRoleAttribute) as? String == kAXWindowRole,
+              attr(window, kAXSubroleAttribute) as? String == kAXStandardWindowSubrole else {
+            throw BridgeError("BACKGROUND_EVENT_TEXT_FOCUS_MISMATCH", "Visual text input requires an exact standard window")
+        }
+        guard let foreground, foreground != pid, observation.before.keyboardPID != nil else {
+            throw BridgeError("BACKGROUND_EVENT_TEXT_FOCUS_MISMATCH", "Visual text input requires a background target and an observed keyboard recipient")
+        }
+        func checkFocus() throws {
+            try Task.checkCancellation()
+            guard !shuttingDown else { throw BridgeError("CANCELLED", "Helper stopped during visual text input") }
+            let (application, currentWindow, currentFrame) = try target(p)
+            guard currentFrame == frame, currentWindow["onScreen"] as? Bool == true, !application.isHidden else {
+                throw BridgeError("WINDOW_MOVED", "Window geometry or visibility changed during visual text input. Observe before retrying.")
+            }
+            try ensureEditableNotSecure(pid)
+            guard let activeWindow = attr(root, kAXFocusedWindowAttribute), CFEqual(activeWindow, window),
+                  let focused = attr(root, kAXFocusedUIElementAttribute), CFEqual(focused, window) else {
+                throw BridgeError("BACKGROUND_EVENT_TEXT_FOCUS_MISMATCH", "Visual text input requires the same exact focused window without a distinct AX editor. Observe before retrying.")
+            }
+            try observation.validate()
+            guard observation.unresolved == 0, observation.transitions.isEmpty else {
+                throw BridgeError("BACKGROUND_KEYBOARD_ROUTE_CHANGED", "Focus changed or became unresolved during visual text input. Observe before retrying.")
+            }
+            try assertBackgroundIsolation(pid, wid, order, foreground)
+        }
+        func visibleLines() async throws -> [String] {
+            try checkFocus()
+            let result = try await ocr(p, languageCorrection: false)
+            try checkFocus()
+            return (result["lines"] as? [Object] ?? []).compactMap { line in
+                guard let bounds = line["frame"] as? Object else { return nil }
+                let rect = CGRect(x: number(bounds, "x"), y: number(bounds, "y"), width: number(bounds, "width"), height: number(bounds, "height"))
+                return region.contains(rect) ? line["text"] as? String : nil
+            }
+        }
+        func count(_ wanted: String, in lines: [String]) -> Int {
+            lines.count(where: { $0.utf16.elementsEqual(wanted.utf16) })
+        }
+        let initial = try await visibleLines()
+        guard count(before, in: initial) == 1, count(text, in: initial) == 0 else {
+            throw BridgeError("STALE_VISUAL_TEXT", "The prior line is missing or ambiguous, or the requested line is already present. No text was sent.")
+        }
+        let source = try backgroundSource()
+        for units in packets {
+            try checkFocus()
+            try postBackgroundUnicode(units, source: source, pid: pid, wid: wid)
+            try await Task.sleep(nanoseconds: 12_000_000)
+        }
+        for _ in 0..<3 {
+            let lines = try await visibleLines()
+            if count(text, in: lines) == 1, count(before, in: lines) == 0 {
+                return ["ok":true,"mode":"background","method":"Unicode CGEvent.postToPid with OCR","strategy":"event",
+                        "visualVerified":true,"verificationRequired":true,"AXActionsGenerated":false,"characters":text.count]
+            }
+            try await Task.sleep(nanoseconds: 40_000_000)
+        }
+        throw BridgeError("TEXT_VERIFICATION_FAILED", "OCR did not confirm the complete new line in the same region. Input may be partial. Observe before retrying.")
     }
     func modifierFlags(_ text:String) throws -> CGEventFlags {
         var flags:CGEventFlags=[]
@@ -394,7 +523,8 @@ struct HeldBackgroundMouse {
         let code = try keyCode(last); let source = try backgroundSource()
         guard let down=CGEvent(keyboardEventSource:source,virtualKey:code,keyDown:true),let up=CGEvent(keyboardEventSource:source,virtualKey:code,keyDown:false) else{throw BridgeError("EVENT_FAILED","Could not create paired keyboard events")}
         for event in [down,up] {
-            event.flags=flags;event.setIntegerValueField(CGEventField(rawValue:51)!,value:Int64(wid))
+            event.flags=flags
+            if !SystemInputFocus.publicAPIOnly { event.setIntegerValueField(CGEventField(rawValue:51)!,value:Int64(wid)) }
             event.setIntegerValueField(.eventSourceUserData,value:0x43554247)
         }
         heldBackgroundKey=(pid,up);defer{releaseBackgroundKey()}
@@ -434,7 +564,7 @@ struct HeldBackgroundMouse {
         return search(window,0)
     }
 
-    func checkBackgroundPopup(_ element: AXUIElement) throws {
+    func checkBackgroundPopup(_ element: AXUIElement, typeAhead: Bool = false) throws {
         // AppKit and Chromium can present a native menu even for an AX press.
         guard attr(element, kAXRoleAttribute) as? String == kAXPopUpButtonRole else { return }
         var actions: CFArray?
@@ -447,12 +577,65 @@ struct HeldBackgroundMouse {
         let webPopup = actionSet == [kAXPressAction, kAXShowMenuAction, "AXScrollToVisible"] &&
             items.count <= 1 && items.allSatisfy { attr($0, kAXRoleAttribute) as? String == kAXMenuItemRole } &&
             belongsToWebArea(element)
+        if typeAhead {
+            if nativePopup {
+                throw BridgeError("BACKGROUND_POPUP_UNSUPPORTED", "The closed native popup does not support verified first-letter selection in background. No key was sent.")
+            }
+            return
+        }
         guard nativePopup || webPopup else { return }
         let message = "This closed popup can open a native menu and take the user's keyboard focus. No input was sent."
         if webPopup {
             throw BridgeError("BACKGROUND_POPUP_UNSUPPORTED", message + " Try app-local AX focus and a printable key matching the option's prefix, then verify the selected value.")
         }
         throw BridgeError("BACKGROUND_POPUP_UNSUPPORTED", message)
+    }
+
+    func checkGnuCashToolbar(_ application: NSRunningApplication, _ p: Object, _ frame: CGRect, _ at: CGPoint) async throws {
+        let point = CGPoint(x: at.x-frame.minX, y: at.y-frame.minY)
+        guard application.bundleIdentifier == "org.gnucash.Gnucash", point.y <= 110 else { return }
+        let observation = try await ocr(p, languageCorrection: false)
+        let (_, window, currentFrame) = try target(p)
+        guard currentFrame == frame, window["onScreen"] as? Bool == true else {
+            throw BridgeError("WINDOW_MOVED", "GnuCash window moved during toolbar verification. No click was sent.")
+        }
+        let labels = (observation["lines"] as? [Object] ?? []).compactMap { line -> (String, CGRect)? in
+            guard let text = line["text"] as? String, let bounds = line["frame"] as? Object else { return nil }
+            let rect = CGRect(x: number(bounds,"x"), y: number(bounds,"y"), width: number(bounds,"width"), height: number(bounds,"height"))
+            guard rect.midY < 110 else { return nil }
+            return (text, rect)
+        }
+        let saveLabels = labels.filter { $0.0 == "Save" && $0.1.midX < 80 }
+        guard saveLabels.count == 1 else {
+            guard (window["title"] as? String)?.hasSuffix(" - GnuCash") == true else { return }
+            throw BridgeError("BACKGROUND_GNUCASH_TOOLBAR_UNVERIFIED", "Could not verify the GnuCash toolbar in this area. No pointer input was sent.")
+        }
+        let toolbarLabel = saveLabels[0].1
+        guard (toolbarLabel.minY - 4 * toolbarLabel.height...toolbarLabel.maxY + toolbarLabel.height).contains(point.y) else { return }
+        // The unlabelled overflow chevron occupies the end of the toolbar.
+        if point.x >= frame.width - 36 {
+            throw BridgeError("BACKGROUND_GNUCASH_DIALOG_UNSUPPORTED", "GnuCash toolbar overflow can raise its window while opening the menu in background. No click was sent.")
+        }
+        let buttons = labels.filter { _, label in
+            abs(label.midY - toolbarLabel.midY) <= toolbarLabel.height &&
+                label.insetBy(dx: -20, dy: -4 * label.height).contains(point)
+        }
+        if buttons.contains(where: { $0.0.caseInsensitiveCompare("Reconcile") == .orderedSame }) {
+            throw BridgeError("BACKGROUND_GNUCASH_DIALOG_UNSUPPORTED", "GnuCash Reconcile can raise its register and dialog in background. No click was sent.")
+        }
+        guard buttons.count == 1, ["Save", "Show Splits"].contains(buttons[0].0) else {
+            throw BridgeError("BACKGROUND_GNUCASH_TOOLBAR_UNVERIFIED", "This GnuCash toolbar point does not match a verified background control. No pointer input was sent.")
+        }
+    }
+
+    func checkGnuCashDialogAction(_ element: AXUIElement, pid: pid_t) throws {
+        guard try app(pid).bundleIdentifier == "org.gnucash.Gnucash" else { return }
+        let isReconcile = [kAXTitleAttribute, kAXDescriptionAttribute].contains {
+            (attr(element, $0) as? String)?.caseInsensitiveCompare("Reconcile") == .orderedSame
+        }
+        if isReconcile || attr(element, kAXIdentifierAttribute) as? String == "ActionsReconcileAction" {
+            throw BridgeError("BACKGROUND_GNUCASH_DIALOG_UNSUPPORTED", "GnuCash Reconcile can raise its register and dialog in background. No AX press was sent.")
+        }
     }
 
     // A row label is often exposed as AXStaticText with no AXPress. Use the
@@ -537,26 +720,56 @@ struct HeldBackgroundMouse {
         throw BridgeError("TABLE_SELECTION_UNVERIFIED", "The table did not report the requested selection or a dialog. Observe the window before retrying.")
     }
 
-    func backgroundWindowOrder() -> [(id:Int,pid:pid_t)] {
+    func backgroundTabGroup(_ tab: AXUIElement) -> AXUIElement? {
+        guard attr(tab, kAXRoleAttribute) as? String == kAXRadioButtonRole,
+              (attr(tab, kAXEnabledAttribute) as? Bool) == true,
+              let value = attr(tab, kAXParentAttribute), CFGetTypeID(value) == AXUIElementGetTypeID() else { return nil }
+        let group = value as! AXUIElement
+        var writable = DarwinBoolean(false)
+        guard attr(group, kAXRoleAttribute) as? String == kAXTabGroupRole,
+              children(group, kAXTabsAttribute).contains(where: { CFEqual($0, tab) }),
+              children(group).contains(where: { CFEqual($0, tab) }),
+              AXUIElementIsAttributeSettable(group, kAXSelectedChildrenAttribute as CFString, &writable) == .success,
+              writable.boolValue else { return nil }
+        return group
+    }
+
+    func selectBackgroundTab(_ tab: AXUIElement, in group: AXUIElement,
+                             observation: BackgroundFocusObservation) async throws -> Object {
+        let selected = children(group, kAXSelectedChildrenAttribute)
+        guard selected.count == 1, children(group, kAXTabsAttribute).contains(where: { CFEqual($0, selected[0]) }) else {
+            throw BridgeError("BACKGROUND_TAB_SELECTION_UNSUPPORTED", "The tab group does not report a single selected child. No selection was sent.")
+        }
+        let result: Object = ["ok": true, "mode": "background", "method": "AXSelectedChildren", "verified": true]
+        if CFEqual(selected[0], tab) { return result }
+        try axCheck(AXUIElementSetAttributeValue(group, kAXSelectedChildrenAttribute as CFString, [tab] as CFArray),
+                    "Background tab selection")
+        for _ in 0..<15 {
+            try await Task.sleep(nanoseconds: 20_000_000)
+            try observation.validate()
+            let current = children(group, kAXSelectedChildrenAttribute)
+            if current.count == 1, CFEqual(current[0], tab) { return result }
+        }
+        throw BridgeError("TAB_SELECTION_UNVERIFIED", "The tab group did not report the requested selection. Observe the window before retrying.")
+    }
+
+    func backgroundWindowOrder() -> NormalWindowOrder {
         let rows = CGWindowListCopyWindowInfo([.optionOnScreenOnly,.excludeDesktopElements],kCGNullWindowID) as? [Object] ?? []
         return rows.compactMap { row in
             guard number(row,kCGWindowLayer as String) == 0, let id=row[kCGWindowNumber as String] as? Int,let pid=row[kCGWindowOwnerPID as String] as? Int else{return nil}
             return (id:id,pid:pid_t(pid))
         }
     }
-    func assertBackgroundIsolation(_ pid:pid_t,_ wid:CGWindowID,_ orderBefore:[(id:Int,pid:pid_t)],_ foregroundBefore:pid_t?) throws {
+    func assertBackgroundIsolation(_ pid:pid_t,_ wid:CGWindowID,_ orderBefore:NormalWindowOrder,_ foregroundBefore:pid_t?) throws {
         if foregroundBefore != pid, NSWorkspace.shared.frontmostApplication?.processIdentifier == pid { throw BridgeError("BACKGROUND_APP_ACTIVATED","The target app activated itself in response to the action. Background isolation was not maintained; no activation-restoration workaround was attempted.") }
         let orderAfter = backgroundWindowOrder()
-        // A dialog can close while its parent changes order. Watch all of
-        // this application's existing normal windows, including the parent.
-        let watched = orderBefore.filter { $0.pid == pid }.map(\.id)
-        for id in watched {
-            guard let beforeIndex = orderBefore.firstIndex(where: { $0.id == id }),
-                  let afterIndex = orderAfter.firstIndex(where: { $0.id == id }) else { continue }
-            let previouslyAbove=Set(orderBefore.prefix(beforeIndex).filter{$0.pid != pid}.map{$0.id})
-            if orderAfter.dropFirst(afterIndex+1).contains(where:{previouslyAbove.contains($0.id)}) {
-                throw BridgeError("BACKGROUND_WINDOW_REORDERED","Window stacking changed during the operation. Isolation could not be confirmed; no window-order restoration was attempted. Observe before retrying.")
-            }
+        switch backgroundWindowCrossing(pid: pid, windowId: Int(wid), before: orderBefore, after: orderAfter) {
+        case .existingWindow:
+            throw BridgeError("BACKGROUND_WINDOW_REORDERED", "An existing target window crossed another application's window. Observe before retrying.")
+        case .newWindow:
+            throw BridgeError("BACKGROUND_WINDOW_REORDERED", "A newly visible target window crossed an existing window above the action's target. Observe before retrying.")
+        case nil:
+            break
         }
     }
     func background(_ method: String, _ input: Object) async throws -> Object {
@@ -583,7 +796,15 @@ struct HeldBackgroundMouse {
         }
         let orderBefore = backgroundWindowOrder()
         let foregroundBefore = NSWorkspace.shared.frontmostApplication?.processIdentifier
+        if method == "click" {
+            try await checkGnuCashToolbar(application, p, frame, try point(p, frame))
+        }
         let scopedInput = p["strategy"] as? String == "appkit" ? ScopedAppKitInput(rawValue: method) : nil
+        if SystemInputFocus.publicAPIOnly && (scopedInput != nil || method == "scroll" ||
+            (method == "click" && p["strategy"] as? String == "event") ||
+            (method == "type_text" && p["visualCheck"] != nil)) {
+            throw BridgeError("BACKGROUND_PUBLIC_API_UNSUPPORTED", "This background input route is unavailable in public-API-only mode. No input was sent.")
+        }
         if let scopedInput {
             guard scopedInput.bundleIDs.contains(application.bundleIdentifier ?? "") else {
                 throw BridgeError(scopedInput.code("NOT_ENABLED"), "This application is not enabled for the experimental AppKit \(method) strategy. No input was sent.")
@@ -591,7 +812,8 @@ struct HeldBackgroundMouse {
             if scopedInput == .key { _ = try keyCode(backgroundKeyChord(p).name) }
             try requireBackgroundFocusedTarget(pid, frame, mismatchCode: scopedInput == .key ? "BACKGROUND_KEY_WINDOW_MISMATCH" : "SCOPED_CLICK_WINDOW_MISMATCH")
         }
-        let inputObservation=try BackgroundFocusObservation(targetPID:pid, scopedInput:scopedInput)
+        let inputObservation=try BackgroundFocusObservation(targetPID:pid, scopedInput:scopedInput,
+                                                           expectedForegroundPID:backgroundWitnessPID)
         defer {inputObservation.stop()}
         var pointerDelivery:BackgroundPointerDelivery?
         var appKitSession:ScopedAppKitFocus?
@@ -626,6 +848,7 @@ struct HeldBackgroundMouse {
                 : try? backgroundPressTarget(p, pid, frame, point)
             if let candidate { try checkBackgroundPopup(candidate) }
             if semantic, let element = candidate {
+                try checkGnuCashDialogAction(element, pid: pid)
                 try await agentCursor.move(pid:pid,windowID:wid,frame:frame,point:point,activity:"click")
                 try inputObservation.validate();try assertBackgroundIsolation(pid,wid,orderBefore,foregroundBefore)
                 if p["elementId"] != nil {
@@ -650,7 +873,25 @@ struct HeldBackgroundMouse {
                 result = try await selectBackgroundTableRow(current, window: try axWindow(pid, frame), observation: inputObservation)
                 break
             }
+            if semantic, p["elementId"] != nil {
+                let tab = try ref(p).element
+                if let group = backgroundTabGroup(tab) {
+                    try await agentCursor.move(pid:pid,windowID:wid,frame:frame,point:point,activity:"click")
+                    try inputObservation.validate()
+                    try assertBackgroundIsolation(pid,wid,orderBefore,foregroundBefore)
+                    let liveTab = try ref(p).element
+                    guard CFEqual(liveTab, tab), let liveGroup = backgroundTabGroup(liveTab), CFEqual(liveGroup, group),
+                          belongsToWindow(liveGroup, try axWindow(pid, frame)) else {
+                        throw BridgeError("STALE_ELEMENT", "The tab group changed during cursor approach. Observe it before selecting a tab.")
+                    }
+                    result = try await selectBackgroundTab(liveTab, in: liveGroup, observation: inputObservation)
+                    break
+                }
+            }
             guard strategy != "ax" else {throw BridgeError("BACKGROUND_CLICK_UNSUPPORTED","No semantic click equivalent at this target; no event was sent")}
+            guard !SystemInputFocus.publicAPIOnly else {
+                throw BridgeError("BACKGROUND_PUBLIC_API_UNSUPPORTED", "No semantic background click is available here. Public-API-only mode disables the raw pointer route. No input was sent.")
+            }
             try await agentCursor.move(pid:pid,windowID:wid,frame:frame,point:point,activity:"click")
             pointerDelivery=try BackgroundPointerDelivery(pid:pid,windowID:wid)
             appKitSession=try await prepareScopedAppKitFocus(pid,wid,frame,pointerDelivery!,inputObservation)
@@ -667,6 +908,7 @@ struct HeldBackgroundMouse {
             try assertBackgroundIsolation(pid,wid,orderBefore,foregroundBefore)
             cursorTracksPointer=true
             for i in 1...count {
+                if i > 1 { try assertBackgroundIsolation(pid,wid,orderBefore,foregroundBefore) }
                 try inputObservation.validate();try backgroundMouse(down,point,button,i,pid,wid,frame,pointerDelivery,modifiers)
                 try await waitInputHold(p,frame,inputObservation,number(p,"durationMs",20))
                 try backgroundMouse(up,point,button,i,pid,wid,frame,pointerDelivery,modifiers)
@@ -683,8 +925,14 @@ struct HeldBackgroundMouse {
         case "drag":
             let from = try point(p,frame,"fromX","fromY"); let to = try point(p,frame,"toX","toY")
             let duration = min(2,max(0.1,number(p,"duration",0.4)))
-            try await agentCursor.move(pid:pid,windowID:wid,frame:frame,point:from,activity:"drag")
+            // A popup can enter native menu tracking on the initial mouse-down.
+            if let candidate = try? backgroundPressTarget(p, pid, frame, from) { try checkBackgroundPopup(candidate) }
             if foregroundBefore != pid { try checkBackgroundRowDrag(pid, frame, from) }
+            guard !SystemInputFocus.publicAPIOnly else {
+                throw BridgeError("BACKGROUND_PUBLIC_API_UNSUPPORTED", "Window-routed background drag is unavailable in public-API-only mode. No pointer input was sent.")
+            }
+            try await checkGnuCashToolbar(application, p, frame, from)
+            try await agentCursor.move(pid:pid,windowID:wid,frame:frame,point:from,activity:"drag")
             pointerDelivery=try BackgroundPointerDelivery(pid:pid,windowID:wid)
             appKitSession=try await prepareScopedAppKitFocus(pid,wid,frame,pointerDelivery!,inputObservation)
             try inputObservation.validate()
@@ -712,9 +960,16 @@ struct HeldBackgroundMouse {
         case "type_text":
             let strategy=p["strategy"] as? String ?? "auto"
             guard ["auto","ax","event"].contains(strategy) else {throw BridgeError("INVALID_ARGUMENT","Unknown text strategy")}
+            if p["replaceAll"] != nil, (strategy == "event" || p["elementId"] == nil || !(p["replaceAll"] is String)) {
+                throw BridgeError("INVALID_ARGUMENT", "replaceAll requires an exact background AX text target and the observed text.")
+            }
+            if p["visualCheck"] != nil {
+                result = try await insertVisuallyCheckedText(p, pid, wid, frame, inputObservation, orderBefore, foregroundBefore)
+                break
+            }
             let textElement=try backgroundTextElement(p,pid,wid,frame)
             if let at=axFrame(textElement){try await agentCursor.move(pid:pid,windowID:wid,frame:frame,point:CGPoint(x:at.midX,y:at.midY),activity:"type")}
-            if strategy == "event",ProcessInfo.processInfo.environment["CU_EXPERIMENTAL_APPKIT_FOCUS"] == "1" {
+            if strategy == "event",!SystemInputFocus.publicAPIOnly,ProcessInfo.processInfo.environment["CU_EXPERIMENTAL_APPKIT_FOCUS"] == "1" {
                 let element=try backgroundTextElement(p,pid,wid,frame)
                 guard let focused=attr(AXUIElementCreateApplication(pid),kAXFocusedUIElementAttribute),CFGetTypeID(focused)==AXUIElementGetTypeID(),CFEqual(focused,element) else{throw BridgeError("BACKGROUND_EVENT_TEXT_FOCUS_MISMATCH","Experimental raw text still requires its exact existing editable focus; no notice was sent")}
                 let selectionBefore=attr(element,kAXSelectedTextRangeAttribute)
@@ -730,12 +985,21 @@ struct HeldBackgroundMouse {
             let semanticSelectAll=p["durationMs"] == nil && (p["strategy"] as? String ?? "auto") == "auto" && ["cmd+a","command+a","meta+a","super+a"].contains(normalized)
             if let focused=attr(AXUIElementCreateApplication(pid),kAXFocusedUIElementAttribute),CFGetTypeID(focused)==AXUIElementGetTypeID() {
                 let element = focused as! AXUIElement
-                if ["down", "up", "space", "enter", "return", "alt+down", "option+down", "alt+up", "option+up"].contains(normalized) {
+                let chord = try backgroundKeyChord(p)
+                // AppKit can open a popup from a vertical arrow even when
+                // the event carries modifiers such as Command.
+                let verticalArrow = chord.name == "down" || chord.name == "up"
+                let unmodifiedActivation = chord.flags.isEmpty && ["space", "enter", "return"].contains(chord.name)
+                if verticalArrow || unmodifiedActivation {
                     try checkBackgroundPopup(element)
+                }
+                if chord.flags.isEmpty || chord.flags == .maskShift,
+                   chord.name.utf8.count == 1, let key = chord.name.utf8.first, (97...122).contains(key) {
+                    try checkBackgroundPopup(element, typeAhead: true)
                 }
                 if let at=axFrame(element) {try await agentCursor.move(pid:pid,windowID:wid,frame:frame,point:CGPoint(x:at.midX,y:at.midY),activity:"key")}
             }
-            if scopedInput == .key || (!semanticSelectAll && ProcessInfo.processInfo.environment["CU_EXPERIMENTAL_APPKIT_FOCUS"] == "1") {
+            if !SystemInputFocus.publicAPIOnly && (scopedInput == .key || (!semanticSelectAll && ProcessInfo.processInfo.environment["CU_EXPERIMENTAL_APPKIT_FOCUS"] == "1")) {
                 pointerDelivery=try BackgroundPointerDelivery(pid:pid,windowID:wid)
                 appKitSession=try await prepareScopedAppKitFocus(pid,wid,frame,pointerDelivery!,inputObservation)
                 if scopedInput == .key && appKitSession == nil {

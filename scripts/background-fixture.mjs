@@ -4,7 +4,7 @@ import { mkdirSync, writeFileSync, readFileSync, existsSync, readdirSync, rmSync
 import { fileURLToPath } from 'node:url';
 import path from 'node:path';
 const root=fileURLToPath(new URL('../',import.meta.url));
-export async function startBackgroundFixture(directory,{roles=['target','cover'],background=true,regular=false,targetRegular=false,launchServices=false,documentInput=false,selectionInput=false,focusDiagnostics=false,rejectRaise=false,allSpaces=false,reference=false,resizable=false,beforeLaunch}={}){
+export async function startBackgroundFixture(directory,{roles=['target','cover'],background=true,regular=false,targetRegular=false,launchServices=false,documentInput=false,selectionInput=false,focusDiagnostics=false,rejectRaise=false,allSpaces=false,reference=false,resizable=false,popup=false,beforeLaunch}={}){
   if(regular && !launchServices && process.env.CU_TEST_ALLOW_FOREGROUND_SETUP!=='1')throw Error('Direct regular AppKit launch may activate itself; CU_TEST_ALLOW_FOREGROUND_SETUP=1 is required.');
   const release=acquireFixtureLease(path.join(root,'.build'));
   const children=[],apps={};let closing;
@@ -36,7 +36,7 @@ export async function startBackgroundFixture(directory,{roles=['target','cover']
     writeFileSync(path.join(app,'Contents/Info.plist'),`<?xml version="1.0"?><plist version="1.0"><dict><key>CFBundleIdentifier</key><string>${bundle}</string><key>CFBundleName</key><string>${name}</string><key>CFBundleExecutable</key><string>fixture</string><key>CFBundleVersion</key><string>1</string></dict></plist>`);
     run('xcrun',['swiftc','-parse-as-library','-swift-version','5','-O',path.join(root,'native/BackgroundFixture.swift'),...(focusDiagnostics?['-D','CU_FOCUS_DIAGNOSTICS',path.join(root,'native/FocusDiagnostics.swift')]:[]),'-o',executable]);run('/usr/bin/codesign',['--force','--sign','-',app]);
     const roleRegular=regular||(targetRegular&&role==='target'),roleLaunchServices=launchServices||(targetRegular&&role==='target');
-    const args=[role,directory,...(rejectRaise&&role==='target'?['--diagnostic-reject-raise']:[]),...(allSpaces?['--all-spaces']:[]),...(resizable?['--resizable']:[]),...(roleRegular?['--regular-background']:[]),...(roleLaunchServices?['--launch-services-background']:[]),...(documentInput&&role==='target'?['--document-input']:[]),...(selectionInput&&role==='target'?['--selection-input']:[]),...(background?['--background',String(role==='cover'?apps.target?.windowId??0:0)]:[])];
+    const args=[role,directory,...(rejectRaise&&role==='target'?['--diagnostic-reject-raise']:[]),...(allSpaces?['--all-spaces']:[]),...(resizable?['--resizable']:[]),...(roleRegular?['--regular-background']:[]),...(roleLaunchServices?['--launch-services-background']:[]),...(documentInput&&role==='target'?['--document-input']:[]),...(selectionInput&&role==='target'?['--selection-input']:[]),...(popup&&role==='target'?['--popup']:[]),...(background?['--background',String(role==='cover'?apps.target?.windowId??0:0)]:[])];
     let child;
     if(roleLaunchServices){run('/usr/bin/open',['-g','-n',app,'--args',...args])}
     else {child=spawn(executable,args,{stdio:['ignore','ignore','pipe']});children.push(child);child.stderr.on('data',d=>process.stderr.write(d))}

@@ -2,7 +2,7 @@
 
 [English version](../BENCH_V2_REMEDIATION.md)
 
-对照基线固定为 `artifacts/bench-v2-full-20261109T044031Z/results.json`，其中有 90 个有效试验和 6 次基础设施中断。复现继续用 Pi、OpenAI OAuth、GPT-6.1 Terra（`low`）及锁定版本的上游应用、检查器和 A22。当前按重复索引跑受影响的用例，全量矩阵留待另行验收。
+对照基线固定为 `artifacts/bench-v2-full-20261109T044031Z/results.json`，其中有 90 个有效试验和 6 次基础设施中断。初期复现使用 Pi、OpenAI OAuth 和 GPT-6.1 Terra `low`，运行器现使用 `high`。复现按重复索引使用锁定版本的上游应用、检查器和 A22。全量矩阵留待另行验收。
 
 | 项目 | 修复前 | 当前证据 |
 | --- | --- | --- |
@@ -40,6 +40,18 @@ IR-01 种子 `147201` 的计分复测得 0.15，A22 八项通过。Next 打开 s
 
 单独的 `487371` 对照对关闭的 Priority 下拉框尝试标准 AX increment、decrement 和 confirm。三项均返回 `AXError -25206`，选值保持 Low，菜单保持关闭。哨兵的失焦和升层计数为零。该对照仍未获得选择路径。见 `artifacts/ir02-popup-standard-actions-8WcsW6/report.json`。
 
+种子 `487371` 的六个定向滚轮事件均到达 BenchLab。Priority 在应用内 AX 聚焦前后都保持 Low，菜单始终关闭。另一组对照在两次鼠标事件中保留 Command，菜单打开并列出三个选项。实际键盘接收进程切到 BenchLab，其主窗口越过哨兵，哨兵仍是前台应用。见 `artifacts/ir02-popup-scroll-AH2LsH/report.json`、`artifacts/ir02-popup-command-click-TqErDW/report.json` 及对应事件追踪。
+
+同种子复现了下拉框的键盘预检缺口。应用内 AX 聚焦后，`cmd+down` 打开菜单、夺取键盘焦点并让主窗口升层。驱动现在按解析后的上下方向键进行预检，覆盖带修饰键的组合。修复后的对照在投递前拒绝了六种激活组合，包括 Command+Down 和其他修饰键别名。目标仅收到 Shift+Space 和 Control+Space 的四个键盘包。菜单保持关闭，追踪中的键盘接收者和窗口顺序保持稳定，哨兵保留全部两个生成字符。见 `artifacts/ir02-popup-modified-keys-xaFxVH/report.json` 和 `artifacts/ir02-popup-modified-keys-after-c5ucPo/report.json`。
+
+同种子的后续对照投递了 Home、End、Left、Right 以及四种带修饰键的空格或回车组合。16 个键盘包均到达 BenchLab，选值保持 Low，菜单保持关闭，失焦和升层计数为零。Pi 计分复测中，IR-01 `147201` 拒绝了 sheet 提示，IR-02 `487371` 选择 Later 关闭通知。两轮各得 0.45，A22 八项均通过。两个原生下拉框的选项选择仍待解决。见 `artifacts/ir02-popup-other-keys-eObGYu/report.json` 和 `artifacts/bench-v2-pi-20261111T081114150514Z/summary.json`。
+
+IR-02 `487371` 从 Priority 开始坐标拖动时打开了原生菜单。键盘接收方切到 BenchLab，哨兵记录一次失焦和一次升层。拖动预检现会在投递鼠标按下前检查起点上的下拉框。同种子复测返回 `BACKGROUND_POPUP_UNSUPPORTED`，未发送鼠标包，未观察到焦点通知，窗口顺序稳定，菜单保持关闭且选值仍为 Low。`npm run test:background` 也使用自有 AppKit 下拉框检查拒绝及后续 AX 回读。见基准测试工作树的 `artifacts/ir-popup-drag-baseline-eyw8rqr7/report.json` 和 `artifacts/ir-popup-drag-guard-oj6csw5h/report.json`。
+
+加入拖动保护后，IR-01 `147201` 与 IR-02 `487371` 各得 0.45，A22 八项均通过。另一次 `147201` 复测把 Next 触发的 `BACKGROUND_WINDOW_REORDERED` 写入 `driver_isolation`，锁定版哨兵仍报告零升层。报告现保留两种观察。见基准测试工作树的 `artifacts/bench-v2-pi-20261113T012028606171Z/summary.json` 和 `artifacts/bench-v2-pi-20261113T012304189387Z/summary.json`。
+
+IR-01 `517139` 复测同样得 0.45，A22 八项均通过，`driver_isolation` 也记录了 Next 导致的换序。MB-09 `790113` 回归得 0.05，A22 八项均通过，驱动未报告隔离错误，11 个生成字符完整保留。表格行拖动在投递前被拒绝。自有光标遮挡回归确认普通画布仍收到后台拖动，且目标窗口保持在覆盖窗之后。见基准测试工作树的 `artifacts/bench-v2-pi-20261113T012423376072Z/summary.json` 和 `artifacts/cursor-occlusion-1794533030859/report.json`。
+
 CDB-G02/03 工作流复现见 `artifacts/bench-v2-pi-20261109T064232356505Z/summary.json`。G04 独立 profile 复测见 `artifacts/bench-v2-pi-20261109T064650603373Z/summary.json`，MCP 范围只包含新启动的 Chrome PID。G03 更新临时 profile 后的结果见 `artifacts/bench-v2-pi-20261109T065029893913Z/summary.json`。在这些轮次中，A22 八项均通过，检查器分别得 0.20、0.45、0.15。
 
 用本机 Codex Computer Use 服务（构建 `1001824`）单独对照 MB-09 种子 `790113`。原版 `cua_repl.drag` 对同一行启动了原生拖放，但无投放事件，顺序未变。哨兵的 419 次采样没有观察到键焦点丢失、激活变化、鼠标移动或打字干扰。这是一次未计分的原版对照。静态检查确认了 `NSEvent` 鼠标构造、事件子类型及窗口字段、PID 投递封装，以及此前调查记录的独立焦点通知机制。本轮仍未证实原版由哪条分支保护焦点。见 `artifacts/mb09-original-compare-DDSKEi/report.json` 和 `artifacts/original-drag-path-WrKjJE/`。
@@ -74,6 +86,8 @@ Chromium 控件防护探针核对了两个 Cases 下拉框。打开菜单的动�
 
 加入通用的跨应用进度和保存核对提示后，G04 `482045` 得 1.0。G02 `909557` 再次打开邮件，模型在六次 GUI 调用成功后主动结束，没有尝试编辑目标应用，仍得 0.20。两轮均满足 GUI-only 和 A22 八项。见 `artifacts/bench-v2-pi-20261110T005715281285Z/summary.json`。
 
+加入结构化 AX 后，G04 首轮复测在 16 次 GUI 调用后因提供方用量上限终止。日志把该次评估诊断保留在 `infrastructure_error` 下，未计入得分。随后种子 `482045` 的复测得 1.0，六项任务检查和 A22 八项全部通过。Pi 调用 GUI 27 次，从三次工具错误中恢复，提供方错误及 GUI-only 违规均为零，113 个生成字符完整保留。见原目录的 `artifacts/bench-v2-pi-20261111T082822635092Z/summary.json` 和基准测试工作树的 `artifacts/bench-v2-pi-20261113T005605761400Z/summary.json`。
+
 下一轮 G02 因 Pi 报告 Codex 用量达到上限而中断。日志把该次尝试记为基础设施错误。续跑仅重试 `909557`，跳过已有计分的 G03。G02 随后得 0.45，A22 八项通过。检查器确认阻塞记录已保存，保留项检查也通过。模型在十二次 GUI 调用成功后结束，仍有日历更新和工作簿未完成。见 `artifacts/bench-v2-pi-20261110T012051583955Z/summary.json`。
 
 G03 的 GnuCash 截图暴露了另一个边界缺陷。ScreenCaptureKit 把启动提示拼进普通账本截图，缩小了账本内容，接口仍按账本尺寸报告比例。`a2b0361` 排除隐式子窗口。同一 800 × 632 逻辑点账本现在完整填充 1600 × 1264 像素截图，比例为 2×。前后截图见 `artifacts/cdb-g03-control-inventory-bbmq5U/` 和 `artifacts/cdb-g03-viewport-8CDoMk/`。显式前台悬停仍可截取其临时窗口，MB-10/11 在 `artifacts/bench-v2-pi-20261109T203944095385Z/summary.json` 中再次得 1.0。
@@ -104,6 +118,24 @@ G02 `909557` 的隔离对照通过取得焦点的 AX 文本字段更新了 Dayma
 
 补全定向按键和事件 ID 引导后，Pi 读取了受保护事件的准确 ID，正确保存阻塞记录，通过日历检查，并成功从 Schedule 切到 Controls 后返回。运行器在 23 次工具调用后达到 360 秒上限。Pi 已开始编辑工作簿，检查器读到的仍是保存文件里的原始记录。得分 0.80，唯一失败项是工作簿一致性。A22 八项通过，哨兵保留全部 361 个生成字符。一次循环调用因声明中使用解构被拒绝，运行器现展示独立对照使用的单变量循环。见 `artifacts/bench-v2-pi-20261111T011312271472Z/summary.json` 及其试验目录的 `artifacts/cdb-result.json`。
 
+Benchmark MCP 现已提供 `getAXNodes`，Calc 循环可以直接筛选节点对象并使用索引。同种子对照重做了三格编辑，核验了落盘的 ODS、工作簿与日历一致，以及 Controls 和无关事件完整保留。GUI 策略审计为空，哨兵保留全部 32 个生成字符，零失焦、零升层。见 `artifacts/cdb-g02-structured-ax-xksqirca/report.json`。
+
+两次 `909557` 对照通过 Benchmark MCP 执行了相同的三格编辑循环。静默自动观察耗时 18.84 秒，启用 `autoObserve:false` 耗时 16.26 秒。后者保留所有显式观察，只读核验确认 ODS 已保存、数值与日历一致、仅三格按预期变化，Controls 和无关记录完整保留。策略审计为空，29 个生成字符完整保留，零失焦、零升层。Calc 引导现使用此绑定选项，并要求重新读取 AX 后再使用数字索引。见基准测试工作树的 `artifacts/cdb-g02-calc-observation-baseline-f6hynl4_/report.json` 和 `artifacts/cdb-g02-calc-explicit-observation-x_1aoqhr/report.json`。
+
+加入 `getAXNodes` 后的首轮计分中，Pi 用它更新了一条日历事件，并从一次无效 JavaScript 表达式中恢复。Pi 在 13 次 GUI 调用后结束，未重开事件核验保存，也未继续其余事件、工作簿和阻塞记录。得分 0.20，A22 八项通过，53 个生成字符完整保留，提供方错误及 GUI-only 违规均为零。工具日志记录了模型正常结束，当时仍有时间和轮次。见 `artifacts/bench-v2-pi-20261111T081843748210Z/summary.json`。
+
+补充继续执行已核验编辑的引导后，下一轮得 0.20，A22 八项通过。Pi 在一次调用中依次绑定 Mail 和 Chat，第二个 `getApp` 返回 `WINDOW_GONE`。随后的清单仍显示相同的 Chat PID 和窗口 ID。Pi 随后读取 Calc 并结束，未重试 Chat 绑定或写入。相同种子的只读对照连续 30 次绑定 Mail 和 Chat 并读取结构化 AX，均未出错。短暂不一致的原因仍待查明。见 `artifacts/bench-v2-pi-20261111T082105297757Z/summary.json` 和 `artifacts/cdb-g02-binding-check-4tbr2ix3/report.json`。
+
+采用逐行批量引导的 G02 复测绑定了两个来源窗口，读取了邮件和聊天。Pi 尝试取消一条日历事件，在 10 次 GUI 调用后结束。评估的日历、工作簿一致性和阻塞记录仍未通过。得分 0.20，A22 八项通过，43 个生成字符完整保留。见基准测试工作树的 `artifacts/bench-v2-pi-20261113T010402738776Z/summary.json`。
+
+下一轮 `909557` 使用显式 AX 观察，保存了部分工作簿并达到本地轮次上限。评估器给出 0.80，唯一失败项是工作簿一致性。原日志把 Pi 生成的中止响应记为提供方错误。新轮次单独记录本地轮次上限，测量可用时保留评估结果。该轮还在 Calendar 底部遇到高度为零的控件，点击返回 `POINT_OUTSIDE_WINDOW`。同种子的自有测试中，新动作 `scrollToVisible` 让观察到的按钮完整进入可见区域，仍选中同一事件，哨兵记录零升层、零失焦。见基准测试工作树的 `artifacts/bench-v2-pi-20261113T013034140217Z/summary.json`、`artifacts/cdb-g02-calendar-offscreen-r6fly1lv/report.json` 和 `artifacts/cdb-g02-calendar-reveal-opi2z8s9/report.json`。
+
+首轮 `high` 档 `909557` 复测使用了 `scrollToVisible`，在 273.27 秒后达到本地 45 轮上限。日历与阻塞记录通过，唯一未通过的是工作簿一致性。日志保留 0.80 分并记录 `turn_cap_reached:true`，提供方错误为零，A22 八项通过，274 个生成字符完整保留。这一轮同时包含新的滚动动作。见基准测试工作树的 `artifacts/bench-v2-pi-20261113T042304154305Z/summary.json`。
+
+工作簿评估器指出只剩最后一条阻塞记录及其证据引用未完成。同种子 F2 对照打开了单元格编辑器，但 AX 未报告焦点。对通过工具栏取得焦点的编辑器直接调用 `setValue` 返回 `AX_VALUE_UNCHANGED`。沿用 Formula 和 Enter 路径时，`typeText(newText,{target:index,replaceAll:oldText})` 能在该编辑器上核对原值并验证写入。三格对照耗时 13.99 秒，显式选中文本后输入的对照耗时 16.26 秒。恰有三格按预期落盘，Controls 和无关记录完整保留，哨兵的 27 个字符全部保留，零失焦、零升层。见基准测试工作树的 `artifacts/cdb-g02-calc-f2-yqir66ce/report.json`、`artifacts/cdb-g02-calc-set-editor-t4x0ujz9/report.json` 和 `artifacts/cdb-g02-calc-replace-all-ki0ynmki/report.json`。
+
+使用整段替换和 `high` 档后，`909557` 复测通过全部七项检查，包括工作簿的阻塞行，得 1.00，A22 八项全过。34 次 GUI 调用、292.20 秒内完成，未触及轮次上限。从一次 JavaScript 语法错误恢复，提供方错误、GUI-only 违规和驱动隔离错误均为零。293 个生成字符完整保留。见基准测试工作树的 `artifacts/bench-v2-pi-20261113T043440241224Z/summary.json`。
+
 较早的一轮 G03 Pi 同种子复测得 0.45。模型读取了邮件和工作簿，关闭 GnuCash 启动提示，随后展开账户时收到 `BACKGROUND_KEYBOARD_FOCUS_CHANGED` 并停止。哨兵同时记录到升层、激活变化和打字中断。同种子对照在两个鼠标包上保留 Command，仍记录到升层、激活变化和失焦。见 `artifacts/bench-v2-pi-20261110T010224956905Z/summary.json` 和 `artifacts/cdb-g03-command-disclosure-0OONBK/report.json`。
 
 加入 Calc 提示后的 G03 仍得 0.45，在 GnuCash 账户点击处停止。本机 GDK 二进制在应用不活跃时调用 `activateIgnoringOtherApps:`，与 [GTK Quartz 鼠标按下处理](https://github.com/GNOME/gtk/blob/bac4a949b151eedada8bc60a97429d2176b0b28b/gdk/quartz/gdkevents-quartz.c#L1622-L1650)一致。实验性应用内焦点路由可以投递点击且未测到干扰，但账户仍折叠。在该路由下，依次发送 `+`、Down、Enter 打开了 Checking Account 账簿，哨兵未记录失焦、升层或打字中断。默认路由的 `+` 没有展开账户，两组省去准备点击的对照也未能展开。见 `artifacts/bench-v2-pi-20261110T012051583955Z/summary.json`、`artifacts/cdb-gnucash-register-keys-s90EgT/report.json`、`artifacts/cdb-gnucash-default-key-zZ0Unj/report.json` 和 `artifacts/cdb-gnucash-notice-ablation-{iKEFFW,tM5Nrv}/report.json`。
@@ -128,9 +160,105 @@ GnuCash 将初始对话框附在账簿窗上，GTK Quartz 再将其加入 AppKit
 
 同种子对照沿用 Benchmark MCP 的 GUI-only 校验。单次 JS 调用核对了当前单元格、名称框、工具栏操作、唯一聚焦的编辑器、编辑器内容和提交后的单元格。另一次调用按下保存，独立只读观察器在保存的 ODS 中确认了测试标记。截图调用返回一张 PNG 和坐标信息，省去了字节数组回显。未记录策略违规，哨兵保留全部七个生成字符，无失焦或升层。见 `artifacts/cdb-g03-guarded-cell-0EEVdV/report.json`。
 
+使用结构化 AX 观察后，G03 复测得 0.45，A22 八项通过。Pi 读取了邮件和工作簿，随后尝试按坐标关闭 GnuCash 启动提示，被 `SCOPED_CLICK_WINDOW_MISMATCH` 拒绝。独立同种子对照绑定了提示窗口，找到可用的 `AXCloseButton`，通过 `performSecondaryAction(index,'press')` 关闭。刷新清单确认提示消失，Accounts 窗口仍在。哨兵保留生成的输入，零失焦、零升层。运行器现提供这条已验证路径。见 `artifacts/bench-v2-pi-20261111T082342708304Z/summary.json` 和 `artifacts/cdb-g03-ax-tip-by_bdfoz/report.json`。
+
+下一轮同种子复测中，Pi 使用 `node.role === 'AXCloseButton'` 查找关闭控件。独立对照读到该控件的 `role` 是 `AXButton`，`subrole` 是 `AXCloseButton`。Pi 核验了一格工作簿编辑并调用保存，随后结束，未确认落盘，也未尝试编辑账本。得分仍为 0.45，A22 八项通过。见 `artifacts/bench-v2-pi-20261111T082632290230Z/summary.json` 及其试验目录的 `artifacts/pi.jsonl`。
+
+引导明确 `subrole` 后，G03 复测中 Pi 读取了四份发票附件，完成了部分 Calc 编辑。它先因使用子集不支持的 `push` 和 `concat` 失败，随后批量调用超过 MCP 客户端的 60 秒期限。Pi 读回当前单元格，尚未进入 GnuCash 就结束。工作簿一致性、异常备注和正式对账均未通过。得分 0.45，A22 八项通过，235 个生成字符完整保留。运行器现提供支持的数组展开语法，并把建议的单次批量缩为一行。见基准测试工作树的 `artifacts/bench-v2-pi-20261113T005605761400Z/summary.json` 及 G03 试验目录的 `artifacts/pi.jsonl`。
+
+G03 同种子对照再次发现，第一个 Reconcile 对话框把登记簿移到了两个已有测试窗口之前。确认后出现第二个 Reconcile 窗口，未发生新的窗口顺序交叉。第二个窗口的 AX 树只有七个原生边框和标题节点，OCR 能定位两张交易列表和 Finish 控件。一次定向 Tab 完成，未测得键盘焦点变化。哨兵保留全部 17 个生成字符。此对照未改动对账状态。见基准测试工作树的 `artifacts/cdb-g03-reconcile-controls-h7pojc55/report.json` 和窗口顺序记录。
+
+采用逐行批量引导的 G03 复测中，Pi 通过 AX 关闭了启动提示，绑定 Accounts 并获取截图。随后提交一格 Calc 编辑并按下工具栏 Save，在更新账本前结束。得分 0.45，A22 八项通过，109 个生成字符完整保留。见基准测试工作树的 `artifacts/bench-v2-pi-20261113T010402738776Z/summary.json`。
+
+`high` 档与整段替换引导的复测进入了 GnuCash 登记簿，保存了差异备注，并让多行 Calc 编辑落盘。达到 45 轮上限后得 0.45，A22 八项通过，334 个生成字符完整保留。评估器发现两条应对账的拆分仍未对账、一条重复付款备注缺失、四格工作簿证据格式有误。提供方和驱动隔离错误均为零。见基准测试工作树的 `artifacts/bench-v2-pi-20261113T043440241224Z/summary.json` 及其 G03 评估输出。
+
+下一轮 `high` 复测在编辑前读取了工作簿的 Controls 页。评估器未再报告证据格式错误。模型用完 45 次工具调用，临近退出时空闲守卫记录无法归因的计时回落，实体计数没有变化。该轮未计分，评估器诊断为 0.45，两笔正式对账及两条异常备注仍未完成。见基准测试工作树的 `artifacts/bench-v2-pi-20261113T044828355105Z/summary.json`。
+
+该轮首次绑定 Calc 时还记录了 `WINDOW_GONE`，前后清单中均有同一个 PID 和窗口 ID。`99589` 的 30 次正常只读绑定未复现。模拟额外的按 PID 窗口查询返回空结果时，工作簿仍存在，旧路径复现报错。adaptive 模式的 AX 读取现直接使用原生快照的精确 PID 和窗口验证。同一模拟下已成功绑定工作簿并读取表格。原生目标消失时仍报错，快照失败会使数字索引失效。见基准测试工作树的 `artifacts/cdb-g03-exact-bind-8myjqmei/report.json` 和 `artifacts/cdb-g03-exact-bind-fixed-5uqyojfp/report.json`。
+
+两轮 `99589` 对照以定向点击选中同一条已观察的 GnuCash 拆分备注，通过 GUI 输入并保存了 39 个字母、数字及空格。编辑格横向滚动时，登记簿底部状态栏仍显示完整备注。账本只读复核确认 Checking Account 拆分上的完整内容、仅一处备注改动，以及所有拆分 ID 保留。普通定向 `event` 按键耗时 9.17 秒，逐键准备 `appkit` 焦点耗时 11.34 秒。两轮均保留全部哨兵生成文字，零失焦、零升层。另一个标点对照发现，当前拼音键盘布局会把部分美式键位映射为全角标点和 `¥`。运行器现引导先定向点击，再用普通定向键输入，并在提交前核对完整文字及标点。见 `artifacts/cdb-g03-memo-event-verified-vqhb43ff/report.json`、`artifacts/cdb-g03-memo-appkit-verified-7rrjzyj5/report.json` 和 `artifacts/cdb-g03-memo-event-verified-78oasp8t/CDB-G03/register-memo-edited.png`。[GTK Quartz 键位映射](https://github.com/GNOME/gtk/blob/bac4a949b151eedada8bc60a97429d2176b0b28b/gdk/quartz/gdkkeys-quartz.c#L231-L249)
+
+下一轮 `high` 计分复测用时 316.13 秒，达到 45 次调用上限，得 0.45。A22 八项通过，317 个生成字符完整保留，提供方、GUI-only 和驱动隔离均无报错。检查器接受了工作簿证据格式，两条账本备注和两笔正式对账仍未完成。模型约用 20 次调用列出窗口和读取来源。同种子对照使用实际受限 REPL，一次调用在 7.07 秒内打开、读取并关闭三个已观察的邮件附件预览，零失焦、零升层。运行器现说明如何合并这些读取，并提示 AX 描述对应现有的 `label` 字段。独立备注对照还确认登记簿编辑器缺少可读 AX 值，`typeText(...,{strategy:'event'})` 因此拒绝输入。在当前拼音键盘布局下，GTK 十六进制输入组合也未能产生半角美元符号。见基准测试工作树的 `artifacts/bench-v2-pi-20261113T191555554345Z/summary.json`、`artifacts/cdb-g03-mail-batch-elwv4scu/report.json` 和 `artifacts/cdb-g03-memo-literal-1f8g0_ws/report.json`。
+
+加入邮件批量引导后，Pi 在第五次调用结束前读完所需的五份附件。Calc 编辑阶段在第 21 次工具调用触及 360 秒上限，得 0.45。仅来源行和账本操作仍未完成。A22 八项通过，361 个生成字符完整保留，出现一次可恢复的 JS 语法错误，提供方、GUI-only 和驱动隔离均无报错。随后两轮同种子诊断向已选中的备注格发送定向 Unicode 键事件，每个按下及抬起事件对携带一个字符。基于 NSEvent 和直接构造 CGEvent 的两种方式均在同一拼音布局下显示并保存了原样标点，包括半角美元符号。文件观察器确认仅一处备注改动，拆分 ID 不变。两轮均完整保留哨兵的十个生成字符，零失焦、零升层。公开 `event` 策略仍要求可读的 AX 回读。见基准测试工作树的 `artifacts/bench-v2-pi-20261113T192522086014Z/summary.json`、`artifacts/cdb-g03-memo-unicode-icsxre1l/report.json` 和 `artifacts/cdb-g03-memo-unicode-cg-4_opcww3/report.json`。
+
+随后在同样成功的 Unicode 写入前后直接查询 AX，`AXFocusedUIElement` 都指向登记簿窗口本身，角色为 `AXWindow`，子角色为 `AXStandardWindow`。可以核对精确窗口身份，AX 没有提供独立的聚焦备注编辑器来回读改动。见基准测试工作树的 `artifacts/cdb-g03-memo-unicode-focus-r15ck_dv/report.json`。
+
+MCP 的 `typeText` 现可结合 `strategy:'event'` 显式使用 `visualCheck`。调用方提供 OCR 读到的完整原行和窗口内区域。每对可打印 Unicode 键事件发送前，驱动会核对同一焦点窗口和键盘隔离，随后在指定区域回读完整新行。同种子受限 stdio MCP 对照在发送前拒绝了过期原行及另一个焦点编辑器。有效调用返回 `visualVerified`，167 次焦点采样无变化、无缺失。独立提交及保存后，账本只读复核确认标点完整、仅改动一条备注、拆分 ID 保持一致。哨兵保留全部 12 个生成字符，零失焦、零升层。见基准测试工作树的 `artifacts/cdb-g03-memo-visual-mcp-duak1ugo/report.json`。
+
+`99589` 的 `high` 复测使用这条路径精确保存了两条异常备注，得分从 0.45 提升至 0.65，A22 八项通过，360 个生成字符完整保留。评估器只剩两笔未对账及因此未通过的工作簿一致性检查。该轮在 359.73 秒达到 45 次调用上限。驱动在打开正式对账时另记一次 `BACKGROUND_WINDOW_REORDERED`。提供方和 GUI-only 均无报错。见基准测试工作树的 `artifacts/bench-v2-pi-20261113T194551609742Z/summary.json`。
+
+两轮 `99589` 对照使用同一个经 OCR 定位的 Reconcile 工具栏位置。纯 AX 点击未找到语义目标，焦点和窗口顺序保持稳定。普通定向点击在对话框出现前就把登记簿升到哨兵上方，哨兵记录一次失焦、一次升层和十次输入受阻。此前的定向 AppKit 点击打开了第一个对话框，哨兵保持焦点，登记簿越过了另外两个后台窗口。这两类失败分别出现在指针投递和定向点击触发对话框的阶段。两轮新对照都保留了原账本。见基准测试工作树的 `artifacts/cdb-g03-reconcile-open-ax-bnyb_yh8/report.json` 和 `artifacts/cdb-g03-reconcile-open-event-gxqkijjn/report.json`。[GnuCash 登记簿命令](https://github.com/Gnucash/gnucash/blob/5.17/gnucash/gnome/gnc-plugin-page-register.cpp#L2580-L2608)
+
+自有 AppKit 对照分别验证了窗口操作。先置前子窗口时，子窗口越过遮挡窗，父窗口仍在其后。随后附加该子窗口时，父窗口也越过遮挡窗。若先附加，两者都在遮挡窗后，直到子窗口被置前。`beginSheet` 一次让父子窗口越过遮挡窗，哨兵保持键焦点，与 IR-01 种子 `147201` 的表现一致。已安装的 GDK 二进制在 Quartz 显示路径中包含 `showAndMakeKey:` 和 `addChildWindow:ordered:`。对照已确定哪些操作可以复现换序，GnuCash 运行时具体触发父窗口换序的调用仍未跟踪到。见基准测试工作树的 `artifacts/background-dialog-order-tuqtivy_/report.json` 和 `artifacts/ir01-sheet-order-regression-5mghd7hl/report.json`。[GTK Quartz 窗口显示](https://github.com/GNOME/gtk/blob/bac4a949b151eedada8bc60a97429d2176b0b28b/gdk/quartz/gdkwindow-quartz.c#L1083-L1125)
+
+驱动现也报告新出现的普通窗口越过原先盖在操作目标上的窗口。自有 AX 点击对照中，一次把新子窗口留在遮挡窗后，另一次只把子窗口移到遮挡窗前。驱动接受前者，并对后者返回 `BACKGROUND_WINDOW_REORDERED`。两次哨兵均保持键焦点。检测器观察应用反应，检测到换序后停止同一请求中的后续点击。见基准测试工作树的 `artifacts/background-new-dialog-driver-1aieyymy/report.json`。
+
+`969d733` 后的 IR-01/02 定向复测在 IR-01 `147201` 遇到提供方用量上限后停止。运行器将该次尝试记为基础设施错误，未计分。IR-02 `487371` 尚未启动。见基准测试工作树的 `artifacts/bench-v2-pi-20261113T200532264125Z/summary.json`。
+
+后续新增预检和 IR-01 首字母实验使用公开 API。MB-09 原生行拖放、G03 应用自激活弹窗以及 IR-01/02 的原生下拉框和 sheet 换序按已知限制处理，汇总见下文“仅公开 API 的已知限制”。识别到不支持的路径时，应在投递前拒绝并说明原因。
+
+IR-01 `147201` 对照通过公开 AX 聚焦关闭的 Team 下拉框，再以公开的进程定向按键发送四个选项的首字母。选值始终为 `Choose a team`，没有出现菜单子节点，也没有测到窗口换序、前台应用或哨兵焦点变化。驱动现会在投递前拒绝已识别原生下拉框的首字母输入。同种子验证了小写、带 Shift 和默认策略，也验证了原有的 Down 预检。G04 `482045` 对照仍能在 AX 聚焦后按首字母选中两个 Chromium 选项，同时拦截了打开这两个原生菜单的请求。见基准测试工作树的 `artifacts/ir01-closed-team-public-fi3ugv9f/report.json`、`artifacts/ir01-native-team-reject-0_41h8sc/report.json` 和 `artifacts/cdb-g04-web-popup-regression-f_fo1_uk/report.json`。
+
+G03 `99589` 对照中，新窗口 OCR 预检在投递前拦截了直接 Reconcile 按钮和紧凑工具栏溢出入口，共覆盖 auto、event 和定向点击的六次请求。Show Splits 仍可操作。账本保持原样，18 个生成字符完整保留，零失焦、零升层。预检覆盖实测的英文图标加文字布局。见基准测试工作树的 `artifacts/cdb-g03-dialog-preflight-f6nr9hwt/report.json`。
+
+MB-09 `790113` 回归确认，从原生行内及相邻边框开始拖动均返回 `BACKGROUND_NATIVE_ROW_DRAG_UNSUPPORTED`。两次目标事件观察均记录零鼠标包，哨兵生成文字完整，零失焦、零升层。见基准测试工作树的 `artifacts/mb09-row-and-bezel-regression-6xy882kg/`。
+
+MB-09 `790113` 以 Pi `high` 和仅公开 API 复跑，仍在投递前返回 `BACKGROUND_NATIVE_ROW_DRAG_UNSUPPORTED`。得分 0.05，A22 八项通过，驱动无隔离错误，哨兵保留全部 20 个字符。见 `artifacts/bench-v2-pi-20261114T064558370743Z/summary.json`。
+
+加入预检后的一次 G03 Pi 复测沿用了此前实验性 AppKit 参数，发现后主动停止。运行器保留未计分记录并清理测试进程。最近的有效 G03 得分仍为 0.65。见基准测试工作树的 `artifacts/bench-v2-pi-20261114T012811451081Z/summary.json`。
+
+新的 `--public-api-only` 试验模式在启动前拒绝实验性 AppKit 参数，并禁用驱动的未公开焦点查询和原始指针投递。G04 `482045` 的两个 Chromium 下拉框仍能使用公开进程定向按键选值。IR-01 `147201` 到达第二页后，Team 的四种受保护输入均被拒绝。打开前一个 sheet 时仍测到后台窗口换序。两组对照均未记录哨兵失焦或升层。GnuCash 工具栏现在拒绝无法确认的登记簿工具栏点击，如果应用暴露带 Reconcile 标签的 AX 按钮，也会预检其语义按下。见基准测试工作树的 `artifacts/ir01-team-public-final-uvbmhmv3/report.json` 和 `artifacts/cdb-g04-popup-public-final-pvaukt9t/report.json`。
+
+以 Pi `high` 和 `--public-api-only` 定向重跑后，IR-01 `147201` 和 IR-02 `487371` 均得 0.45，A22 八项通过。哨兵分别保留全部 47 和 25 个生成字符，两轮均无 GUI-only 违规或基础设施错误。IR-01 打开原生 sheet 时仍报告后台窗口换序。见基准测试工作树的 `artifacts/bench-v2-pi-20261114T014132146273Z/summary.json`。
+
+在 IR-01 `147201` 上，公开 AX 探针在投递前枚举了 Next 的普通属性、带参数属性、动作及描述。按钮只公开了描述为 “press” 的 `AXPress`，没有帮助文本或标识符，窗口也没有默认按钮或已附加的 sheet。锁定版源码用普通 `NSButton` 创建该按钮，点击回调再调用 `NSAlert.beginSheetModal(for:)`。自有窗口对照中，sheet 和父窗口同时越过遮挡窗，哨兵保持键焦点。这组对照里，公开 AX 元数据没有提供可在执行前识别该弹窗的信号。见 `artifacts/ir01-public-ax-metadata-zzDvesJ5/report.json`。[锁定版 AppKit 测试应用](https://github.com/trycua/cua/blob/22a67eacd15dc71811e330ed88951dd615bb395d/libs/cua-driver-bench/automated-eval/macos_bench/swift/BenchLabInterrupts.swift#L243-L267)
+
+同种子另一次仅公开 API 复跑中，BenchLab 记录打开 sheet 后约 16 毫秒成为前台应用。哨兵记录一次失焦、一次升层和 22 次输入受阻，A22 只有四项通过。驱动在 Next 点击中报告 `BACKGROUND_ACCESSIBILITY_FOCUS_CHANGED`。同次试验的 IR-02 得分 0.45，A22 八项通过。基准现在会在每次后续输入前检查初始哨兵，并在确认焦点变化后停止输入。自有应用主动激活对照中，后续按钮未收到调用，仍可读取新 AX 快照。应用回调可在缺少提前 AX 信号的情况下打开 sheet，这条路径的隔离问题仍存在。见 `artifacts/bench-v2-pi-20261114T064925200793Z/summary.json` 和 `artifacts/ir01-witness-guard-XRGNDS0p/report.json`。
+
+加入哨兵保护后，Pi 复现了 IR-01 的首次失焦，仍能读取新 sheet。后续决定按钮点击在投递前返回 `BENCH_WITNESS_FOCUS_CHANGED`，测试应用未记录决定。A22 按原规则为 4/8，任务得分 0.15。IR-02 关闭通知横幅，得分 0.45，A22 八项通过。见 `artifacts/bench-v2-pi-20261114T065429236501Z/summary.json`。新 IOKit 读数检查下，IR-04 同种子复测仍得 1.00，A22 八项通过。见 `artifacts/bench-v2-pi-20261114T064824146323Z/summary.json`。
+
+仅公开 API 的后台模式会在投递前拒绝显式 `AXShowMenu`，包括识别范围之外的控件。自有 AppKit 对照按钮同时公开 `AXShowMenu` 和 `AXPress`。菜单回调未触发，普通按下仍投递到同一控件，哨兵无失焦或窗口升层。见 `artifacts/public-menu-guard-eSDxMTEV/report.json`。
+
+IR-03 `410255` 以 Pi `high` 和仅公开 API 模式复跑，得分 1.00，A22 八项通过，两次保存提示均完成。哨兵保留全部 49 个生成字符。选择第二条笔记时，驱动记录一次 `BACKGROUND_WINDOW_REORDERED`。同种子对照确认首个保存 sheet 和父窗口均越过另一扇自有后台遮挡窗，哨兵保持在两者上方并保有焦点。见 `artifacts/bench-v2-pi-20261114T015856177473Z/summary.json` 和 `artifacts/ir03-public-save-order-cHyl13cs/report.json`。[锁定版保存处理器](https://github.com/trycua/cua/blob/22a67eacd15dc71811e330ed88951dd615bb395d/libs/cua-driver-bench/automated-eval/macos_bench/swift/BenchLabInterrupts.swift#L608-L627)
+
+IR-04 `816494` 以 Pi `high` 和仅公开 API 复跑，五项检查全部通过。模型拒绝同意弹层并准确提交一次，得分从锁定基线的 0.45 升至 1.00，A22 八项通过，哨兵保留全部 35 个字符。显式前台条件下，MB-10 `227159` 和 MB-11 `160721` 也都用公开 API 得分 1.00。评估器验证了 MB-10 的真实悬停和单次正确点击，以及 MB-11 的原生工具提示显示和单次正确提交。见 `artifacts/bench-v2-pi-20261114T064304582314Z/summary.json` 和 `artifacts/bench-v2-pi-20261114T064355337470Z/summary.json`。
+
+仅公开 API 的 G02 `909557` 在额度恢复后续跑唯一剩余种子，第二次尝试得分 0.65，A22 八项通过。日历检查通过。运行达到 45 次 GUI 调用时，工作簿一致性和聊天中的阻塞记录仍未通过，哨兵保留全部 170 个字符。聊天表单提交按钮位于视口外，最后一次调用前未将其滚入可见区。Calc 标签没有 `AXPress`，聚焦操作后工作表未切换。见 `artifacts/bench-v2-pi-20261114T020206000655Z/summary.json`。
+
+Calc 同种子对照中，公开定向按键 Command–Page Down 和 Enter 均返回事件投递确认，工作表和编辑中的单元格仍保持原状。通过公式编辑栏、Accept 和 Save 的 AX 控件，成功将一个诊断单元格保存到文件。工作表标签的父级 `AXTabGroup` 提供可写的 `AXSelectedChildren`。没有按下动作的已观察标签现在可通过该属性完成语义点击。最终对照切换至 Controls，再点击同一标签，切回 Schedule，并保存一个单元格变更。自有窗口顺序保持稳定，哨兵保留全部 23 个字符。见 `artifacts/cdb-g02-public-calc-5z8Kyyuz/report.json`、`artifacts/cdb-g02-public-tabs-Rf95hMaj/report.json` 和 `artifacts/cdb-g02-public-tab-final-KDXJSelr/report.json`。[LibreOffice 选中子元素的实现](https://github.com/LibreOffice/core/blob/libreoffice-26.8.2.2/vcl/osx/a11yselectionwrapper.mm#L65-L90)
+
+加入标签选择和仅公开 API 的操作引导后，G02 `909557` 得分 0.85，A22 八项通过，日历及工作簿一致性均通过。运行在 43 次 GUI 调用后达到 360 秒限制，Signal Quay Chat 的阻塞记录尚未提交。哨兵保留全部 361 个字符，驱动隔离、GUI-only 和提供方均无报错。同种子聊天对照将首个字段滚入可见区，回读五个字段后点击观察到的 AX 提交按钮。界面显示审计确认，自有观察器读到已保存的阻塞记录，哨兵未失焦或升层。运行器现在引导模型在耗时的目标编辑前先保存已核实的阻塞记录。见 `artifacts/bench-v2-pi-20261114T061614031408Z/summary.json` 和 `artifacts/cdb-g02-public-chat-BdNOvhSu/report.json`。
+
+随后使用 Pi GPT-6.1 Terra、`high` 和 `--public-api-only` 重跑 G02 `909557`。Pi 在第八次调用提交阻塞记录，共 33 次 GUI 调用，耗时 292.67 秒。阻塞记录、日历和已保存工作簿等七项检查全部通过，得分 1.00，A22 八项通过。哨兵保留全部 293 个字符，驱动隔离、GUI-only 和提供方均无报错。同种子锁定基线为 0.20。见 `artifacts/bench-v2-pi-20261114T062427582654Z/summary.json`。
+
+G04 `482045` 首次全流程使用仅公开 API，模型通过关闭的网页下拉框选值并保存一条案件记录，编辑另一条时达到 45 次调用上限。得分 0.15，A22 八项通过，哨兵保留全部 136 个字符。工具记录确认第一条的选值、结构化证据填写和重开回读。运行器现在引导模型将已核实案件的选值和字段编辑批量执行，并逐案保存和重开检查。见 `artifacts/bench-v2-pi-20261114T063023939479Z/summary.json`。
+
+加入逐案操作引导后，以 `high` 和仅公开 API 重跑 G04 `482045`，六项评估全部通过，得分 1.00，A22 八项通过。共 22 次 GUI 调用，耗时 120.20 秒，哨兵保留全部 121 个字符，驱动隔离、GUI-only 和提供方均无报错。见 `artifacts/bench-v2-pi-20261114T063342722365Z/summary.json`。
+
+仅用公开 API 的 G03 `99589` 对照在投递前拒绝了工具栏溢出入口、无法确认的工具栏坐标和显式实验点击。账本与可见窗口列表保持原样，哨兵生成文字完整，零失焦、零升层。运行器在 GnuCash 试验中都会说明这项对账限制。见基准测试工作树的 `artifacts/cdb-g03-public-toolbar-4_o8lzbo/report.json`。
+
+G03 `99589` 以 Pi `high` 和仅公开 API 复跑，得分 0.45，A22 八项通过。Pi 编辑 Calc 并调用保存，结束前未能打开 GnuCash 登记簿。异常备注、正式对账和工作簿一致性均未通过。哨兵保留全部 232 个字符，提供方、GUI-only 和驱动隔离均无报错。同种子公开 AX 对照中，Accounts 窗口只公开七个节点，没有账户行、列表树或展开控件，截图 OCR 能读到 Assets 行。发送定向 Shift–等号和右方向键后，账户节点和登记簿仍未出现，账本保持原样。见 `artifacts/bench-v2-pi-20261114T063632426557Z/summary.json` 和 `artifacts/cdb-g03-public-account-i3WfNju8/report.json`。
+
+另一轮同种子对照中，第二个 Reconcile 窗口在已观察交易行与 OCR 定位的 R 列交点接收了定向点击。Funds Out 合计从 $73.10 升至 $1,321.70，再次点击恢复 $73.10。哨兵保留全部 17 个生成字符，零失焦。第一个对话框仍改变了与其他测试后台窗口的相对顺序。对照在 Finish 前结束，确认了可撤销的行勾选。见基准测试工作树的 `artifacts/cdb-g03-reconcile-row-8glk4mao/report.json`。
+
+另一轮 `99589` 对照在一次性账本完成并保存了一笔诊断性对账。定向数字编辑保留原有小数分隔符。Finish 前通过 OCR 和截图核对了勾选金额、两项余额相等及差额为零。只读 XML 观察器确认一条 Checking Account 拆分从 `n` 变为 `y`，对账日期随之写入，所有交易编号均保留。哨兵的 19 个生成字符完整保留，零失焦、零激活。驱动仍报告了初始对话框导致的后台窗口换序。见基准测试工作树的 `artifacts/cdb-g03-reconcile-finish-i1wkeb6t/report.json` 和截图。
+
 | 待办 | 已有逐轮证据 |
 | --- | --- |
 | MB-09 `790113` | 投递前拦截消除了已验证表格行拖动路径上的干扰，后台原生列表重排仍缺少可验证的投递方式。加入预检前，手势全程保留 Command 也会失败。见 `artifacts/mb09-drag-threshold-34DwfW/report.json` 和 `artifacts/mb09-command-drag-igkzdF/report.json` |
-| IR-01 `147201`、`517139` 和 IR-02 `487371` | 无视觉光标时直接通过 AX 按 Next，仍复现了原生 sheet 让目标越过另一后台窗口，哨兵始终保持键焦点。此前打开菜单则单独造成过失焦。在应用内聚焦的 AppKit 下拉框发送普通按键，选值未改变，显式 `appkit` 按键准备的对照也是如此。原生选项选择与 sheet 堆叠仍待解决。见 `artifacts/ir-popup-typeahead-TLnRd8/report.json` 和 `artifacts/ir02-popup-scoped-letter-6TMHum/report.json` |
-| CDB-G02 `909557` | 运行器的 Electron 遮挡开关恢复了邮件 AXPress，未测得干扰。独立对照验证了日历和 Calc 对应记录均能保存。0.80 的计分轮通过了日历和阻塞记录检查，工作簿一致性仍待验证 |
-| CDB-G03 `99589` | 独立对照已验证 Calc 工具栏编辑和保存、GnuCash 账簿导航及拆分备注保存。打开正式对账仍会让账簿越过其他后台窗口。计分轮工作簿一致性和 `y` 状态的安全写入仍待验证 |
+| IR-01 `147201`、`517139` 和 IR-02 `487371` | 关闭状态下的原生 AppKit 下拉框选值属于已知后台限制，首字母输入及打开菜单会在投递前拒绝。IR-01 原生 sheet 仍可能升层并夺取焦点，哨兵保护会停止后续输入 |
+| CDB-G03 `99589` | 此前的实验路径已验证两条异常备注。仅公开 API 的轮次未能在账户树中导航。后台打开正式对账属于已知限制，实测的 Reconcile 按钮及溢出入口会在投递前拒绝 |
+
+## 仅公开 API 的已知限制
+
+使用 `--public-api-only` 时，下列路径没有经过验证、且不打扰用户的后台投递方式。驱动不会把它们报告为后台成功。能在投递前识别的路径直接拒绝并说明原因。无法提前识别的路径在检测到换序或失焦后返回错误，基准随后停止该轮的输入。这些限制不放宽 GUI-only 或 A22，也不会自动切换到前台。
+
+| 限制 | 驱动行为 | 证据 |
+| --- | --- | --- |
+| MB-09 原生表格行拖放重排 | 从原生表格的普通行或相邻边框发起后台拖动时返回 `BACKGROUND_NATIVE_ROW_DRAG_UNSUPPORTED`，不发送鼠标包 | `artifacts/mb09-row-and-bezel-regression-6xy882kg/`；`artifacts/bench-v2-pi-20261114T064558370743Z/summary.json` 得 0.05，A22 八项通过 |
+| CDB-G03 GnuCash 正式对账（应用自激活对话框） | 已识别的 Reconcile 按钮、它的 AX 按下和工具栏溢出入口返回 `BACKGROUND_GNUCASH_DIALOG_UNSUPPORTED`。无法确认的工具栏坐标返回 `BACKGROUND_GNUCASH_TOOLBAR_UNVERIFIED` | `artifacts/cdb-g03-public-toolbar-4_o8lzbo/report.json`；`artifacts/bench-v2-pi-20261114T063632426557Z/summary.json` 得 0.45，A22 八项通过 |
+| IR-01/02 关闭状态的原生 AppKit 下拉框选值 | 关闭的 `NSPopUpButton` 不公开选项，值和选中子元素都不可写。点击、AX 按下、从下拉框起点拖动、会打开菜单的方向键组合（含修饰键）以及首字母输入均返回 `BACKGROUND_POPUP_UNSUPPORTED`。显式 `AXShowMenu` 返回 `BACKGROUND_MENU_UNSUPPORTED`。这些请求不发送输入，选值保持不变 | `artifacts/ir01-closed-team-public-fi3ugv9f/report.json`、`artifacts/ir01-native-team-reject-0_41h8sc/report.json`、`artifacts/ir01-team-public-final-uvbmhmv3/report.json`、`artifacts/public-menu-guard-eSDxMTEV/report.json`；IR-02 `487371` 在 `artifacts/bench-v2-pi-20261114T065429236501Z/summary.json` 得 0.45，A22 八项通过 |
+| IR-01 Next 打开的原生 sheet 换序与应用自激活 | Next 是普通 `NSButton`，点击回调才调用 `beginSheetModal`。公开 AX 在投递前没有可识别的信号，所以无法提前拒绝，首次换序或失焦仍会发生。驱动对该次点击返回 `BACKGROUND_WINDOW_REORDERED` 或 `BACKGROUND_ACCESSIBILITY_FOCUS_CHANGED`，不报告成功。随后基准的哨兵保护让后续输入返回 `BENCH_WITNESS_FOCUS_CHANGED`，只读观察仍可用。自 `493373c` 起，原生 helper 在开始投递时也要求前台和系统 AX 焦点仍属于初始哨兵。A22 按实测结果计分 | `artifacts/ir01-public-ax-metadata-zzDvesJ5/report.json`、`artifacts/ir01-witness-guard-XRGNDS0p/report.json`；IR-01 `147201` 在 `artifacts/bench-v2-pi-20261114T065429236501Z/summary.json` 得 0.15，A22 4/8 |
+
+上游参考：trycua 的 [Cua Driver Bench 文章](https://cua.ai/blog/cua-driver-bench)把 macOS 上的两项缺口列为待修，分别是从弹出菜单选值时菜单会在用户窗口上方显示约 50 毫秒，以及后台拖放（MB-09 为 0/5）。文章也写到 cua-driver 在 macOS 上能让后台应用的 sheet 留在用户窗口之后。因此 IR-01 的 sheet 换序是本仓库在仅公开 API 约束下的限制，不是上游共有的问题。截至 2026-11-14，三个相关 PR 均未合并。[#7497](https://github.com/trycua/cua/pull/7497) 在无法避免升层时拒绝后台下拉框和右键菜单。[#7567](https://github.com/trycua/cua/pull/7567) 在此基础上尝试首字母选择，但只在应用自认为处于激活状态（`AXFrontmost`）时生效，否则直接拒绝。这与本仓库在 `147201` 上首字母输入未改变选值的观察一致。[#7556](https://github.com/trycua/cua/pull/7556) 借助遮挡面板，在用户指针处发出一次硬件鼠标按下和抬起来完成后台拖放，作者注明它依赖的 WindowServer 行为不是文档契约。本仓库不采用这类路径。

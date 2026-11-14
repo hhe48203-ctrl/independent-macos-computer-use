@@ -5,12 +5,39 @@ import json
 from pathlib import Path
 import re
 import subprocess
+import time
 
 HID_TYPES = (1, 2, 3, 4, 5, 6, 7, 10, 11, 12, 22, 23, 24, 25, 26, 27)
+IDLE_TIME = re.compile(r'"HIDIdleTime"\s*=\s*([0-9]+)\s*$')
 TICKLE = re.compile(
     r'\b(\d+):(\d+):(\d+) UserIsActive named: "[^"\n]*?queue\.tickle\.nxevent '
     r'service:IOHIDSystem pid:(\d+) process:computer-use-bridge"'
 )
+
+
+def hid_idle_seconds():
+    try:
+        result = subprocess.check_output(["/usr/sbin/ioreg", "-r", "-c", "IOHIDSystem", "-l", "-d", "1"],
+                                         stderr=subprocess.DEVNULL, text=True, timeout=3)
+    except (OSError, subprocess.SubprocessError) as error:
+        raise RuntimeError("Could not read IOKit hardware idle time") from error
+    matches = [match for line in result.splitlines() if (match := IDLE_TIME.search(line))]
+    if len(matches) != 1:
+        raise RuntimeError("Expected one valid IOKit HIDIdleTime measurement")
+    return int(matches[0][1]) / 1e9
+
+
+def wait_for_idle(minimum, timeout, stop_file):
+    deadline = time.monotonic() + timeout
+    while not stop_file.exists():
+        idle = hid_idle_seconds()
+        if idle >= minimum:
+            return idle
+        remaining = deadline - time.monotonic()
+        if remaining <= 0:
+            break
+        time.sleep(min(1, remaining))
+    return None
 
 
 def hid_counter_reader():

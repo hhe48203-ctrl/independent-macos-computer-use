@@ -8,6 +8,19 @@ import activity
 
 
 class ActivityGuardTest(unittest.TestCase):
+    def test_idle_measurement_preserves_zero_and_refuses_missing_or_ambiguous_data(self):
+        property_line = '  "HIDIdleTime" = 0\n'
+        with patch.object(activity.subprocess, 'check_output', return_value=property_line):
+            self.assertEqual(activity.hid_idle_seconds(), 0.0)
+        for invalid in ('', property_line * 2, '  "HIDIdleTime" = -1\n'):
+            with patch.object(activity.subprocess, 'check_output', return_value=invalid):
+                with self.assertRaisesRegex(RuntimeError, "valid IOKit HIDIdleTime"):
+                    activity.hid_idle_seconds()
+        with patch.object(activity.subprocess, 'check_output', side_effect=OSError), \
+             patch.object(Path, 'exists', return_value=False):
+            with self.assertRaisesRegex(RuntimeError, "Could not read IOKit"):
+                activity.wait_for_idle(0, 0, Path('/inactive-stop-marker'))
+
     def test_same_hid_counters_require_attributed_idle_reset(self):
         counters = (12,) * len(activity.HID_TYPES)
         self.assertEqual(activity.activity_decision(20, 0.8, counters, counters, lambda _: 34),

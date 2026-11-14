@@ -35,6 +35,10 @@ Pass `{emit:false}` to `getApp` to suppress its initial tree and automatic AX ou
 
 `getAXState` and `getAXStateAndScreenshot` accept `maxNodes` (1–2000, default 500) and `maxDepth` (1–30, default 16) for a single observation. Use `emit:false` to filter the returned text before displaying relevant lines from a large tree.
 
+`getAXNodes({emit:false,maxNodes:500,maxDepth:16})` returns `{nodes,truncated,coordinates}` for a full or bounded AX-only observation. Each node has `index`, `parentIndex` (`null` at the root), `depth` and its available AX attributes. Filter by fields such as `role`, `title`, `label` or `value` and use the latest `index` for actions. This observation refreshes indices and applies the binding's AX-only coordinate rules. The next text diff still compares against the last text observation. Pass `emit:false` to keep the entire result out of the displayed output.
+
+Use `getApp(reference,{emit:false,autoObserve:false})` when your script already reads and verifies AX state after each action. It skips the post-action snapshot and discards previous AX indices even when the native action reports an error. Read `getAXNodes` or `getAXState` before using another index. Coordinate arrays retain the last observation's mapping and still require matching window geometry. Initial binding and explicit reconnect still take a snapshot, and reconnect inherits `autoObserve`.
+
 `getScreenshot` returns a PNG Buffer, and `getAXStateAndScreenshot` returns `{state,coordinates,screenshot?}`. Both display as MCP image blocks by default; `emit:false` only returns them. `nodeRepl.write(value)` emits text and `nodeRepl.emitImage(PNG or JPEG bytes)` emits an image. Ending a call with `undefined` avoids a redundant value inspection.
 
 An ordinary window screenshot captures the bound window alone. A separate child window can otherwise expand the captured image and invalidate its coordinate scale. Bind a separate dialog by its own PID and window ID when it appears in `listWindows`. The explicit hover capture can include owned transient windows within the bound frame.
@@ -66,19 +70,27 @@ A confirmed call returns a **new object plus a full initial AX observation**, in
 | Method | Description |
 |---|---|
 | click(index or [x,y], options?) | mouseButton, clickCount, strategy:auto/ax/event/appkit, key, durationMs; plain clicks prefer AXPress |
-| typeText(text,{strategy?,target?}) | verified AX insertion or real process-directed Unicode. Optional target is the current editable AX index in this bound window |
+| typeText(text,{strategy?,target?,replaceAll?,visualCheck?}) | verified AX insertion or process-directed Unicode, with optional visual readback |
 | pressKey('CMD+A',{strategy?,durationMs?}) | auto may use AX selection; event forces real key packets |
 | drag(from,to,{duration?}) | duration 0.1..2 s, default 0.4; background real events |
 | scroll(index or point,direction,pages?,{distanceMode?}) | up/down/left/right, pages default 1 with range >0..10; calibrated by default, legacy optional |
 | selectText(index,text,{prefix?,suffix?,selectionType?}) | text/cursor_before/cursor_after with UTF-16 ranges |
 | setValue(index,text) | semantic AXValue set, with string readback when available |
-| performSecondaryAction(index,action) | focus/press/showMenu/increment/decrement/confirm |
+| performSecondaryAction(index,action) | focus/press/showMenu/increment/decrement/confirm/scrollToVisible |
 | paste(text,{format:'text'}) | plain-text AX insertion, no clipboard |
 | ocr({emit?,maxDimension?}) | local Vision OCR; rectangles are logical points in the window |
 | move([x,y]) | moves only the independent overlay cursor, produces no mouse input |
 | hover([x,y],{durationMs?,screenshot?}) | explicit foreground hover with the real pointer |
 
+If a control advertises `AXScrollToVisible`, `performSecondaryAction(index,'scrollToVisible')` asks the app to reveal it. Re-observe the window to confirm the control is visible and get its current index before acting on it.
+
+For a focused background AX field, pass its current index and observed full value to `typeText(newText,{target:index,replaceAll:oldText})`. The driver checks the live value before replacing it and verifies the resulting text. A changed value returns `STALE_TEXT_VALUE`. Read the application again to verify any subsequent commit or save.
+
+When the exact background window has an observed editor absent from AX, focus the editor and call `typeText(text,{strategy:'event',visualCheck:{before,region}})`. Supply the prior complete line from `app.ocr()` as `before`. Set `region` to a window-relative `{x,y,width,height}` rectangle in logical points that can contain both complete lines. The driver requires a unique prior line and confirms its replacement with the requested text using OCR. Each string must be a single line of 1–160 UTF-16 units. The result's `visualVerified` confirms the displayed text in that region. Check the intended editor before committing and verify the saved document afterward. Refresh the observation after `STALE_VISUAL_TEXT` or `TEXT_VERIFICATION_FAILED`.
+
 Plain background element clicks use the table’s writable `AXSelectedRows` when the observed element is a row or its text and has no `AXPress`. `selectionOutcome:"dialogOpened"` means a sheet appeared. Read the new AX tree before choosing its buttons.
+
+A plain background click on an observed tab can use its parent `AXTabGroup`’s writable `AXSelectedChildren` when the tab has no press action. The helper requires a single current selection and reads back the selected tab. Verify the newly displayed content with a fresh observation.
 
 A plain background click on a static text label inside its direct button or checkbox parent can use the parent’s `AXPress`. The parent must contain the click point and still match after the cursor approaches. Use `strategy:'event'` to request pointer delivery explicitly.
 
@@ -96,7 +108,7 @@ Modifier-click example: `await app.click([200,400],{key:'super+shift',durationMs
 
 The default vertical distance is calibrated to `round(windowHeight*pages)`, consistent with measurements on two owned apps, two sizes and consecutive scrolling. Horizontal keeps `round(windowWidth*0.8*pages)`: the original produced no horizontal displacement in this round, so no horizontal compatibility is claimed. The fourth parameter `{distanceMode:'legacy'}` restores the v1.0 0.8 algorithm on both axes. The returned `scrollDistance` gives the logical-point delta sent; the actual displacement is still up to the app. Full data is in the [compatibility acceptance](COMPATIBILITY_V1_1.md).
 
-For a readable string `AXValue`, `setValue` reports `valueVerified` when the returned value exactly matches the request. If a requested change leaves the previous value in place, it reports `AX_VALUE_UNCHANGED`. Observe normalized or unreadable values before proceeding. Closed popups with read-only values, no children and only native menu actions report `BACKGROUND_POPUP_UNSUPPORTED` for background opens. Real events require app support. The `event` text strategy requires a pre-existing, readable, non-secure text focus and selection range.
+For a readable string `AXValue`, `setValue` reports `valueVerified` when the returned value exactly matches the request. If a requested change leaves the previous value in place, it reports `AX_VALUE_UNCHANGED`. Observe normalized or unreadable values before proceeding. Closed popups with read-only values, no children and only native menu actions report `BACKGROUND_POPUP_UNSUPPORTED` for background opens. The same preflight covers a drag starting on the popup and Up and Down on the focused popup, including with modifiers. Real events require app support. The `event` text strategy uses a pre-existing, readable, non-secure text focus and selection range unless `visualCheck` explicitly selects visual readback.
 
 In the tested Chrome address bar, `typeText` updated the displayed value without preparing the address for submission. For navigation, focus the current address field, call `setValue(index,address)`, press Enter, and verify the loaded page in a fresh observation.
 
@@ -145,5 +157,11 @@ The current original macOS build and the independent build are not identical: as
 ## Concurrent-use profile (v1.2)
 
 Real event strategies and synthetic AppKit activation are separate. The pi setup defaults to `CU_EXPERIMENTAL_APPKIT_FOCUS=0`; `--background-events` no longer turns it on. Only `--experimental-appkit-focus` opts into activation. `cua.status().background.appKitFocusPolicy` reports the selected policy.
+
+`BACKGROUND_WINDOW_REORDERED` reports an existing normal window crossing another app’s window or a newly visible normal window crossing a window that was above the action target. Ordinary `AXPress` metadata can omit the fact that the app will open a sheet. In that case, the app may already have opened its dialog when the error arrives. Observe current windows before another mutation.
+
+The background popup preflight returns `BACKGROUND_POPUP_UNSUPPORTED` for menu opening and first-letter selection on recognized closed native AppKit popups. Chromium web controls that support type-ahead can still receive a printable key after local AX focus. GnuCash background clicks on the observed English Reconcile toolbar control and toolbar overflow return `BACKGROUND_GNUCASH_DIALOG_UNSUPPORTED` before dispatch. This check uses the exact window's OCR and covers the measured text-and-icons toolbar layout. Other layouts and dialog commands need their own validation.
+
+Set `CU_PUBLIC_API_ONLY=1` at server startup to restrict the driver to documented macOS APIs. Background clicks need a semantic AX route. Background pointer events and experimental AppKit preparation return `BACKGROUND_PUBLIC_API_UNSUPPORTED`. Explicit background `showMenu` is refused before dispatch because native menu tracking can affect the foreground session. Process-directed key events require an exact AX-focused target window. Foreground app and system AX focus are sampled, and `keyboardFocusResolved` is false because the system keyboard-recipient query is unavailable in this mode.
 
 Inactive AppKit apps can ignore raw CMD+A/menu shortcuts and text-selection drags. Prefer `pressKey('CMD+A')`, `selectText(...)`, and `click(index)` for their semantic equivalents. Do not retry failed input with activation automatically. The optional activation route can activate a background text input context while system focus stays elsewhere. [Input isolation](INPUT_ISOLATION.md) records the cause trace, original AX Raise observation and limits; a new single-participant cooperative comparison was accepted; this does not extend to experimental long holds.

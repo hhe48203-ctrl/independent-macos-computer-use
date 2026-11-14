@@ -2,7 +2,7 @@
 
 [English version](../BENCH_V2.md)
 
-`npm run bench:v2` 接入 Cua Driver Bench v2 指定提交 `22a67eacd15dc71811e330ed88951dd615bb395d` 的十个 macOS 任务。运行器将锁定的源码取到 `.research/`，按 Git blob ID 校验文件，复用上游任务提示、种子、测试应用、检查器和 A22 计分。我们的实验组由 Pi 调用本仓库的 MCP，模型固定为 `openai-codex/gpt-6.1-terra`，推理档位为 `low`。[上游锁定版本](https://github.com/trycua/cua/tree/22a67eacd15dc71811e330ed88951dd615bb395d/libs/cua-driver-bench)
+`npm run bench:v2` 接入 Cua Driver Bench v2 指定提交 `22a67eacd15dc71811e330ed88951dd615bb395d` 的十个 macOS 任务。运行器将锁定的源码取到 `.research/`，按 Git blob ID 校验文件，复用上游任务提示、种子、测试应用、检查器和 A22 计分。我们的实验组由 Pi 调用本仓库的 MCP，模型固定为 `openai-codex/gpt-6.1-terra`，推理档位为 `high`。[上游锁定版本](https://github.com/trycua/cua/tree/22a67eacd15dc71811e330ed88951dd615bb395d/libs/cua-driver-bench)
 
 ```sh
 npm ci --ignore-scripts
@@ -32,6 +32,8 @@ npm run bench:v2 -- --run --tasks benchlab
 
 在专用桌面上运行后台试验时，可重复传入 `--appkit-key-bundle BUNDLE_ID`，允许指定应用的 `pressKey` 显式使用 `strategy:'appkit'`。若要为普通左键坐标点击启用同一策略，可单独传入 `--appkit-click-bundle BUNDLE_ID`。两种选项都为指定调用启用实验性应用内焦点准备。运行器把两份应用列表写入日志，续跑时沿用。试验按 A22 和 GUI-only 计分。
 
+传入 `--public-api-only` 会以 `CU_PUBLIC_API_ONLY=1` 启动原生驱动。它与实验性 AppKit 参数互斥，续跑时沿用。驱动使用 AX 语义操作及公开的进程定向按键接口。此模式下，原始后台指针投递和视觉回读输入不可用。驱动可观察前台应用和系统 AX 焦点，实际键盘接收进程显示为未解析。A22 仍由锁定的哨兵评估。
+
 测试 Chrome 进程沿用登录会话的 `HOME`，以便在 macOS 上打开 loopback 页面。它仍使用本轮新建的 profile，并仅为本次启动关闭其更新调度器。Pi 和其他测试进程继续使用隔离的 home。[Chromium 启动参数](https://chromium.googlesource.com/chromium/src/+/refs/heads/main/chrome/common/chrome_switches.h)
 
 ```sh
@@ -44,14 +46,22 @@ npm run bench:v2 -- --run --tasks v2 --condition both --runs 5 --allow-multi-app
 
 对已计分的后台轮次，终端会列出检查器分数、任务通过状态和 A22 通过项数。`background_completion` 要求任务通过且 A22 八项全部满足。基础设施尝试会显示状态，具体错误记录在逐轮 JSON 中。
 
-原矩阵和针对性修复对照分别记录。[Bench v2 失败复现记录](BENCH_V2_REMEDIATION.md)
+原矩阵和针对性修复对照分别记录。[Bench v2 失败复现记录](BENCH_V2_REMEDIATION.md)，[修复前后对比总结](BENCH_V2_GOAL_SUMMARY.md)
 
 `artifacts/bench-v2-pi-*/summary.json` 记录计划、实测提供方和模型、token 用量、实际回合数、用时、检查器结果和 A22 判据。各轮保留 Pi JSONL、测试应用状态和事件、哨兵记录与检查器输出。`provider_error_count` 记录每次模型错误响应。若最后一条助手响应以 `stop` 正常结束，此前的错误记为已恢复。提供方尚未恢复就结束的轮次保留基础设施状态。基础设施错误会终止后续计划，不进入已计分分母。任务未完成或发生干扰也会保留为有效成绩。退出码零表示计划内各轮均完成计分。任务成功率与后台完成率请读取报告中的独立计数。
 
-Pi 只获得两个 MCP 工具。benchmark 的 JS 限制阻止系统、文件和网络调用，原生操作按 bundle、受控 PID 和已观察快照限定范围。截图只覆盖测试窗口。当前 `app.move` 只移动视觉光标，尚未投递真实悬停事件，MB-10、MB-11 可以检出这个缺口。测试保留能力失败，用上游哨兵测量 A22 的八项判据。
+Pi 因 OpenAI 额度耗尽结束一轮时，运行器记录 `agent.provider_usage_limit: true`，保存未计分的尝试并停止后续轮次。额度恢复后可从保存的汇总报告续跑。
+
+`driver_isolation` 列出原生驱动观察到的隔离错误，包括已有后台窗口之间的顺序交叉。有事件时也会写入 `driver-isolation.jsonl`。每条记录包含错误代码和原生操作。A22 仍按锁定版哨兵的测量计分。
+
+仅公开 API 的后台试验会在每次输入前检查初始哨兵的前台状态与系统 AX 焦点。原生 helper 在开始操作时也要求焦点仍属于同一哨兵，并在投递前再次检查。驱动报告失焦或无法确认哨兵焦点后，后续输入均返回 `BENCH_WITNESS_FOCUS_CHANGED`，仍可进行只读观察。应用自行升层并夺取焦点时，该规则可停止后续动作。
+
+`turn_cap_reached` 记录由 Pi 基准扩展确认的本地轮次上限。Pi 为这次本地停止生成的中止响应不计入 `provider_error_count`。证据可用时，这类轮次保留评估器分数，任务状态记为未通过。
+
+Pi 只获得两个 MCP 工具。benchmark 的 JS 限制阻止系统、文件和网络调用，原生操作按 bundle、受控 PID 和已观察快照限定范围。截图只覆盖测试窗口。前台试验可为 MB-10、MB-11 显式调用 `app.hover`，投递真实指针移动。`app.move` 只移动视觉光标。上游哨兵测量 A22 的八项判据。
 
 试验期间分别观测实体 HID 事件计数和 IOKit 空闲时长。HID 计数变化或无法归因的空闲计时回落会中断本轮。只有核实可执行文件、MCP scope 和 Pi 父进程链都指向本轮 helper，并且 HID 计数保持不变时，才允许带着新的 WindowServer 活动记录继续。上游哨兵的测量和 A22 计分保持原规则。
 
-这是使用锁定任务集的本地 Pi 实验组。解读成绩时请注明显示器、任务、重复数和工具策略。上游横评使用不同的 agent、桌面和运行计划。[上游方法](https://github.com/trycua/cua/blob/22a67eacd15dc71811e330ed88951dd615bb395d/libs/cua-driver-bench/METHOD.md)
+IOKit 读数缺失、有歧义或读取失败时，运行器会说明测量错误并停止。已中断的轮次会保存为未计分尝试。
 
-2026-11-08，隔离的 Pi 连接确认了指定提供方和模型，并完成一次空窗口 MCP 调用。桌面试验在启动任何窗口之前等待空闲超时，本次集成暂无计分结果。三项多应用工作流所需的部分依赖在本机尚未安装。
+这是使用锁定任务集的本地 Pi 实验组。解读成绩时请注明显示器、任务、重复数和工具策略。上游横评使用不同的 agent、桌面和运行计划。[上游方法](https://github.com/trycua/cua/blob/22a67eacd15dc71811e330ed88951dd615bb395d/libs/cua-driver-bench/METHOD.md)

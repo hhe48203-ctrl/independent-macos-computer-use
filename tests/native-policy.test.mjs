@@ -18,3 +18,15 @@ test('native background-only policy rejects foreground and unknown modes before 
   await assert.rejects(explicit.request('click',{pid:1,windowId:2,x:0,y:0,strategy:'appkit',mode:'foreground'}),{code:'INVALID_ARGUMENT'});
  }finally{explicit.close()}
 });
+
+test('public API mode disables private focus diagnostics and experimental preparation',{skip:process.platform!=='darwin'||!existsSync(helper)},async()=>{
+ const bridge=new Bridge({env:{...process.env,CU_PUBLIC_API_ONLY:'1',CU_EXPERIMENTAL_APPKIT_FOCUS:'1'}});
+ try {
+  const {background,inputFocus}=await bridge.request('status');
+  assert.equal(background.publicAPIOnly,true);
+  assert.equal(background.experimentalAppKitFocus,false);
+  assert.equal(background.windowLocationSPIAvailable,false);
+  assert.equal(inputFocus.queryAvailable,false);
+  assert.equal(inputFocus.keyboardPID,null);
+ }finally{bridge.close();await bridge.retiring}
+});
