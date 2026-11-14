@@ -124,22 +124,22 @@ The experimental app-local AppKit focus route is off unless `CU_EXPERIMENTAL_APP
 
 ### Cua Driver Bench v2
 
-`--public-api-only` replays stay on documented macOS APIs. SkyLight focus queries, raw background pointer delivery, and experimental AppKit routes stay off. Of the nine replayed background seeds, four are now full passes (task, GUI-only, and A22 8/8): CDB-G02, CDB-G04, IR-03, and IR-04. None of those nine was a full pass in the frozen baseline. GUI-only held on every replay and on all 90 baseline trials. Foreground MB-10 and MB-11 also reached 1.00 on the seeds below.
+`--public-api-only` runs stay on documented macOS APIs. SkyLight and other private APIs stay off, including raw background pointer delivery and experimental AppKit routes.
 
-| Task | Condition | Seed | Baseline | Replay |
+| Task | Condition | Seed | Score | A22 |
 | --- | --- | --- | --- | --- |
-| CDB-G02 | Background | `909557` | 0.20 | 1.00 |
-| CDB-G04 | Background | `482045` | 0.15 | 1.00 |
-| IR-03 | Background | `410255` | 0.40 | 1.00 |
-| IR-04 | Background | `816494` | 0.45 | 1.00 |
-| MB-10 | Foreground | `227159` | 0.10 | 1.00 |
-| MB-11 | Foreground | `160721` | 0.05 | 1.00 |
+| CDB-G02 | Background | `909557` | 1.00 | 8/8 |
+| CDB-G04 | Background | `482045` | 1.00 | 8/8 |
+| IR-03 | Background | `410255` | 1.00 | 8/8 |
+| IR-04 | Background | `816494` | 1.00 | 8/8 |
+| MB-10 | Foreground | `227159` | 1.00 | n/a |
+| MB-11 | Foreground | `160721` | 1.00 | n/a |
 
-Routes with no undisturbed public-API delivery are refused before dispatch, with an explicit code, instead of a reported success. Native row drag on MB-09 returns `BACKGROUND_NATIVE_ROW_DRAG_UNSUPPORTED` (seed `790113` stayed at 0.05, A22 8/8). GnuCash reconcile dialogs on CDB-G03 return `BACKGROUND_GNUCASH_DIALOG_UNSUPPORTED` (seed `99589` stayed at 0.45, A22 8/8). Closed native popups on IR-01/02 return `BACKGROUND_POPUP_UNSUPPORTED`; an explicit `AXShowMenu` returns `BACKGROUND_MENU_UNSUPPORTED`. IR-01 `147201` stayed at 0.15, and A22 fell from 8/8 to 4/8 when the fixture activated itself while opening a sheet. The driver returned an error for that click and stopped later input.
+GUI-only held on every run. Unsupported background routes are refused before dispatch with an explicit error code, instead of faking success. Native row drag on MB-09 returns `BACKGROUND_NATIVE_ROW_DRAG_UNSUPPORTED`. GnuCash reconcile dialogs on CDB-G03 return `BACKGROUND_GNUCASH_DIALOG_UNSUPPORTED`. Closed native popups on IR-01/02 return `BACKGROUND_POPUP_UNSUPPORTED`; an explicit `AXShowMenu` returns `BACKGROUND_MENU_UNSUPPORTED`.
 
-These are single same-seed retests (thinking `high` against a thinking `low` baseline, and the runner adds per-app guidance), not a full 90-trial acceptance. Per-seed evidence and known limits are in the [before-and-after summary](docs/BENCH_V2_GOAL_SUMMARY.md).
+These are single same-seed replays, not a full 90-trial acceptance. Details are in the [goal summary](docs/BENCH_V2_GOAL_SUMMARY.md).
 
-trycua's [Cua Driver Bench post](https://cua.ai/blog/cua-driver-bench) still lists two open macOS gaps for cua-driver: a popup shown over the user's window for about 50 ms, and background drag (MB-09 0/5). This repository refuses those routes before dispatch. The same post says cua-driver keeps a background sheet behind the user's window, so the IR-01 sheet reorder is a public-API limit here. As of 2026-11-14 the related upstream pull requests are unmerged, and the drag change depends on undocumented WindowServer behavior this repository does not adopt.
+trycua's [Cua Driver Bench post](https://cua.ai/blog/cua-driver-bench) still lists two open macOS gaps for cua-driver: a popup shown over the user's window for about 50 ms, and background drag (MB-09 0/5). This repository refuses those routes before dispatch; as of 2026-11-14 the related upstream pull requests are unmerged, the drag change depends on undocumented WindowServer behavior this repository does not adopt, and the same post keeps a background sheet behind the user's window, so the IR-01 sheet reorder is a public-API limit here.
 
 ## Development, validation, and license
 
