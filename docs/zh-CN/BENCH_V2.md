@@ -50,6 +50,8 @@ npm run bench:v2 -- --run --tasks v2 --condition both --runs 5 --allow-multi-app
 
 `artifacts/bench-v2-pi-*/summary.json` 记录计划、实测提供方和模型、token 用量、实际回合数、用时、检查器结果和 A22 判据。各轮保留 Pi JSONL、测试应用状态和事件、哨兵记录与检查器输出。`provider_error_count` 记录每次模型错误响应。若最后一条助手响应以 `stop` 正常结束，此前的错误记为已恢复。提供方尚未恢复就结束的轮次保留基础设施状态。基础设施错误会终止后续计划，不进入已计分分母。任务未完成或发生干扰也会保留为有效成绩。退出码零表示计划内各轮均完成计分。任务成功率与后台完成率请读取报告中的独立计数。
 
+Pi 因 OpenAI 额度耗尽结束一轮时，运行器记录 `agent.provider_usage_limit: true`，保存未计分的尝试并停止后续轮次。额度恢复后可从保存的汇总报告续跑。
+
 `driver_isolation` 列出原生驱动观察到的隔离错误，包括已有后台窗口之间的顺序交叉。有事件时也会写入 `driver-isolation.jsonl`。每条记录包含错误代码和原生操作。A22 仍按锁定版哨兵的测量计分。
 
 `turn_cap_reached` 记录由 Pi 基准扩展确认的本地轮次上限。Pi 为这次本地停止生成的中止响应不计入 `provider_error_count`。证据可用时，这类轮次保留评估器分数，任务状态记为未通过。
@@ -59,5 +61,3 @@ Pi 只获得两个 MCP 工具。benchmark 的 JS 限制阻止系统、文件和�
 试验期间分别观测实体 HID 事件计数和 IOKit 空闲时长。HID 计数变化或无法归因的空闲计时回落会中断本轮。只有核实可执行文件、MCP scope 和 Pi 父进程链都指向本轮 helper，并且 HID 计数保持不变时，才允许带着新的 WindowServer 活动记录继续。上游哨兵的测量和 A22 计分保持原规则。
 
 这是使用锁定任务集的本地 Pi 实验组。解读成绩时请注明显示器、任务、重复数和工具策略。上游横评使用不同的 agent、桌面和运行计划。[上游方法](https://github.com/trycua/cua/blob/22a67eacd15dc71811e330ed88951dd615bb395d/libs/cua-driver-bench/METHOD.md)
-
-2026-11-08，隔离的 Pi 连接确认了指定提供方和模型，并完成一次空窗口 MCP 调用。桌面试验在启动任何窗口之前等待空闲超时，本次集成暂无计分结果。三项多应用工作流所需的部分依赖在本机尚未安装。

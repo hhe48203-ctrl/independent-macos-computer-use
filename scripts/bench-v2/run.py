@@ -541,11 +541,18 @@ def agent_facts(events, guard, v2, *, turn_cap_reached=False):
     provider_error_count = sum(msg.get("stopReason") == "error" for msg in responses)
     normal_end = bool(responses) and (responses[-1].get("stopReason") == "stop" or
                                       cap_abort and responses[-1].get("stopReason") == "toolUse")
+    last_response = responses[-1] if responses else {}
+    provider_usage_limit = (
+        last_response.get("stopReason") == "error"
+        and (last_response.get("provider"), last_response.get("model")) == (PROVIDER, MODEL)
+        and "the usage limit has been reached" in str(last_response.get("errorMessage", "")).lower()
+    )
     return {"model_verified": identities == [(PROVIDER, MODEL)], "observed_models": identities,
             "turns": sum(e.get("type") == "turn_start" for e in events), "tool_calls": len(starts),
             "tool_errors": sum(e.get("type") == "tool_execution_end" and bool(e.get("isError")) for e in events),
             "gui_only_violations": sorted(violations), "gui_only": not violations and all(e.get("toolName") in TOOLS for e in starts),
             "provider_error": provider_error_count > 0 and not normal_end,
+            "provider_usage_limit": provider_usage_limit,
             "provider_error_count": provider_error_count, "usage": usage}
 
 
@@ -608,6 +615,8 @@ def run_trial(entry, condition, out, task, spec, bundle_ids, login, modules, *, 
                 row["driver_isolation"] = json_lines(artifacts / "driver-isolation.jsonl")
                 row["agent"] = agent_facts(json_lines(artifacts / "pi.jsonl"), json_lines(artifacts / "gui-guard.jsonl"), v2,
                                            turn_cap_reached=row["turn_cap_reached"])
+                if row["agent"]["provider_usage_limit"]:
+                    raise RuntimeError("OpenAI usage limit reached. The run can resume after quota is available.")
                 row["evaluation"] = pack.evaluate(row["exit_code"]) if pack else runner.evaluate_probe(
                     task, seed, paths, artifacts, sentinel.log)
                 if row["interrupted"]:

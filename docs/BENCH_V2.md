@@ -50,6 +50,8 @@ The baseline and targeted repair results are tracked separately. [Bench v2 failu
 
 `artifacts/bench-v2-pi-*/summary.json` contains the plan, observed provider and model, token usage, real turn counts, wall times, checker results and A22 criteria. Each trial also retains Pi's JSONL, native fixture state/events, the sentinel log and checker output. `provider_error_count` records every model error response. Earlier errors count as recovered when the last assistant response ends normally with `stop`. Trials ending before provider recovery retain infrastructure status. An infrastructure error stops the schedule and stays out of the scored denominator. A checker failure or a recorded interference can be a valid benchmark result. Exit zero means all planned trials were scored. Use the recorded task and background completion counts to assess performance.
 
+When Pi ends a trial with OpenAI's usage-limit error, the runner records `agent.provider_usage_limit: true`, saves the attempt without a score, and stops the schedule. Resume the saved summary after quota is available.
+
 `driver_isolation` lists isolation errors observed by the native driver, including crossings between existing background windows. The same events are saved in `driver-isolation.jsonl` when present. Each record contains the error code and native operation. The A22 score continues to use the pinned sentinel measurements.
 
 `turn_cap_reached` records a local stop confirmed by Pi's benchmark extension. Pi's synthetic abort for that stop is excluded from `provider_error_count`. A trial stopped at the cap retains its evaluator score when its evidence is usable and cannot pass the task.
@@ -59,5 +61,3 @@ Pi gets only the two MCP tools. A benchmark JS gate blocks OS, file and network 
 During a trial the idle guard checks HID event counters separately from IOKit idle time. A counter change or unexplained idle reset interrupts the run. It can continue after a fresh WindowServer tickle only when the executable, MCP scope and Pi ancestry identify the trial's own helper and the HID counters stayed unchanged. This affects runner interruption handling only. The upstream sentinel and A22 retain their original measurements and scoring.
 
 This is a local Pi arm using the pinned task set. Report the display, selected tasks, repetitions and backend policy alongside results. The upstream comparison uses different agents, desktop setup and trial schedules. [Upstream method](https://github.com/trycua/cua/blob/22a67eacd15dc71811e330ed88951dd615bb395d/libs/cua-driver-bench/METHOD.md)
-
-On 2026-11-08 the isolated Pi connection returned the requested provider and model and completed one empty-window MCP call. The desktop attempt timed out waiting for idle before any trial opened. There are no scored trials for this integration yet. The three multi-app workflows also require dependencies absent from this Mac.
