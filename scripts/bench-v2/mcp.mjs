@@ -10,10 +10,10 @@ const metadataMethods = new Set(['status', 'apps', 'windows', 'cursor_state', 'c
 const inputMethods = new Set(['click', 'drag', 'scroll', 'type_text', 'key', 'ax_action', 'select_text']);
 const focusIsolationErrors = new Set([
   'BACKGROUND_APP_ACTIVATED', 'BACKGROUND_KEYBOARD_FOCUS_CHANGED', 'BACKGROUND_KEYBOARD_ROUTE_CHANGED',
-  'BACKGROUND_TYPING_ROUTE_CHANGED', 'BACKGROUND_ACCESSIBILITY_FOCUS_CHANGED'
+  'BACKGROUND_TYPING_ROUTE_CHANGED', 'BACKGROUND_ACCESSIBILITY_FOCUS_CHANGED', 'BENCH_WITNESS_FOCUS_CHANGED'
 ]);
 const isolationErrors = new Set([
-  ...focusIsolationErrors, 'BACKGROUND_WINDOW_REORDERED', 'BENCH_WITNESS_FOCUS_CHANGED'
+  ...focusIsolationErrors, 'BACKGROUND_WINDOW_REORDERED'
 ]);
 
 export function createScopedRequest(request, targets, reject = message => { throw new BenchPolicyError(message, true); },
@@ -84,7 +84,11 @@ if (process.argv[2] === '--check') {
 } else if (process.argv[2] === '--serve') {
   const scope = JSON.parse(readFileSync(process.argv[3], 'utf8'));
   const audit = (code, message) => appendFileSync(scope.audit, JSON.stringify({code,message})+'\n', {mode: 0o600});
-  const bridge = new Bridge();
+  const env = {...process.env};
+  if (Number.isSafeInteger(scope.backgroundWitnessPID) && scope.backgroundWitnessPID > 0) {
+    env.CU_BACKGROUND_WITNESS_PID = String(scope.backgroundWitnessPID);
+  }
+  const bridge = new Bridge({env});
   bridge.request = createScopedRequest(bridge.request.bind(bridge), scope.targets, message => {
     audit('BENCH_GUI_ONLY', message);
     throw new BenchPolicyError(message, true);

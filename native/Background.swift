@@ -23,10 +23,14 @@ import ApplicationServices
     var lastSampleTime:Double=0
     var transitions:[[String:Any]]=[]
     var timer:Timer?
-    init(targetPID:pid_t, scopedInput: ScopedAppKitInput? = nil) throws {
+    init(targetPID:pid_t, scopedInput: ScopedAppKitInput? = nil, expectedForegroundPID: pid_t? = nil) throws {
         self.targetPID=targetPID;after=before
         self.scopedInput=scopedInput
         typingRawBefore=ExperimentalTypingFocus.read(forScopedInput: scopedInput != nil)
+        if let expectedForegroundPID,
+           before.foregroundPID != expectedForegroundPID || before.accessibilityPID != expectedForegroundPID {
+            throw BridgeError("BENCH_WITNESS_FOCUS_CHANGED", "The original witness no longer has both foreground and system Accessibility focus. No input was sent.")
+        }
         guard !before.hasKeyboardFocusWithoutForeground(targetPID) else {
             throw BridgeError("BACKGROUND_KEYBOARD_FOCUS_ALREADY_TARGET", "The target already receives system keyboard input while another app is foreground. Background input was stopped before delivery. Observe the current state before continuing.")
         }
@@ -808,7 +812,8 @@ struct HeldBackgroundMouse {
             if scopedInput == .key { _ = try keyCode(backgroundKeyChord(p).name) }
             try requireBackgroundFocusedTarget(pid, frame, mismatchCode: scopedInput == .key ? "BACKGROUND_KEY_WINDOW_MISMATCH" : "SCOPED_CLICK_WINDOW_MISMATCH")
         }
-        let inputObservation=try BackgroundFocusObservation(targetPID:pid, scopedInput:scopedInput)
+        let inputObservation=try BackgroundFocusObservation(targetPID:pid, scopedInput:scopedInput,
+                                                           expectedForegroundPID:backgroundWitnessPID)
         defer {inputObservation.stop()}
         var pointerDelivery:BackgroundPointerDelivery?
         var appKitSession:ScopedAppKitFocus?

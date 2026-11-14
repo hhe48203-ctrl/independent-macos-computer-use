@@ -59,6 +59,7 @@ struct Snapshot {
     let allowed: Set<String>?
     let clipboardEnabled: Bool
     let foregroundEnabled: Bool
+    let backgroundWitnessPID: pid_t?
     init() {
         let env = ProcessInfo.processInfo.environment
         if let raw = env["CU_ALLOWED_BUNDLE_IDS"] {
@@ -66,6 +67,7 @@ struct Snapshot {
         } else { allowed = nil }
         clipboardEnabled = env["CU_ENABLE_CLIPBOARD"] == "1"
         foregroundEnabled = env["CU_ENABLE_FOREGROUND"] == "1"
+        backgroundWitnessPID = env["CU_PUBLIC_API_ONLY"] == "1" ? env["CU_BACKGROUND_WITNESS_PID"].flatMap(pid_t.init) : nil
     }
     func requireAX() throws {
         guard AXIsProcessTrusted() else { throw BridgeError("ACCESSIBILITY_DENIED", "Grant Accessibility to Local Computer Use or the launching terminal/agent in System Settings > Privacy & Security, then restart the MCP client.") }
@@ -543,7 +545,7 @@ struct Snapshot {
             let semanticOrder = backgroundMode ? backgroundWindowOrder() : []
             let semanticFront = NSWorkspace.shared.frontmostApplication?.processIdentifier
             let r = try ref(p)
-            let inputObservation=backgroundMode ? try BackgroundFocusObservation(targetPID:r.pid):nil
+            let inputObservation=backgroundMode ? try BackgroundFocusObservation(targetPID:r.pid, expectedForegroundPID:backgroundWitnessPID):nil
             defer {inputObservation?.stop()}
             guard r.scope == "window", let value = attr(r.element, kAXValueAttribute) as? String else { throw BridgeError("NOT_TEXT", "Element has no editable text value") }
             let text = try string(p, "text")
@@ -585,7 +587,7 @@ struct Snapshot {
             let semanticOrder = backgroundMode ? backgroundWindowOrder() : []
             let semanticFront = NSWorkspace.shared.frontmostApplication?.processIdentifier
             let r = try ref(p); let action = try string(p, "action")
-            let inputObservation=backgroundMode ? try BackgroundFocusObservation(targetPID:r.pid):nil
+            let inputObservation=backgroundMode ? try BackgroundFocusObservation(targetPID:r.pid, expectedForegroundPID:backgroundWitnessPID):nil
             var valueWrite: (before: String, requested: String)?
             defer {inputObservation?.stop()}
             if r.scope == "menu", backgroundMode { throw BridgeError("BACKGROUND_MENU_UNSUPPORTED", "Global application menus can interfere with the foreground session. Use explicit foreground mode only when authorized.") }

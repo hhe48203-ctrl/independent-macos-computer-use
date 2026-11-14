@@ -79,7 +79,7 @@ test('benchmark records native isolation errors and propagates the original erro
 });
 
 test('public background witness loss stops later input and keeps observations available', async () => {
-  for (const nativeError of [false, true]) {
+  for (const nativeError of [null, 'BACKGROUND_ACCESSIBILITY_FOCUS_CHANGED', 'BENCH_WITNESS_FOCUS_CHANGED']) {
     const calls = [];
     const observations = [];
     let foreground = 51;
@@ -88,7 +88,7 @@ test('public background witness loss stops later input and keeps observations av
       if (method === 'status') return {inputFocus:{foregroundPID:foreground,accessibilityFocusedPID:foreground}};
       if (method === 'snapshot') return {snapshotId:'observed'};
       if (method === 'click' && nativeError) {
-        throw Object.assign(new Error('AX focus changed'), {code:'BACKGROUND_ACCESSIBILITY_FOCUS_CHANGED'});
+        throw Object.assign(new Error('Witness focus changed'), {code:nativeError});
       }
       return {ok:true};
     }, [{pid:42}], undefined, {backgroundWitnessPID:51, reportIsolation:event=>observations.push(event)});
@@ -97,7 +97,7 @@ test('public background witness loss stops later input and keeps observations av
     const target = {snapshotId:'observed',elementId:'node'};
     if (nativeError) {
       await Promise.all([
-        assert.rejects(request('click', target), {code:'BACKGROUND_ACCESSIBILITY_FOCUS_CHANGED'}),
+        assert.rejects(request('click', target), {code:nativeError}),
         assert.rejects(request('ax_action', target), {code:'BENCH_WITNESS_FOCUS_CHANGED'}),
       ]);
     } else {
