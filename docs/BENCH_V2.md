@@ -46,7 +46,7 @@ npm run bench:v2 -- --run --tasks v2 --condition both --runs 5 --allow-multi-app
 
 The terminal prints the checker score, task pass status, and the number of A22 criteria held in a scored background trial. `background_completion` requires both a task pass and all eight criteria. An infrastructure attempt prints its status and records the error in the trial JSON.
 
-The baseline and targeted repair results are tracked separately. [Bench v2 failure reproduction](BENCH_V2_REMEDIATION.md)
+The baseline and targeted repair results are tracked separately. [Bench v2 failure reproduction](BENCH_V2_REMEDIATION.md), [before-and-after summary](BENCH_V2_GOAL_SUMMARY.md)
 
 `artifacts/bench-v2-pi-*/summary.json` contains the plan, observed provider and model, token usage, real turn counts, wall times, checker results and A22 criteria. Each trial also retains Pi's JSONL, native fixture state/events, the sentinel log and checker output. `provider_error_count` records every model error response. Earlier errors count as recovered when the last assistant response ends normally with `stop`. Trials ending before provider recovery retain infrastructure status. An infrastructure error stops the schedule and stays out of the scored denominator. A checker failure or a recorded interference can be a valid benchmark result. Exit zero means all planned trials were scored. Use the recorded task and background completion counts to assess performance.
 

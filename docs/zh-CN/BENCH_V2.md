@@ -46,7 +46,7 @@ npm run bench:v2 -- --run --tasks v2 --condition both --runs 5 --allow-multi-app
 
 对已计分的后台轮次，终端会列出检查器分数、任务通过状态和 A22 通过项数。`background_completion` 要求任务通过且 A22 八项全部满足。基础设施尝试会显示状态，具体错误记录在逐轮 JSON 中。
 
-原矩阵和针对性修复对照分别记录。[Bench v2 失败复现记录](BENCH_V2_REMEDIATION.md)
+原矩阵和针对性修复对照分别记录。[Bench v2 失败复现记录](BENCH_V2_REMEDIATION.md)，[修复前后对比总结](BENCH_V2_GOAL_SUMMARY.md)
 
 `artifacts/bench-v2-pi-*/summary.json` 记录计划、实测提供方和模型、token 用量、实际回合数、用时、检查器结果和 A22 判据。各轮保留 Pi JSONL、测试应用状态和事件、哨兵记录与检查器输出。`provider_error_count` 记录每次模型错误响应。若最后一条助手响应以 `stop` 正常结束，此前的错误记为已恢复。提供方尚未恢复就结束的轮次保留基础设施状态。基础设施错误会终止后续计划，不进入已计分分母。任务未完成或发生干扰也会保留为有效成绩。退出码零表示计划内各轮均完成计分。任务成功率与后台完成率请读取报告中的独立计数。
 
