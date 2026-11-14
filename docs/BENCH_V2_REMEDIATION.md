@@ -2,7 +2,7 @@
 
 [中文版本](zh-CN/BENCH_V2_REMEDIATION.md)
 
-The fixed comparison baseline is `artifacts/bench-v2-full-20261109T044031Z/results.json`. It contains 90 scored trials and six infrastructure attempts. Reproductions use Pi, OpenAI OAuth and GPT-6.1 Terra at `low` with the pinned upstream fixture, checker and A22 rules. The current work uses individual replicate indices and leaves the full matrix for a separate acceptance run.
+The fixed comparison baseline is `artifacts/bench-v2-full-20261109T044031Z/results.json`. It contains 90 scored trials and six infrastructure attempts. The initial reproductions used Pi, OpenAI OAuth and GPT-6.1 Terra at `low`. The runner now uses `high`. Reproductions use individual replicate indices with the pinned upstream fixture, checker and A22 rules. The full matrix is reserved for a separate acceptance run.
 
 | Item | Before | Current evidence |
 | --- | --- | --- |
@@ -196,13 +196,15 @@ The driver now also reports a newly visible normal window that crosses an existi
 
 The targeted IR-01/02 replay after `969d733` stopped when the provider reported its usage limit on IR-01 `147201`. The runner recorded an infrastructure attempt without a score. IR-02 `487371` did not start. See `artifacts/bench-v2-pi-20261113T200532264125Z/summary.json` in the benchmark worktree.
 
-For the remaining background work, use public APIs. Treat MB-09 native row dragging and G03 self-activating dialogs as known limitations. Detect the unsupported route before dispatch and return an actionable error. MB-09 already has a passive native row and bezel preflight. G03 still needs a preflight for the unsupported dialog-opening route. For IR-01, test first-letter selection with the popup closed and verify selection, menu visibility, focus and stacking. If selection is unavailable, document the limitation and keep the pre-dispatch rejection for menu opening.
+The follow-up scope uses public APIs for the new checks and the IR-01 first-letter experiment. MB-09 native row dragging and G03 self-activating dialogs are known limitations. A detected unsupported route must be rejected before dispatch with its reason.
 
 On IR-01 `147201`, public AX focused the closed Team popup. Public process-directed key events for each of its four option initials left the value at `Choose a team`, exposed no menu children and produced no observed window-order, foreground or witness-focus change. The driver now rejects first-letter input on the recognized native popup before dispatch. The same seed verified lowercase, shifted and ordinary key variants plus the existing Down preflight. The G04 `482045` control still selected both Chromium options by prefix after AX focus and blocked both native-menu opens. See `artifacts/ir01-closed-team-public-fi3ugv9f/report.json`, `artifacts/ir01-native-team-reject-0_41h8sc/report.json` and `artifacts/cdb-g04-web-popup-regression-f_fo1_uk/report.json` in the benchmark worktree.
 
 On G03 `99589`, the new window-OCR preflight rejected direct Reconcile and the compact toolbar overflow before dispatch in all six auto, event and scoped click attempts. The Show Splits control remained operable. The book was unchanged and all 18 generated witness characters survived with zero focus loss or raises. The preflight covers the measured English text-and-icons layout. See `artifacts/cdb-g03-dialog-preflight-f6nr9hwt/report.json` in the benchmark worktree.
 
 The MB-09 `790113` regression verified that the row and its adjacent bezel still reject with `BACKGROUND_NATIVE_ROW_DRAG_UNSUPPORTED`. The two target taps observed zero mouse packets. Both witnesses kept all generated text with zero focus loss or raises. See `artifacts/mb09-row-and-bezel-regression-6xy882kg/` in the benchmark worktree.
+
+A Pi G03 replay after the preflight change was stopped because it had been launched with the earlier experimental AppKit options. The runner retained the attempt as unscored and shut down the owned fixtures. The preceding G03 score of 0.65 is still the latest scored result. See `artifacts/bench-v2-pi-20261114T012811451081Z/summary.json` in the benchmark worktree.
 
 In a separate same-seed control, the second Reconcile window accepted a scoped click where an observed transaction row intersected the OCR-located R column. The Funds Out total rose from $73.10 to $1,321.70, and a second click restored $73.10. The sentinel kept all 17 generated characters with zero key loss. The first dialog again crossed other owned background windows. The control ended before Finish and proves only the reversible row selection. See `artifacts/cdb-g03-reconcile-row-8glk4mao/report.json` in the benchmark worktree.
 
