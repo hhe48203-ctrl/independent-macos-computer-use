@@ -399,6 +399,15 @@ def run_agent(pi, auth, catalog, targets, prompt, artifacts, turns, seconds, des
                 "Re-observe, verify the preview and capture its AXStaticText values, then close it with the observed Close attachment AXButton. "
                 "Break if any expected control is missing or ambiguous. Print only the relevant attachment content and keep going with the destination edits."
             )
+        if public_api_only and "com.trycua.cdbbench.signal-quay-chat" in owned_bundles:
+            instructions += (
+                " When Signal Quay Chat requires a blocker record, save and verify it as soon as the source facts are confirmed. "
+                "Reveal the first form field with AXScrollToVisible if its frame has zero height. In one GUI call, "
+                "loop over the observed field titles and values, taking a fresh AX tree before each click and before "
+                "typeText(value,{target:field.index,replaceAll:field.value}). Check focused:true and each updated value, "
+                "and break if a field is missing or unverified. Use the observed enabled AXButton with AXPress to submit. "
+                "Verify the saved record and audit confirmation in a fresh AX tree."
+            )
         if "com.trycua.cdbbench.daymark-calendar" in owned_bundles:
             instructions += (
                 " In Daymark Calendar, click the observed event button with {strategy:'ax'} and verify its ID in the editor. "
