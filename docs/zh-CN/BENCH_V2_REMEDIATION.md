@@ -196,7 +196,7 @@ MCP 的 `typeText` 现可结合 `strategy:'event'` 显式使用 `visualCheck`。
 
 `969d733` 后的 IR-01/02 定向复测在 IR-01 `147201` 遇到提供方用量上限后停止。运行器将该次尝试记为基础设施错误，未计分。IR-02 `487371` 尚未启动。见基准测试工作树的 `artifacts/bench-v2-pi-20261113T200532264125Z/summary.json`。
 
-后续新增预检和 IR-01 首字母实验使用公开 API。MB-09 原生行拖放和 G03 应用自激活弹窗按已知限制处理。识别到不支持的路径时，应在投递前拒绝并说明原因。
+后续新增预检和 IR-01 首字母实验使用公开 API。MB-09 原生行拖放、G03 应用自激活弹窗以及 IR-01/02 的原生下拉框和 sheet 换序按已知限制处理，汇总见下文“仅公开 API 的已知限制”。识别到不支持的路径时，应在投递前拒绝并说明原因。
 
 IR-01 `147201` 对照通过公开 AX 聚焦关闭的 Team 下拉框，再以公开的进程定向按键发送四个选项的首字母。选值始终为 `Choose a team`，没有出现菜单子节点，也没有测到窗口换序、前台应用或哨兵焦点变化。驱动现会在投递前拒绝已识别原生下拉框的首字母输入。同种子验证了小写、带 Shift 和默认策略，也验证了原有的 Down 预检。G04 `482045` 对照仍能在 AX 聚焦后按首字母选中两个 Chromium 选项，同时拦截了打开这两个原生菜单的请求。见基准测试工作树的 `artifacts/ir01-closed-team-public-fi3ugv9f/report.json`、`artifacts/ir01-native-team-reject-0_41h8sc/report.json` 和 `artifacts/cdb-g04-web-popup-regression-f_fo1_uk/report.json`。
 
@@ -249,3 +249,16 @@ G03 `99589` 以 Pi `high` 和仅公开 API 复跑，得分 0.45，A22 八项通�
 | MB-09 `790113` | 投递前拦截消除了已验证表格行拖动路径上的干扰，后台原生列表重排仍缺少可验证的投递方式。加入预检前，手势全程保留 Command 也会失败。见 `artifacts/mb09-drag-threshold-34DwfW/report.json` 和 `artifacts/mb09-command-drag-igkzdF/report.json` |
 | IR-01 `147201`、`517139` 和 IR-02 `487371` | 关闭状态下的原生 AppKit 下拉框选值属于已知后台限制，首字母输入及打开菜单会在投递前拒绝。IR-01 原生 sheet 仍可能升层并夺取焦点，哨兵保护会停止后续输入 |
 | CDB-G03 `99589` | 此前的实验路径已验证两条异常备注。仅公开 API 的轮次未能在账户树中导航。后台打开正式对账属于已知限制，实测的 Reconcile 按钮及溢出入口会在投递前拒绝 |
+
+## 仅公开 API 的已知限制
+
+使用 `--public-api-only` 时，下列路径没有经过验证、且不打扰用户的后台投递方式。驱动不会把它们报告为后台成功。能在投递前识别的路径直接拒绝并说明原因。无法提前识别的路径在检测到换序或失焦后返回错误，基准随后停止该轮的输入。这些限制不放宽 GUI-only 或 A22，也不会自动切换到前台。
+
+| 限制 | 驱动行为 | 证据 |
+| --- | --- | --- |
+| MB-09 原生表格行拖放重排 | 从原生表格的普通行或相邻边框发起后台拖动时返回 `BACKGROUND_NATIVE_ROW_DRAG_UNSUPPORTED`，不发送鼠标包 | `artifacts/mb09-row-and-bezel-regression-6xy882kg/`；`artifacts/bench-v2-pi-20261114T064558370743Z/summary.json` 得 0.05，A22 八项通过 |
+| CDB-G03 GnuCash 正式对账（应用自激活对话框） | 已识别的 Reconcile 按钮、它的 AX 按下和工具栏溢出入口返回 `BACKGROUND_GNUCASH_DIALOG_UNSUPPORTED`。无法确认的工具栏坐标返回 `BACKGROUND_GNUCASH_TOOLBAR_UNVERIFIED` | `artifacts/cdb-g03-public-toolbar-4_o8lzbo/report.json`；`artifacts/bench-v2-pi-20261114T063632426557Z/summary.json` 得 0.45，A22 八项通过 |
+| IR-01/02 关闭状态的原生 AppKit 下拉框选值 | 关闭的 `NSPopUpButton` 不公开选项，值和选中子元素都不可写。点击、AX 按下、从下拉框起点拖动、会打开菜单的方向键组合（含修饰键）以及首字母输入均返回 `BACKGROUND_POPUP_UNSUPPORTED`。显式 `AXShowMenu` 返回 `BACKGROUND_MENU_UNSUPPORTED`。这些请求不发送输入，选值保持不变 | `artifacts/ir01-closed-team-public-fi3ugv9f/report.json`、`artifacts/ir01-native-team-reject-0_41h8sc/report.json`、`artifacts/ir01-team-public-final-uvbmhmv3/report.json`、`artifacts/public-menu-guard-eSDxMTEV/report.json`；IR-02 `487371` 在 `artifacts/bench-v2-pi-20261114T065429236501Z/summary.json` 得 0.45，A22 八项通过 |
+| IR-01 Next 打开的原生 sheet 换序与应用自激活 | Next 是普通 `NSButton`，点击回调才调用 `beginSheetModal`。公开 AX 在投递前没有可识别的信号，所以无法提前拒绝，首次换序或失焦仍会发生。驱动对该次点击返回 `BACKGROUND_WINDOW_REORDERED` 或 `BACKGROUND_ACCESSIBILITY_FOCUS_CHANGED`，不报告成功。随后基准的哨兵保护让后续输入返回 `BENCH_WITNESS_FOCUS_CHANGED`，只读观察仍可用。自 `493373c` 起，原生 helper 在开始投递时也要求前台和系统 AX 焦点仍属于初始哨兵。A22 按实测结果计分 | `artifacts/ir01-public-ax-metadata-zzDvesJ5/report.json`、`artifacts/ir01-witness-guard-XRGNDS0p/report.json`；IR-01 `147201` 在 `artifacts/bench-v2-pi-20261114T065429236501Z/summary.json` 得 0.15，A22 4/8 |
+
+上游参考：trycua 的 [Cua Driver Bench 文章](https://cua.ai/blog/cua-driver-bench)把 macOS 上的两项缺口列为待修，分别是从弹出菜单选值时菜单会在用户窗口上方显示约 50 毫秒，以及后台拖放（MB-09 为 0/5）。文章也写到 cua-driver 在 macOS 上能让后台应用的 sheet 留在用户窗口之后。因此 IR-01 的 sheet 换序是本仓库在仅公开 API 约束下的限制，不是上游共有的问题。截至 2026-11-14，三个相关 PR 均未合并。[#7497](https://github.com/trycua/cua/pull/7497) 在无法避免升层时拒绝后台下拉框和右键菜单。[#7567](https://github.com/trycua/cua/pull/7567) 在此基础上尝试首字母选择，但只在应用自认为处于激活状态（`AXFrontmost`）时生效，否则直接拒绝。这与本仓库在 `147201` 上首字母输入未改变选值的观察一致。[#7556](https://github.com/trycua/cua/pull/7556) 借助遮挡面板，在用户指针处发出一次硬件鼠标按下和抬起来完成后台拖放，作者注明它依赖的 WindowServer 行为不是文档契约。本仓库不采用这类路径。
