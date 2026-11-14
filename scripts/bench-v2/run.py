@@ -438,6 +438,11 @@ def run_agent(pi, auth, catalog, targets, prompt, artifacts, turns, seconds, des
                     "Check the editor value before committing. Read back the committed cell and stop the loop at the first failed check. "
                     "Print the compact results and save finished groups before moving to another app."
                 )
+        if "org.gnucash.Gnucash" in owned_bundles:
+            instructions += (
+                " GnuCash background mode blocks the Reconcile toolbar control and toolbar overflow because they can raise windows. "
+                "The register's R column toggles uncleared and cleared. Leave formal reconciliation pending and verify the independent edits."
+            )
         if "org.gnucash.Gnucash" in scoped_key_bundles:
             instructions += (
                 " If GnuCash opens a separate Tip of the Day window, bind its exact PID and window ID. "
@@ -458,10 +463,7 @@ def run_agent(pi, auth, catalog, targets, prompt, artifacts, turns, seconds, des
                 "so the complete new line can fit and keep it inside the window. Expect visualVerified:true. "
                 "Check the complete memo in the register status line and verify that the intended row is still selected, "
                 "commit with scoped Enter, save with scoped Command-S and verify from a fresh screenshot. "
-                "Reserve time and turns for edits and their save checks in both the ledger and workbook. "
-                "The register's R column toggles uncleared and cleared. Reconciled status requires the Reconcile workflow. "
-                "Background mode blocks the Reconcile toolbar control and toolbar overflow because they can raise windows. "
-                "Leave formal reconciliation pending and verify the independent workbook and ledger edits."
+                "Reserve time and turns for edits and their save checks in both the ledger and workbook."
             )
         if scoped_key_bundles or scoped_click_bundles:
             instructions += " Use the remaining turns to attempt required edits when you have an observed, supported GUI route."
