@@ -204,6 +204,8 @@ G03 `99589` 对照中，新窗口 OCR 预检在投递前拦截了直接 Reconcil
 
 MB-09 `790113` 回归确认，从原生行内及相邻边框开始拖动均返回 `BACKGROUND_NATIVE_ROW_DRAG_UNSUPPORTED`。两次目标事件观察均记录零鼠标包，哨兵生成文字完整，零失焦、零升层。见基准测试工作树的 `artifacts/mb09-row-and-bezel-regression-6xy882kg/`。
 
+MB-09 `790113` 以 Pi `high` 和仅公开 API 复跑，仍在投递前返回 `BACKGROUND_NATIVE_ROW_DRAG_UNSUPPORTED`。得分 0.05，A22 八项通过，驱动无隔离错误，哨兵保留全部 20 个字符。见 `artifacts/bench-v2-pi-20261114T064558370743Z/summary.json`。
+
 加入预检后的一次 G03 Pi 复测沿用了此前实验性 AppKit 参数，发现后主动停止。运行器保留未计分记录并清理测试进程。最近的有效 G03 得分仍为 0.65。见基准测试工作树的 `artifacts/bench-v2-pi-20261114T012811451081Z/summary.json`。
 
 新的 `--public-api-only` 试验模式在启动前拒绝实验性 AppKit 参数，并禁用驱动的未公开焦点查询和原始指针投递。G04 `482045` 的两个 Chromium 下拉框仍能使用公开进程定向按键选值。IR-01 `147201` 到达第二页后，Team 的四种受保护输入均被拒绝。打开前一个 sheet 时仍测到后台窗口换序。两组对照均未记录哨兵失焦或升层。GnuCash 工具栏现在拒绝无法确认的登记簿工具栏点击，如果应用暴露带 Reconcile 标签的 AX 按钮，也会预检其语义按下。见基准测试工作树的 `artifacts/ir01-team-public-final-uvbmhmv3/report.json` 和 `artifacts/cdb-g04-popup-public-final-pvaukt9t/report.json`。
