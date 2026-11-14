@@ -156,10 +156,10 @@ await cua.getScreenshot({
 
 真实事件策略与局部AppKit激活是两回事。pi setup默认设置 `CU_EXPERIMENTAL_APPKIT_FOCUS=0`，`--background-events` 不再开启它；只有 `--experimental-appkit-focus` 才明确开启。`cua.status().background.appKitFocusPolicy` 报告所选策略。
 
-`BACKGROUND_WINDOW_REORDERED` 表示目标应用的已有普通窗口越过了另一应用的窗口，或新出现的普通窗口越过了原本盖在操作目标上方的窗口。收到错误时对话框可能已经打开，应先观察当前窗口再继续操作。
+`BACKGROUND_WINDOW_REORDERED` 表示目标应用的已有普通窗口越过了另一应用的窗口，或新出现的普通窗口越过了原本盖在操作目标上方的窗口。普通 `AXPress` 元数据可能不包含应用将打开 sheet 的信息。这种情况下，收到错误时对话框可能已经打开，应先观察当前窗口再继续操作。
 
 后台预检识别到关闭的原生 AppKit 下拉框时，会拒绝打开菜单或按首字母选值，返回 `BACKGROUND_POPUP_UNSUPPORTED`。支持首字母选值的 Chromium 网页控件取得应用内 AX 焦点后仍可接收可打印按键。对已观察到的 GnuCash 英文 Reconcile 工具栏按钮及工具栏溢出入口，后台点击会在投递前返回 `BACKGROUND_GNUCASH_DIALOG_UNSUPPORTED`。检查使用精确窗口的 OCR，覆盖已测量的图标加文字工具栏布局。其他布局和对话框命令仍需独立验证。
 
-启动服务时设置 `CU_PUBLIC_API_ONLY=1`，将驱动限制在有文档的 macOS API。后台点击需要 AX 语义路径。后台指针事件和实验性 AppKit 准备返回 `BACKGROUND_PUBLIC_API_UNSUPPORTED`。进程定向按键要求目标窗口与应用内 AX 焦点一致。驱动采样前台应用和系统 AX 焦点，此模式无法查询实际键盘接收进程，因此 `keyboardFocusResolved` 为 `false`。
+启动服务时设置 `CU_PUBLIC_API_ONLY=1`，将驱动限制在有文档的 macOS API。后台点击需要 AX 语义路径。后台指针事件和实验性 AppKit 准备返回 `BACKGROUND_PUBLIC_API_UNSUPPORTED`。显式后台 `showMenu` 会在投递前拒绝，因为原生菜单可能干扰前台会话。进程定向按键要求目标窗口与应用内 AX 焦点一致。驱动采样前台应用和系统 AX 焦点，此模式无法查询实际键盘接收进程，因此 `keyboardFocusResolved` 为 `false`。
 
 未内部激活的AppKit应用可能忽略原生CMD+A/菜单快捷键和文本拖选。优先用 `pressKey('CMD+A')`、`selectText(...)`、`click(index)` 的语义等价操作，不在失败后自动激活重试。可选激活路径会在系统焦点仍属别处时激活后台文本输入上下文。[输入隔离调查](INPUT_ISOLATION.md)记录了因果追踪、原版AX Raise及边界；新增的单人并用对照已获接受，不外推到实验长按。

@@ -210,6 +210,10 @@ MB-09 `790113` 回归确认，从原生行内及相邻边框开始拖动均返�
 
 以 Pi `high` 和 `--public-api-only` 定向重跑后，IR-01 `147201` 和 IR-02 `487371` 均得 0.45，A22 八项通过。哨兵分别保留全部 47 和 25 个生成字符，两轮均无 GUI-only 违规或基础设施错误。IR-01 打开原生 sheet 时仍报告后台窗口换序。见基准测试工作树的 `artifacts/bench-v2-pi-20261114T014132146273Z/summary.json`。
 
+在 IR-01 `147201` 上，公开 AX 探针在投递前枚举了 Next 的普通属性、带参数属性、动作及描述。按钮只公开了描述为 “press” 的 `AXPress`，没有帮助文本或标识符，窗口也没有默认按钮或已附加的 sheet。锁定版源码用普通 `NSButton` 创建该按钮，点击回调再调用 `NSAlert.beginSheetModal(for:)`。自有窗口对照中，sheet 和父窗口同时越过遮挡窗，哨兵保持键焦点。这组对照里，公开 AX 元数据没有提供可在执行前识别该弹窗的信号。见 `artifacts/ir01-public-ax-metadata-zzDvesJ5/report.json`。[锁定版 AppKit 测试应用](https://github.com/trycua/cua/blob/22a67eacd15dc71811e330ed88951dd615bb395d/libs/cua-driver-bench/automated-eval/macos_bench/swift/BenchLabInterrupts.swift#L243-L267)
+
+仅公开 API 的后台模式会在投递前拒绝显式 `AXShowMenu`，包括识别范围之外的控件。自有 AppKit 对照按钮同时公开 `AXShowMenu` 和 `AXPress`。菜单回调未触发，普通按下仍投递到同一控件，哨兵无失焦或窗口升层。见 `artifacts/public-menu-guard-eSDxMTEV/report.json`。
+
 仅用公开 API 的 G03 `99589` 对照在投递前拒绝了工具栏溢出入口、无法确认的工具栏坐标和显式实验点击。账本与可见窗口列表保持原样，哨兵生成文字完整，零失焦、零升层。运行器在 GnuCash 试验中都会说明这项对账限制。见基准测试工作树的 `artifacts/cdb-g03-public-toolbar-4_o8lzbo/report.json`。
 
 另一轮同种子对照中，第二个 Reconcile 窗口在已观察交易行与 OCR 定位的 R 列交点接收了定向点击。Funds Out 合计从 $73.10 升至 $1,321.70，再次点击恢复 $73.10。哨兵保留全部 17 个生成字符，零失焦。第一个对话框仍改变了与其他测试后台窗口的相对顺序。对照在 Finish 前结束，确认了可撤销的行勾选。见基准测试工作树的 `artifacts/cdb-g03-reconcile-row-8glk4mao/report.json`。

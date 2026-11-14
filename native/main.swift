@@ -597,6 +597,9 @@ struct Snapshot {
                 }
             }
             if backgroundMode, action == "press" || action == "showMenu" { try checkBackgroundPopup(r.element) }
+            if backgroundMode, SystemInputFocus.publicAPIOnly, action == "showMenu" {
+                throw BridgeError("BACKGROUND_MENU_UNSUPPORTED", "Public-API-only mode cannot isolate native menu tracking from the user's session. No AXShowMenu action was sent.")
+            }
             if backgroundMode, action == "press" || action == "showMenu" || action == "confirm" {
                 try checkGnuCashDialogAction(r.element, pid: r.pid)
             }
